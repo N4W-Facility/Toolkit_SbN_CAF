@@ -1,0 +1,78 @@
+﻿id,SbN,Indicadores priorizados,Unidad de medida
+8,Área de filtro verde,Carga de sedimentos transportada durante eventos de lluvia,t/año
+8,Área de filtro verde,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+8,Área de filtro verde,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+8,Área de filtro verde,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+2,Restauración pasiva,Carga de sedimentos transportada durante eventos de lluvia,t/año
+2,Restauración pasiva,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+2,Restauración pasiva,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+2,Restauración pasiva,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+21,Cosecha de agua,Número de personas con acceso mejorado al agua gracias a SbN,Personas
+21,Cosecha de agua,Cosecha de agua pluvial implementada por SbN,m³/año
+14,Espacios verdes,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+3,Restauración activa - Enriquecimiento,Carga de sedimentos transportada durante eventos de lluvia,t/año
+3,Restauración activa - Enriquecimiento,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+3,Restauración activa - Enriquecimiento,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+3,Restauración activa - Enriquecimiento,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+3,Restauración activa - Enriquecimiento,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+9,Canales vegetados,Carga de sedimentos transportada durante eventos de lluvia,t/año
+9,Canales vegetados,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+9,Canales vegetados,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+9,Canales vegetados,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+11,Humedales artificiales,Carga de sedimentos transportada durante eventos de lluvia,t/año
+11,Humedales artificiales,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+11,Humedales artificiales,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+11,Humedales artificiales,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+11,Humedales artificiales,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+12,Jardines de lluvia,Carga de sedimentos transportada durante eventos de lluvia,t/año
+12,Jardines de lluvia,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+12,Jardines de lluvia,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+12,Jardines de lluvia,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+20,Agroforestería,Carga de sedimentos transportada durante eventos de lluvia,t/año
+20,Agroforestería,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+20,Agroforestería,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+20,Agroforestería,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+6,Llanuras de inundación,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+6,Llanuras de inundación,Volumen estimado de recarga natural anual (VWB),m³/año
+6,Llanuras de inundación,Carga de sedimentos transportada durante eventos de lluvia,t/año
+6,Llanuras de inundación,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+1,Conservación del bosque,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+1,Conservación del bosque,Volumen estimado de recarga natural anual (VWB),m³/año
+1,Conservación del bosque,Carga de sedimentos transportada durante eventos de lluvia,t/año
+1,Conservación del bosque,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+1,Conservación del bosque,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+1,Conservación del bosque,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+15,Parques inundables,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+15,Parques inundables,Volumen estimado de recarga natural anual (VWB),m³/año
+16,Pavimentos verdes adaptados,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+4,Restauración activa - Nucleación,Carga de sedimentos transportada durante eventos de lluvia,t/año
+4,Restauración activa - Nucleación,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+4,Restauración activa - Nucleación,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+4,Restauración activa - Nucleación,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+4,Restauración activa - Nucleación,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+7,Renaturalización de cuerpos de agua,Carga de sedimentos transportada durante eventos de lluvia,t/año
+7,Renaturalización de cuerpos de agua,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+7,Renaturalización de cuerpos de agua,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+7,Renaturalización de cuerpos de agua,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+7,Renaturalización de cuerpos de agua,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+17,Silvicultura de cuenca urbana,Carga de sedimentos transportada durante eventos de lluvia,t/año
+17,Silvicultura de cuenca urbana,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+17,Silvicultura de cuenca urbana,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+17,Silvicultura de cuenca urbana,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+5,Restauración de vegetación riparia,Carga de sedimentos transportada durante eventos de lluvia,t/año
+5,Restauración de vegetación riparia,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+5,Restauración de vegetación riparia,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+5,Restauración de vegetación riparia,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+5,Restauración de vegetación riparia,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+5,Restauración de vegetación riparia,Volumen estimado de recarga natural anual (VWB),m³/año
+18,Techos verdes,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+13,Zanjas de infiltración,Carga de sedimentos transportada durante eventos de lluvia,t/año
+13,Zanjas de infiltración,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+13,Zanjas de infiltración,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+13,Zanjas de infiltración,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+19,Vías ciclo-pedestres con pavimento verde,Volumen de escorrentía superficial generado en eventos extremos,m³/año
+10,Estanques de biorretención,Carga de sedimentos transportada durante eventos de lluvia,t/año
+10,Estanques de biorretención,Reducción porcentual de SST en cuerpos receptores aguas abajo de las SbN,% reducción
+10,Estanques de biorretención,Carga anual de nutrientes reducida mediante intervención SbN,kg/año
+10,Estanques de biorretención,Porcentaje de reducción de N y P entre entrada y salida de la SbN,% reducción
+10,Estanques de biorretención,Volumen de escorrentía superficial generado en eventos extremos,m³/año

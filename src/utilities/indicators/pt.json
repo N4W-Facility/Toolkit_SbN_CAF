@@ -1,0 +1,107 @@
+{
+  "1": [
+    {"nombre": "Área de floresta conservada", "unidad": "ha"},
+    {"nombre": "Carbono armazenado", "unidad": "ton CO2"},
+    {"nombre": "Biodiversidade protegida", "unidad": "espécies"}
+  ],
+  "2": [
+    {"nombre": "Área em restauração passiva", "unidad": "ha"},
+    {"nombre": "Cobertura vegetal recuperada", "unidad": "%"},
+    {"nombre": "Regeneração natural", "unidad": "indivíduos/ha"}
+  ],
+  "3": [
+    {"nombre": "Área restaurada ativamente", "unidad": "ha"},
+    {"nombre": "Árvores plantadas", "unidad": "indivíduos"},
+    {"nombre": "Sobrevivência de plantas", "unidad": "%"}
+  ],
+  "4": [
+    {"nombre": "Núcleos de restauração estabelecidos", "unidad": "unidades"},
+    {"nombre": "Área de influência", "unidad": "ha"},
+    {"nombre": "Espécies nativas introduzidas", "unidad": "espécies"}
+  ],
+  "5": [
+    {"nombre": "Comprimento de zona ripária restaurada", "unidad": "km"},
+    {"nombre": "Largura da zona ripária", "unidad": "m"},
+    {"nombre": "Redução de sedimentos", "unidad": "ton/ano"}
+  ],
+  "6": [
+    {"nombre": "Área de planície conectada", "unidad": "ha"},
+    {"nombre": "Volume de retenção", "unidad": "m³"},
+    {"nombre": "Redução de picos de cheia", "unidad": "%"}
+  ],
+  "7": [
+    {"nombre": "Comprimento de corpo d'água renaturalizado", "unidad": "km"},
+    {"nombre": "Melhoria na qualidade da água", "unidad": "%"},
+    {"nombre": "Habitat aquático criado", "unidad": "m²"}
+  ],
+  "8": [
+    {"nombre": "Área de filtro verde", "unidad": "ha"},
+    {"nombre": "Redução de nutrientes", "unidad": "kg/ano"},
+    {"nombre": "Eficiência de filtração", "unidad": "%"}
+  ],
+  "9": [
+    {"nombre": "Comprimento de canais vegetados", "unidad": "km"},
+    {"nombre": "Capacidade de condução", "unidad": "m³/s"},
+    {"nombre": "Qualidade da água tratada", "unidad": "índice"}
+  ],
+  "10": [
+    {"nombre": "Número de lagoas", "unidad": "unidades"},
+    {"nombre": "Volume de retenção", "unidad": "m³"},
+    {"nombre": "Taxa de infiltração", "unidad": "mm/h"}
+  ],
+  "11": [
+    {"nombre": "Área de áreas úmidas", "unidad": "ha"},
+    {"nombre": "Carga poluente removida", "unidad": "kg/ano"},
+    {"nombre": "Biodiversidade suportada", "unidad": "espécies"}
+  ],
+  "12": [
+    {"nombre": "Número de jardins", "unidad": "unidades"},
+    {"nombre": "Volume de escoamento capturado", "unidad": "m³/ano"},
+    {"nombre": "Área verde criada", "unidad": "m²"}
+  ],
+  "13": [
+    {"nombre": "Comprimento de valas", "unidad": "m"},
+    {"nombre": "Capacidade de infiltração", "unidad": "m³/dia"},
+    {"nombre": "Poluentes filtrados", "unidad": "kg/ano"}
+  ],
+  "14": [
+    {"nombre": "Área de espaços verdes", "unidad": "ha"},
+    {"nombre": "População beneficiada", "unidad": "habitantes"},
+    {"nombre": "Serviços ecossistêmicos", "unidad": "índice"}
+  ],
+  "15": [
+    {"nombre": "Área de parques inundáveis", "unidad": "ha"},
+    {"nombre": "Volume de armazenamento", "unidad": "m³"},
+    {"nombre": "Frequência de uso recreativo", "unidad": "visitas/ano"}
+  ],
+  "16": [
+    {"nombre": "Área de pavimento permeável", "unidad": "m²"},
+    {"nombre": "Taxa de infiltração", "unidad": "mm/h"},
+    {"nombre": "Redução de escoamento", "unidad": "%"}
+  ],
+  "17": [
+    {"nombre": "Árvores urbanas plantadas", "unidad": "indivíduos"},
+    {"nombre": "Cobertura de dossel", "unidad": "%"},
+    {"nombre": "Redução de temperatura", "unidad": "°C"}
+  ],
+  "18": [
+    {"nombre": "Área de telhados verdes", "unidad": "m²"},
+    {"nombre": "Retenção de água da chuva", "unidad": "L/ano"},
+    {"nombre": "Economia de energia", "unidad": "kWh/ano"}
+  ],
+  "19": [
+    {"nombre": "Comprimento de vias verdes", "unidad": "km"},
+    {"nombre": "Área permeável", "unidad": "m²"},
+    {"nombre": "Usuários beneficiados", "unidad": "pessoas/dia"}
+  ],
+  "20": [
+    {"nombre": "Área agroflorestal", "unidad": "ha"},
+    {"nombre": "Produção agrícola", "unidad": "ton/ano"},
+    {"nombre": "Carbono sequestrado", "unidad": "ton CO2/ano"}
+  ],
+  "21": [
+    {"nombre": "Volume de água coletada", "unidad": "m³/ano"},
+    {"nombre": "Sistemas instalados", "unidad": "unidades"},
+    {"nombre": "Famílias beneficiadas", "unidad": "famílias"}
+  ]
+}

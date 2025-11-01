@@ -1,0 +1,54 @@
+﻿Barrier Code,Description,Group,Group code
+GB0101,Disconnect between short-term actions and long-term objectives,Political barriers,GB01
+GB0101b,"Coordination between departments and administrations is tedious, and workflow between them is time-consuming.",Political barriers,GB01
+GB0101c,"We are in an election campaign period, and this will affect the NBS implementation process.",Political barriers,GB01
+GB0101d,Achieving visible results in the short term is a priority.,Political barriers,GB01
+GB0101e,"Bidding processes are often complex, and it is not possible to assign specific staff to develop bidding processes for innovative actions.",Political barriers,GB01
+GB0102,Discontinuity between short-term actions and long-term plans,Political barriers,GB01
+GB0102a,"There is tension between the agendas of central and local governments, and/or they are from different parties",Political barriers,GB01
+GB0102b,There are frequent changes in local authorities or other governing administrations.,Political barriers,GB01
+GB0102c,"There are no common interests between metropolitan municipalities and district municipalities, which may affect the implementation of NBS.",Political barriers,GB01
+GB0102d,Austerity policies may affect the implementation of NBS.,Political barriers,GB01
+GB0103,Revisions to strategic plans affecting the project area,Political barriers,GB01
+GB0103a,There is a physical plan that may affect the development of nature-based solutions.,Political barriers,GB01
+GB0103b,There is a thematic strategic plan that may affect the development of nature-based solutions.,Political barriers,GB01
+GB0104,Long-term revisions to strategic plans affecting the project area,Political barriers,GB01
+GB0104a,There is a physical plan that may affect the development of nature-based solutions.,Political barriers,GB01
+GB0104b,There is a thematic strategic plan that may affect the development of nature-based solutions.,Political barriers,GB01
+GB0105,Country-specific political obstacles,Political barriers,GB01
+GB0201,Infrastructural barriers,Technical barriers,GB02
+GB0201a,Authorities are locked into the “practice of carrying out infrastructure works”,Technical barriers,GB02
+GB0201b,Limited structural capacity of affected buildings to support the weight of green infrastructure,Technical barriers,GB02
+GB0201c,Lack of construction companies with proven experience in building NBS in the local environment.,Technical barriers,GB02
+GB0201d,Technical barriers to plant and tree selection and interventions,Technical barriers,GB02
+GB0202,Location of interventions in urban space,Technical barriers,GB02
+GB0202a,Authorities are stuck in the “practice of carrying out infrastructure works”,Technical barriers,GB02
+GB0203,Country-specific technical obstacles,Technical barriers,GB02
+GB0301a,Basic local legislation is not complied with,Legal barriers,GB03
+GB0301b,The landowner may not be interested in NBS,Legal barriers,GB03
+GB0301c,Land use is restricted due to legal conditions,Legal barriers,GB03
+GB0301d,Local permits for construction work can cause delays.,Legal barriers,GB03
+GB0301e,Lack of local ordinances and regulations.,Legal barriers,GB03
+GB0301f,Lack of coordination for public-private collaboration.,Legal barriers,GB03
+GB0302,Organizational barriers.,Legal barriers,GB03
+GB0302a,Conflicts between departments and/or lack of collaboration.,Legal barriers,GB03
+GB0302b,Vertical/horizontal hierarchical work culture.,Legal barriers,GB03
+GB0302c,Lack or absence of organizational learning capacity.,Legal barriers,GB03
+GB0302d,Lack of commitment to programs.,Legal barriers,GB03
+GB0303,Country-specific legal obstacles.,Legal barriers,GB03
+GB0401,Knowledge gaps - Fear of the unknown,Socio-cultural barriers,GB04
+GB0401a,Lack of information on NBS projects,Socio-cultural barriers,GB04
+GB0401b,Concerns about skater participation and the impact of human-nature interactions,Socio-cultural barriers,GB04
+GB0401c,Uncertainties about NBS implementation and maintenance,Socio-cultural barriers,GB04
+GB0402,Lack of awareness,Socio-cultural barriers,GB04
+GB0402a,Lack of awareness about climate change and the benefits that NBS bring to city residents,Socio-cultural barriers,GB04
+GB0403,Ecological gentrification and social inclusion,Socio-cultural barriers,GB04
+GB0403a,NBS can increase the real estate value of land,Socio-cultural barriers,GB04
+GB0404,Growth paradigm,Socio-cultural barriers,GB04
+GB0404a,The city has slowed its growth: investment efforts are mainly devoted to economic ends.,Socio-cultural barriers,GB04
+GB0405,Country-specific socio-cultural obstacles,Socio-cultural barriers,GB04
+GB0501,Perception of the valuation of ecosystem services,Financial barriers,GB05
+GB0501a,The city cannot support the monitoring and evaluation of NBS.,Financial barriers,GB05
+GB0502,Public-private partnerships,Financial barriers,GB05
+GB0502a,There are no opportunities for public-private partnership agreements.,Financial barriers,GB05
+GB0503,Country-specific financial barriers,Financial barriers,GB05

@@ -1,0 +1,54 @@
+﻿Codigo_Barrera,Descripcion,Grupo,Codigo_Grupo
+GB0101,Desconexión entre las acciones a corto plazo y los objetivos a largo plazo,Barreras políticas,GB01
+GB0101b,La coordinación entre departamentos y administraciones es tediosa y el flujo de trabajo entre ellos requiere mucho tiempo.,Barreras políticas,GB01
+GB0101c,"Estamos en periodo de campaña electoral, y ello afectará al proceso de implantación de la NBS",Barreras políticas,GB01
+GB0101d,Es prioritario conseguir resultados visibles a corto plazo.,Barreras políticas,GB01
+GB0101e,Los procesos de licitación suelen ser complejos y no hay posibilidad de asignar personal específico para desarrollar procesos de licitación de acciones innovadoras.,Barreras políticas,GB01
+GB0102,Discontinuidad entre las acciones a corto plazo y los planes a largo plazo,Barreras políticas,GB01
+GB0102a,"Existe tensión entre las agendas de los gobiernos central y local, y/o son de partidos diferentes",Barreras políticas,GB01
+GB0102b,Hay cambios frecuentes en las autoridades locales u otras administraciones gobernantes.,Barreras políticas,GB01
+GB0102c,"No hay intereses comunes entre los municipios metropolitanos y los municipios de distrito, lo que puede afectar a la aplicación de las NBS.",Barreras políticas,GB01
+GB0102d,Las políticas de austeridad pueden afectar a la aplicación de las NBS.,Barreras políticas,GB01
+GB0103,Revisiones de planes estratégicos afectando al área del proyecto,Barreras políticas,GB01
+GB0103a,Existe un plan físico que puede afectar al desarrollo de soluciones basadas en la naturaleza.,Barreras políticas,GB01
+GB0103b,Existe un plan estratégico temático que puede afectar al desarrollo de soluciones basadas en la naturaleza.,Barreras políticas,GB01
+GB0104,Revisiones a largo plazo de planes estratégicos afectando al área del proyecto,Barreras políticas,GB01
+GB0104a,Existe un plan físico que puede afectar al desarrollo de soluciones basadas en la naturaleza.,Barreras políticas,GB01
+GB0104b,Existe un plan estratégico temático que puede afectar al desarrollo de soluciones basadas en la naturaleza.,Barreras políticas,GB01
+GB0105,Obstáculos políticos específicos de cada país,Barreras políticas,GB01
+GB0201,Barreras infraestructurales,Barreras técnicas,GB02
+GB0201a,"Las autoridades se encierran en la ""práctica de realizar obras de infraestructura""",Barreras técnicas,GB02
+GB0201b,Capacidad estructural limitada de los edificios afectados para soportar el peso de la infraestructura verde,Barreras técnicas,GB02
+GB0201c,Ausencia de empresas constructoras con experiencia demostrada en la construcción de NBS en el entorno local.,Barreras técnicas,GB02
+GB0201d,Barreras técnicas para la selección de plantas y árboles y las intervenciones,Barreras técnicas,GB02
+GB0202,Localización de las intervenciones en el espacio urbano,Barreras técnicas,GB02
+GB0202a,"Las autoridades se bloquean en la ""práctica de realizar obras de infraestructura""",Barreras técnicas,GB02
+GB0203,Obstáculos técnicos específicos de cada país,Barreras técnicas,GB02
+GB0301a,No se cumple la legislación básica local,Barreras legales,GB03
+GB0301b,Puede que el propietario del terreno no esté interesado en las NBS,Barreras legales,GB03
+GB0301c,El uso del terreno está restringido debido a condiciones legales,Barreras legales,GB03
+GB0301d,Los permisos locales para las obras de construcción pueden causar retrasos,Barreras legales,GB03
+GB0301e,Faltan ordenanzas y reglamentos locales,Barreras legales,GB03
+GB0301f,Falta de coordinación para una colaboración público-privada,Barreras legales,GB03
+GB0302,Barreras organizativas,Barreras legales,GB03
+GB0302a,Conflictos entre departamentos y/o falta de colaboración.,Barreras legales,GB03
+GB0302b,Cultura de trabajo jerárquica vertical/horizontal,Barreras legales,GB03
+GB0302c,Falta o ausencia de capacidad de aprendizaje organizativo,Barreras legales,GB03
+GB0302d,Falta de compromiso con los programas,Barreras legales,GB03
+GB0303,Obstáculos legales específicos de cada país,Barreras legales,GB03
+GB0401,Lagunas de conocimiento -Miedo a lo desconocido,Barreras socio-culturales,GB04
+GB0401a,Falta de información sobre los proyectos NBS,Barreras socio-culturales,GB04
+GB0401b,Preocupación por la participación de los skaters y el impacto de las interacciones entre el hombre y la naturaleza.,Barreras socio-culturales,GB04
+GB0401c,Incógnitas sobre la implantación y el mantenimiento de las NBS,Barreras socio-culturales,GB04
+GB0402,Falta de concienciación,Barreras socio-culturales,GB04
+GB0402a,Falta de concienciación sobre el cambio climático y los beneficios que las NBS aportan a los residentes de la ciudad.,Barreras socio-culturales,GB04
+GB0403,Gentrificación ecológica e inclusión social,Barreras socio-culturales,GB04
+GB0403a,NBS puede aumentar el valor inmobiliario de los terrenos,Barreras socio-culturales,GB04
+GB0404,Paradigma de crecimiento,Barreras socio-culturales,GB04
+GB0404a,La ciudad ha rebajado su crecimiento: los esfuerzos en inversión se dedican principalmente a fines económicos.,Barreras socio-culturales,GB04
+GB0405,Obstáculos socio-culturales específicos de cada país,Barreras socio-culturales,GB04
+GB0501,Percepción de la valoración de los ecoservicios,Barreras financieras,GB05
+GB0501a,La ciudad no puede apoyar la monitorización de las NBS y su evaluación.,Barreras financieras,GB05
+GB0502,Colaboración público-privada,Barreras financieras,GB05
+GB0502a,No hay oportunidades para acuerdos de colaboración público-privada,Barreras financieras,GB05
+GB0503,Obstáculos financieros específicos de cada país,Barreras financieras,GB05

@@ -1,0 +1,107 @@
+{
+  "1": [
+    {"nombre": "Conserved forest area", "unidad": "ha"},
+    {"nombre": "Stored carbon", "unidad": "ton CO2"},
+    {"nombre": "Protected biodiversity", "unidad": "species"}
+  ],
+  "2": [
+    {"nombre": "Area under passive restoration", "unidad": "ha"},
+    {"nombre": "Recovered vegetation cover", "unidad": "%"},
+    {"nombre": "Natural regeneration", "unidad": "individuals/ha"}
+  ],
+  "3": [
+    {"nombre": "Actively restored area", "unidad": "ha"},
+    {"nombre": "Trees planted", "unidad": "individuals"},
+    {"nombre": "Plant survival", "unidad": "%"}
+  ],
+  "4": [
+    {"nombre": "Restoration nuclei established", "unidad": "units"},
+    {"nombre": "Area of influence", "unidad": "ha"},
+    {"nombre": "Native species introduced", "unidad": "species"}
+  ],
+  "5": [
+    {"nombre": "Length of restored riparian zone", "unidad": "km"},
+    {"nombre": "Riparian zone width", "unidad": "m"},
+    {"nombre": "Sediment reduction", "unidad": "ton/year"}
+  ],
+  "6": [
+    {"nombre": "Connected floodplain area", "unidad": "ha"},
+    {"nombre": "Retention volume", "unidad": "m³"},
+    {"nombre": "Peak flow reduction", "unidad": "%"}
+  ],
+  "7": [
+    {"nombre": "Length of renaturalized water body", "unidad": "km"},
+    {"nombre": "Water quality improvement", "unidad": "%"},
+    {"nombre": "Aquatic habitat created", "unidad": "m²"}
+  ],
+  "8": [
+    {"nombre": "Green filter area", "unidad": "ha"},
+    {"nombre": "Nutrient reduction", "unidad": "kg/year"},
+    {"nombre": "Filtration efficiency", "unidad": "%"}
+  ],
+  "9": [
+    {"nombre": "Length of vegetated channels", "unidad": "km"},
+    {"nombre": "Conveyance capacity", "unidad": "m³/s"},
+    {"nombre": "Treated water quality", "unidad": "index"}
+  ],
+  "10": [
+    {"nombre": "Number of ponds", "unidad": "units"},
+    {"nombre": "Retention volume", "unidad": "m³"},
+    {"nombre": "Infiltration rate", "unidad": "mm/h"}
+  ],
+  "11": [
+    {"nombre": "Wetland area", "unidad": "ha"},
+    {"nombre": "Pollutant load removed", "unidad": "kg/year"},
+    {"nombre": "Biodiversity supported", "unidad": "species"}
+  ],
+  "12": [
+    {"nombre": "Number of gardens", "unidad": "units"},
+    {"nombre": "Runoff volume captured", "unidad": "m³/year"},
+    {"nombre": "Green area created", "unidad": "m²"}
+  ],
+  "13": [
+    {"nombre": "Length of trenches", "unidad": "m"},
+    {"nombre": "Infiltration capacity", "unidad": "m³/day"},
+    {"nombre": "Pollutants filtered", "unidad": "kg/year"}
+  ],
+  "14": [
+    {"nombre": "Green spaces area", "unidad": "ha"},
+    {"nombre": "Population benefited", "unidad": "inhabitants"},
+    {"nombre": "Ecosystem services", "unidad": "index"}
+  ],
+  "15": [
+    {"nombre": "Floodable parks area", "unidad": "ha"},
+    {"nombre": "Storage volume", "unidad": "m³"},
+    {"nombre": "Recreational use frequency", "unidad": "visits/year"}
+  ],
+  "16": [
+    {"nombre": "Permeable pavement area", "unidad": "m²"},
+    {"nombre": "Infiltration rate", "unidad": "mm/h"},
+    {"nombre": "Runoff reduction", "unidad": "%"}
+  ],
+  "17": [
+    {"nombre": "Urban trees planted", "unidad": "individuals"},
+    {"nombre": "Canopy cover", "unidad": "%"},
+    {"nombre": "Temperature reduction", "unidad": "°C"}
+  ],
+  "18": [
+    {"nombre": "Green roofs area", "unidad": "m²"},
+    {"nombre": "Rainwater retention", "unidad": "L/year"},
+    {"nombre": "Energy savings", "unidad": "kWh/year"}
+  ],
+  "19": [
+    {"nombre": "Green pathways length", "unidad": "km"},
+    {"nombre": "Permeable area", "unidad": "m²"},
+    {"nombre": "Users benefited", "unidad": "people/day"}
+  ],
+  "20": [
+    {"nombre": "Agroforestry area", "unidad": "ha"},
+    {"nombre": "Agricultural production", "unidad": "ton/year"},
+    {"nombre": "Carbon sequestered", "unidad": "ton CO2/year"}
+  ],
+  "21": [
+    {"nombre": "Volume of water harvested", "unidad": "m³/year"},
+    {"nombre": "Systems installed", "unidad": "units"},
+    {"nombre": "Families benefited", "unidad": "families"}
+  ]
+}

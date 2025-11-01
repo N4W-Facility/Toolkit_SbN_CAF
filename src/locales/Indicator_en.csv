@@ -1,0 +1,78 @@
+﻿id,NbS,Prioritized indicators,Unidad de medida
+8,Vegetative filter strip,Sediment load transported during rainfall events,t/year
+8,Vegetative filter strip,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+8,Vegetative filter strip,Annual nutrient load reduced through the NbS intervention,kg/year
+8,Vegetative filter strip,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+2,Passive restoration,Sediment load transported during rainfall events,t/year
+2,Passive restoration,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+2,Passive restoration,Annual nutrient load reduced through the NbS intervention,kg/year
+2,Passive restoration,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+21,Rainwater harvesting,Number of people with improved access to water thanks to the NbS,People
+21,Rainwater harvesting,Volume of rainwater harvested via the NbS,m³/year
+14,Green spaces,Surface runoff volume generated during extreme events,m³/year
+3,Active restoration – Enrichment,Sediment load transported during rainfall events,t/year
+3,Active restoration – Enrichment,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+3,Active restoration – Enrichment,Annual nutrient load reduced through the NbS intervention,kg/year
+3,Active restoration – Enrichment,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+3,Active restoration – Enrichment,Surface runoff volume generated during extreme events,m³/year
+9,Vegetated channels (swales),Sediment load transported during rainfall events,t/year
+9,Vegetated channels (swales),Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+9,Vegetated channels (swales),Annual nutrient load reduced through the NbS intervention,kg/year
+9,Vegetated channels (swales),Percent reduction of N and P between the NbS inflow and outflow,% reduction
+11,Constructed wetlands,Sediment load transported during rainfall events,t/year
+11,Constructed wetlands,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+11,Constructed wetlands,Annual nutrient load reduced through the NbS intervention,kg/year
+11,Constructed wetlands,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+11,Constructed wetlands,Surface runoff volume generated during extreme events,m³/year
+12,Rain gardens,Sediment load transported during rainfall events,t/year
+12,Rain gardens,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+12,Rain gardens,Annual nutrient load reduced through the NbS intervention,kg/year
+12,Rain gardens,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+20,Agroforestry,Sediment load transported during rainfall events,t/year
+20,Agroforestry,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+20,Agroforestry,Annual nutrient load reduced through the NbS intervention,kg/year
+20,Agroforestry,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+6,Floodplains,Surface runoff volume generated during extreme events,m³/year
+6,Floodplains,Estimated annual natural recharge volume (VWB),m³/year
+6,Floodplains,Sediment load transported during rainfall events,t/year
+6,Floodplains,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+1,Forest conservation,Surface runoff volume generated during extreme events,m³/year
+1,Forest conservation,Estimated annual natural recharge volume (VWB),m³/year
+1,Forest conservation,Sediment load transported during rainfall events,t/year
+1,Forest conservation,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+1,Forest conservation,Annual nutrient load reduced through the NbS intervention,kg/year
+1,Forest conservation,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+15,Floodable parks,Surface runoff volume generated during extreme events,m³/year
+15,Floodable parks,Estimated annual natural recharge volume (VWB),m³/year
+16,Retrofitted green pavements,Surface runoff volume generated during extreme events,m³/year
+4,Active restoration – Nucleation,Sediment load transported during rainfall events,t/year
+4,Active restoration – Nucleation,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+4,Active restoration – Nucleation,Annual nutrient load reduced through the NbS intervention,kg/year
+4,Active restoration – Nucleation,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+4,Active restoration – Nucleation,Surface runoff volume generated during extreme events,m³/year
+7,Renaturalization of water bodies,Sediment load transported during rainfall events,t/year
+7,Renaturalization of water bodies,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+7,Renaturalization of water bodies,Annual nutrient load reduced through the NbS intervention,kg/year
+7,Renaturalization of water bodies,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+7,Renaturalization of water bodies,Surface runoff volume generated during extreme events,m³/year
+17,Urban watershed forestry,Sediment load transported during rainfall events,t/year
+17,Urban watershed forestry,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+17,Urban watershed forestry,Annual nutrient load reduced through the NbS intervention,kg/year
+17,Urban watershed forestry,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+5,Riparian vegetation restoration,Sediment load transported during rainfall events,t/year
+5,Riparian vegetation restoration,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+5,Riparian vegetation restoration,Annual nutrient load reduced through the NbS intervention,kg/year
+5,Riparian vegetation restoration,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+5,Riparian vegetation restoration,Surface runoff volume generated during extreme events,m³/year
+5,Riparian vegetation restoration,Estimated annual natural recharge volume (VWB),m³/year
+18,Green roofs,Surface runoff volume generated during extreme events,m³/year
+13,Infiltration trenches,Sediment load transported during rainfall events,t/year
+13,Infiltration trenches,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+13,Infiltration trenches,Annual nutrient load reduced through the NbS intervention,kg/year
+13,Infiltration trenches,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+19,Bicycle–pedestrian paths with green pavement,Surface runoff volume generated during extreme events,m³/year
+10,Bioretention ponds,Sediment load transported during rainfall events,t/year
+10,Bioretention ponds,Percent reduction of TSS in downstream receiving waters below the NbS,% reduction
+10,Bioretention ponds,Annual nutrient load reduced through the NbS intervention,kg/year
+10,Bioretention ponds,Percent reduction of N and P between the NbS inflow and outflow,% reduction
+10,Bioretention ponds,Surface runoff volume generated during extreme events,m³/year

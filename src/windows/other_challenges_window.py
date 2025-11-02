@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes
+from ..utils.sbn_prioritization import SbNPrioritization
 
 
 class OtherChallengesWindow(ctk.CTk):
@@ -332,6 +333,13 @@ class OtherChallengesWindow(ctk.CTk):
                 file_path = os.path.join(project_dir, filename)
 
                 df.to_csv(file_path, index=False, encoding='utf-8-sig')
+
+                # Actualizar priorización de SbN
+                try:
+                    SbNPrioritization.update_other_challenges(project_dir)
+                except Exception as e:
+                    print(f"Error actualizando priorización SbN: {e}")
+
                 messagebox.showinfo(
                     get_text("other_challenges.save_success_title"),
                     get_text("other_challenges.save_success_message")
@@ -369,8 +377,8 @@ class OtherChallengesWindow(ctk.CTk):
 
         if 'title' in self.widget_refs:
             title_text = get_text("other_challenges.main_title")
-            if self.has_previous_data:
-                title_text += "\n" + get_text("status.config_loaded")
+            # if self.has_previous_data:
+            #     title_text += "\n" + get_text("status.config_loaded")
             self.widget_refs['title'].configure(text=title_text)
 
         if 'description' in self.widget_refs:

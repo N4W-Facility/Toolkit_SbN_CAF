@@ -20,7 +20,8 @@ class ThemeManager:
         'warning': '#FF9800',
         'error': '#F44336',
         'error_hover': '#D32F2F',
-        'hover': '#E3F2FD'
+        'hover': '#E3F2FD',
+        'info': '#1A1A1A'
     }
     
     FONTS = {

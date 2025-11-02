@@ -100,8 +100,15 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         # Visor de mapa (lado izquierdo) - ahora tendrá más espacio
         map_container = ctk.CTkFrame(content_frame, **ThemeManager.get_frame_style())
         map_container.pack(side="left", fill="both", expand=True, padx=(0, 15))
-        
-        self.map_viewer = MatplotlibMapViewer(map_container, fg_color="transparent")
+
+        # Ocultar controles de colormap en ventana de cuenca (no se usan rasters aquí)
+        # Pasar callback para botón de reset: en vez de volver a Latinoamérica, centra en la cuenca
+        self.map_viewer = MatplotlibMapViewer(
+            map_container,
+            hide_colormap_controls=True,
+            reset_callback=self._zoom_to_watershed,
+            fg_color="transparent"
+        )
         self.map_viewer.pack(fill="both", expand=True, padx=8, pady=8)
         self.map_viewer.set_coordinate_callback(self._on_coordinates_selected)
         
@@ -500,8 +507,8 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                     alpha=0.5,
                     linewidth=2
                 )
-                # Centrar y ampliar vista al polígono
-                self.map_viewer.zoom_to_vector(str(watershed_shp_path), padding_factor=0.15)
+                # Centrar y hacer zoom específico a la cuenca con margen mínimo
+                self.map_viewer.zoom_to_vector(str(watershed_shp_path), padding_factor=0.05)
 
             # Cerrar ventana de progreso antes del mensaje de éxito
             try:
@@ -1567,9 +1574,9 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 )
                 print(f"{'✓' if success_vector else '❌'} add_vector_layer: {success_vector}")
 
-                # Centrar y ampliar vista al polígono
+                # Centrar y hacer zoom específico a la cuenca con margen mínimo
                 if success_vector:
-                    self.map_viewer.zoom_to_vector(self.watershed_shapefile, padding_factor=0.15)
+                    self.map_viewer.zoom_to_vector(self.watershed_shapefile, padding_factor=0.05)
             else:
                 print("❌ map_viewer NO disponible")
 
@@ -1583,6 +1590,17 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 get_text("messages.warning"),
                 f"No se pudo cargar la cuenca existente: {str(e)}"
             )
+
+    def _zoom_to_watershed(self):
+        """Hacer zoom a la cuenca cargada (callback para botón de reset del mapa)"""
+        if self.watershed_shapefile and os.path.exists(self.watershed_shapefile):
+            try:
+                self.map_viewer.zoom_to_vector(self.watershed_shapefile, padding_factor=0.05)
+                print("🌍 Vista centrada en la cuenca")
+            except Exception as e:
+                print(f"⚠️ Error al hacer zoom a cuenca: {e}")
+        else:
+            print("⚠️ No hay cuenca cargada para centrar")
 
     def _load_saved_coordinates(self, lat, lon):
         """Cargar coordenadas guardadas previamente"""

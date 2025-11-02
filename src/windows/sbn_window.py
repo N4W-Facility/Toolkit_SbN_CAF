@@ -5,6 +5,7 @@ import glob
 from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes, get_current_global_language, set_current_global_language
 from ..components.matplotlib_map_viewer import MatplotlibMapViewer
+from ..utils.sbn_prioritization import SbNPrioritization
 
 class SbNWindow(ctk.CTkToplevel):
 
@@ -59,6 +60,12 @@ class SbNWindow(ctk.CTkToplevel):
         # Referencias a widgets para actualización de texto
         self.widget_refs = {}
         self.sbn_checkboxes = {}
+
+        # Cargar prioridades de SbN desde SbN_Prioritization.csv
+        self.sbn_priorities = {}
+        if self.project_path:
+            project_dir = os.path.dirname(self.project_path) if os.path.isfile(self.project_path) else self.project_path
+            self.sbn_priorities = SbNPrioritization.get_sbn_priorities(project_dir)
 
         # Suscribirse a cambios de idioma
         subscribe_to_language_changes(self._update_texts)
@@ -241,10 +248,22 @@ class SbNWindow(ctk.CTkToplevel):
         sbn_frame = ctk.CTkFrame(parent, fg_color="transparent")
         sbn_frame.pack(fill="x", pady=2)
 
+        # Construir texto del checkbox con ranking de prioridad si existe
+        sbn_name = get_text(f'sbn_solutions.{sbn_id}')
+        priority_info = self.sbn_priorities.get(sbn_id, {})
+
+        if priority_info and priority_info.get('is_enabled') and priority_info.get('priority_rank'):
+            # SbN habilitada con ranking
+            priority_text = get_text('sbn.priority_label').format(priority_info['priority_rank'])
+            checkbox_text = f"{sbn['icon']} {sbn_name} {priority_text}"
+        else:
+            # SbN sin prioridad o deshabilitada
+            checkbox_text = f"{sbn['icon']} {sbn_name}"
+
         # Checkbox
         checkbox = ctk.CTkCheckBox(
             sbn_frame,
-            text=f"{sbn['icon']} {get_text(f'sbn_solutions.{sbn_id}')}",
+            text=checkbox_text,
             command=lambda: self._toggle_sbn_raster(sbn_id),
             font=ThemeManager.FONTS['body'],
             text_color=ThemeManager.COLORS['text_primary'],
@@ -254,18 +273,30 @@ class SbNWindow(ctk.CTkToplevel):
         )
         checkbox.pack(side="left", padx=5, pady=5)
 
-        # Verificar si existe el archivo raster
-        raster_path = self._find_sbn_raster(sbn_id)
-        if not raster_path:
+        # Verificar si la SbN está deshabilitada por prioridad = 0
+        if priority_info and not priority_info.get('is_enabled', True):
             checkbox.configure(state="disabled")
-            # Agregar indicador de "no disponible"
+            # Agregar indicador de "no apta"
             na_label = ctk.CTkLabel(
                 sbn_frame,
-                text="❌",
+                text="⛔",
                 font=ThemeManager.FONTS['caption'],
                 text_color=ThemeManager.COLORS['error']
             )
             na_label.pack(side="right", padx=5)
+        else:
+            # Verificar si existe el archivo raster
+            raster_path = self._find_sbn_raster(sbn_id)
+            if not raster_path:
+                checkbox.configure(state="disabled")
+                # Agregar indicador de "no disponible"
+                na_label = ctk.CTkLabel(
+                    sbn_frame,
+                    text="❌",
+                    font=ThemeManager.FONTS['caption'],
+                    text_color=ThemeManager.COLORS['error']
+                )
+                na_label.pack(side="right", padx=5)
 
         self.sbn_checkboxes[sbn_id] = checkbox
 

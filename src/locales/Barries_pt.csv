@@ -1,54 +1,36 @@
-﻿Código Barreira,Descrição,Grupo,Código Grupo
-GB0101,Desconexão entre as ações de curto prazo e os objetivos de longo prazo,Barreiras políticas,GB01
-GB0101b,A coordenação entre departamentos e administrações é tediosa e o fluxo de trabalho entre eles requer muito tempo.,Barreiras políticas,GB01
-GB0101c,"Estamos em período de campanha eleitoral, e isso afetará o processo de implementação da NBS.",Barreiras políticas,GB01
-GB0101d,É prioritário obter resultados visíveis a curto prazo.,Barreiras políticas,GB01
-GB0101e,Os processos de licitação costumam ser complexos e não há possibilidade de designar pessoal específico para desenvolver processos de licitação de ações inovadoras.,Barreiras políticas,GB01
-GB0102,Descontinuidade entre as ações de curto prazo e os planos de longo prazo,Barreiras políticas,GB01
-GB0102a,Existe tensão entre as agendas dos governos central e local e/ou são de partidos diferentes,Barreiras políticas,GB01
-GB0102b,Há mudanças frequentes nas autoridades locais ou outras administrações governantes.,Barreiras políticas,GB01
-GB0102c,"Não há interesses comuns entre os municípios metropolitanos e os municípios distritais, o que pode afetar a aplicação das NBS.",Barreiras políticas,GB01
-GB0102d,As políticas de austeridade podem afetar a aplicação das NBS.,Barreiras políticas,GB01
-GB0103,Revisões de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
-GB0103a,Existe um plano físico que pode afetar o desenvolvimento de soluções baseadas na natureza.,Barreiras políticas,GB01
-GB0103b,Existe um plano estratégico temático que pode afetar o desenvolvimento de soluções baseadas na natureza.,Barreiras políticas,GB01
-GB0104,Revisões de longo prazo de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
-GB0104a,Existe um plano físico que pode afetar o desenvolvimento de soluções baseadas na natureza.,Barreiras políticas,GB01
-GB0104b,Existe um plano estratégico temático que pode afetar o desenvolvimento de soluções baseadas na natureza.,Barreiras políticas,GB01
-GB0105,Obstáculos políticos específicos de cada país,Barreiras políticas,GB01
-GB0201,Barreiras infraestruturais,Barreiras técnicas,GB02
-GB0201a,As autoridades limitam-se à “prática de realizar obras de infraestrutura”,Barreiras técnicas,GB02
-GB0201b,Capacidade estrutural limitada dos edifícios afetados para suportar o peso da infraestrutura verde,Barreiras técnicas,GB02
-GB0201c,Ausência de empresas de construção com experiência comprovada na construção de NBS no ambiente local.,Barreiras técnicas,GB02
-GB0201d,Barreiras técnicas para a seleção de plantas e árvores e intervenções,Barreiras técnicas,GB02
-GB0202,Localização das intervenções no espaço urbano,Barreiras técnicas,GB02
-GB0202a,As autoridades se limitam à “prática de realizar obras de infraestrutura”,Barreiras técnicas,GB02
-GB0203,Obstáculos técnicos específicos de cada país,Barreiras técnicas,GB02
-GB0301a,A legislação local básica não é cumprida,Barreiras legais,GB03
-GB0301b,O proprietário do terreno pode não estar interessado nas NBS,Barreiras legais,GB03
-GB0301c,O uso do terreno é restrito devido a condições legais,Barreiras legais,GB03
-GB0301d,As licenças locais para obras de construção podem causar atrasos,Barreiras legais,GB03
-GB0301e,Faltam regulamentos e portarias locais,Barreiras legais,GB03
-GB0301f,Falta de coordenação para uma colaboração público-privada,Barreiras legais,GB03
-GB0302,Barreiras organizacionais,Barreiras legais,GB03
-GB0302a,Conflitos entre departamentos e/ou falta de colaboração.,Barreiras legais,GB03
-GB0302b,Cultura de trabalho hierárquica vertical/horizontal,Barreiras legais,GB03
-GB0302c,Falta ou ausência de capacidade de aprendizagem organizacional,Barreiras legais,GB03
-GB0302d,Falta de compromisso com os programas,Barreiras legais,GB03
-GB0303,Obstáculos legais específicos de cada país,Barreiras legais,GB03
-GB0401,Lacunas de conhecimento - Medo do desconhecido,Barreiras socioculturais,GB04
-GB0401a,Falta de informação sobre os projetos NBS,Barreiras socioculturais,GB04
-GB0401b,Preocupação com a participação dos skatistas e o impacto das interações entre o homem e a natureza.,Barreiras socioculturais,GB04
-GB0401c,Incertezas sobre a implantação e manutenção das NBS,Barreiras socioculturais,GB04
-GB0402,Falta de conscientização,Barreiras socioculturais,GB04
-GB0402a,Falta de conscientização sobre as mudanças climáticas e os benefícios que as NBS trazem para os residentes da cidade.,Barreiras socioculturais,GB04
-GB0403,Gentrificação ecológica e inclusão social,Barreiras socioculturais,GB04
-GB0403a,As NBS podem aumentar o valor imobiliário dos terrenos,Barreiras socioculturais,GB04
-GB0404,Paradigma de crescimento,Barreiras socioculturais,GB04
-GB0404a,A cidade reduziu seu crescimento: os esforços de investimento são dedicados principalmente a fins econômicos.,Barreiras socioculturais,GB04
-GB0405,Obstáculos socioculturais específicos de cada país,Barreiras socioculturais,GB04
-GB0501,Percepção da valorização dos ecossistemas,Barreiras financeiras,GB05
-GB0501a,A cidade não pode apoiar o monitoramento das NBS e sua avaliação.,Barreiras financeiras,GB05
-GB0502,Parceria público-privada,Barreiras financeiras,GB05
-GB0502a,Não há oportunidades para acordos de parceria público-privada.,Barreiras financeiras,GB05
-GB0503,Obstáculos financeiros específicos de cada país,Barreiras financeiras,GB05
+﻿Código Barreira,Descrição,Subcategoria,Grupo,Código Grupo
+GB0101b,A coordenação entre departamentos e administrações é tediosa e o fluxo de trabalho entre eles requer muito tempo.,Desconexão entre as ações de curto prazo e os objetivos de longo prazo,Barreiras políticas,GB01
+GB0101c,"Estamos em período de campanha eleitoral, e isso afetará o processo de implementação da NBS.",Desconexão entre as ações de curto prazo e os objetivos de longo prazo,Barreiras políticas,GB01
+GB0101d,É prioritário obter resultados visíveis a curto prazo.,Desconexão entre as ações de curto prazo e os objetivos de longo prazo,Barreiras políticas,GB01
+GB0101e,Os processos de licitação costumam ser complexos e não há possibilidade de designar pessoal específico para desenvolver processos de licitação de ações inovadoras.,Desconexão entre as ações de curto prazo e os objetivos de longo prazo,Barreiras políticas,GB01
+GB0102a,Existe tensão entre as agendas dos governos central e local e/ou são de partidos diferentes,Descontinuidade entre as ações de curto prazo e os planos de longo prazo,Barreiras políticas,GB01
+GB0102b,Há mudanças frequentes nas autoridades locais ou outras administrações governantes.,Descontinuidade entre as ações de curto prazo e os planos de longo prazo,Barreiras políticas,GB01
+GB0102c,"Não há interesses comuns entre os municípios metropolitanos e os municípios distritais, o que pode afetar a aplicação das NBS.",Descontinuidade entre as ações de curto prazo e os planos de longo prazo,Barreiras políticas,GB01
+GB0102d,As políticas de austeridade podem afetar a aplicação das NBS.,Descontinuidade entre as ações de curto prazo e os planos de longo prazo,Barreiras políticas,GB01
+GB0103a,Existe um plano físico que pode afetar o desenvolvimento de soluções baseadas na natureza.,Revisões de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
+GB0103b,Existe um plano estratégico temático que pode afetar o desenvolvimento de soluções baseadas na natureza.,Revisões de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
+GB0104a,Existe um plano físico que pode afetar o desenvolvimento de soluções baseadas na natureza.,Revisões de longo prazo de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
+GB0104b,Existe um plano estratégico temático que pode afetar o desenvolvimento de soluções baseadas na natureza.,Revisões de longo prazo de planos estratégicos que afetam a área do projeto,Barreiras políticas,GB01
+GB0201a,As autoridades limitam-se à “prática de realizar obras de infraestrutura”,Barreiras infraestruturais,Barreiras técnicas,GB02
+GB0201b,Capacidade estrutural limitada dos edifícios afetados para suportar o peso da infraestrutura verde,Barreiras infraestruturais,Barreiras técnicas,GB02
+GB0201c,Ausência de empresas de construção com experiência comprovada na construção de NBS no ambiente local.,Barreiras infraestruturais,Barreiras técnicas,GB02
+GB0201d,Barreiras técnicas para a seleção de plantas e árvores e intervenções,Barreiras infraestruturais,Barreiras técnicas,GB02
+GB0202a,As autoridades se limitam à “prática de realizar obras de infraestrutura”,Localização das intervenções no espaço urbano,Barreiras técnicas,GB02
+GB0301a,A legislação local básica não é cumprida,,Barreiras legais,GB03
+GB0301b,O proprietário do terreno pode não estar interessado nas NBS,,Barreiras legais,GB03
+GB0301c,O uso do terreno é restrito devido a condições legais,,Barreiras legais,GB03
+GB0301d,As licenças locais para obras de construção podem causar atrasos,,Barreiras legais,GB03
+GB0301e,Faltam regulamentos e portarias locais,,Barreiras legais,GB03
+GB0301f,Falta de coordenação para uma colaboração público-privada,,Barreiras legais,GB03
+GB0302a,Conflitos entre departamentos e/ou falta de colaboração.,Barreiras organizacionais,Barreiras legais,GB03
+GB0302b,Cultura de trabalho hierárquica vertical/horizontal,Barreiras organizacionais,Barreiras legais,GB03
+GB0302c,Falta ou ausência de capacidade de aprendizagem organizacional,Barreiras organizacionais,Barreiras legais,GB03
+GB0302d,Falta de compromisso com os programas,Barreiras organizacionais,Barreiras legais,GB03
+GB0401a,Falta de informação sobre os projetos NBS,Lacunas de conhecimento - Medo do desconhecido,Barreiras socioculturais,GB04
+GB0401b,Preocupação com a participação dos skatistas e o impacto das interações entre o homem e a natureza.,Lacunas de conhecimento - Medo do desconhecido,Barreiras socioculturais,GB04
+GB0401c,Incertezas sobre a implantação e manutenção das NBS,Lacunas de conhecimento - Medo do desconhecido,Barreiras socioculturais,GB04
+GB0402a,Falta de conscientização sobre as mudanças climáticas e os benefícios que as NBS trazem para os residentes da cidade.,Falta de conscientização,Barreiras socioculturais,GB04
+GB0403a,As NBS podem aumentar o valor imobiliário dos terrenos,Gentrificação ecológica e inclusão social,Barreiras socioculturais,GB04
+GB0404a,A cidade reduziu seu crescimento: os esforços de investimento são dedicados principalmente a fins econômicos.,Paradigma de crescimento,Barreiras socioculturais,GB04
+GB0501a,A cidade não pode apoiar o monitoramento das NBS e sua avaliação.,Percepção da valorização dos ecossistemas,Barreiras financeiras,GB05
+GB0502a,Não há oportunidades para acordos de parceria público-privada.,Parceria público-privada,Barreiras financeiras,GB05

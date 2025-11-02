@@ -2,6 +2,7 @@ import customtkinter as ctk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+from matplotlib.ticker import FuncFormatter
 import contextily as ctx
 import numpy as np
 import os
@@ -20,9 +21,13 @@ except ImportError:
 
 class MatplotlibMapViewer(ctk.CTkFrame):
     
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, hide_colormap_controls=False, reset_callback=None, **kwargs):
         super().__init__(parent, **kwargs)
-        
+
+        # Configuración de controles
+        self.hide_colormap_controls = hide_colormap_controls
+        self.reset_callback = reset_callback  # Callback personalizado para botón de reset
+
         self.selected_lat = None
         self.selected_lon = None
         self.coordinate_callback = None
@@ -71,12 +76,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         self._setup_ui()
         self._create_map()
 
-        # --- Precarga de tiles para Latinoamérica (solo primera vez) ---
-        try:
-            bbox_latam = (-118.0, -56.0, -34.0, 33.0)  # Oeste, Sur, Este, Norte
-            self.precache_tiles(bbox_latam, zmin=4, zmax=12, provider=ctx.providers.OpenStreetMap.Mapnik)
-        except Exception as e:
-            print(f"Precarga omitida: {e}")
+        # Precarga deshabilitada: con caché persistente en AppData, solo descargamos bajo demanda
+        # La precarga desde z=4 era redundante y causaba descargas innecesarias al abrir el visor
+        # try:
+        #     bbox_latam = (-118.0, -56.0, -34.0, 33.0)
+        #     self.precache_tiles(bbox_latam, zmin=4, zmax=12, provider=ctx.providers.OpenStreetMap.Mapnik)
+        # except Exception as e:
+        #     print(f"Precarga omitida: {e}")
 
     
     def _setup_ui(self):
@@ -253,30 +259,46 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         )
         map_type_menu.pack(side="right", padx=8)
 
-        # Frame para selector de colormap con label
-        colormap_frame = ctk.CTkFrame(top_controls, fg_color="transparent")
-        colormap_frame.pack(side="right", padx=8)
-
-        # Label para el selector
-        colormap_label = ctk.CTkLabel(
-            colormap_frame,
-            text="🎨",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeManager.COLORS['text_secondary']
+        # Botón para resetear vista (comportamiento personalizable)
+        # Si hay callback personalizado, se usa ese; sino, vuelve a vista por defecto de Latinoamérica
+        reset_view_btn = ctk.CTkButton(
+            top_controls,
+            text="🌍",
+            command=self._handle_reset_view,
+            width=30,
+            height=32,
+            font=ThemeManager.FONTS['body']
         )
-        colormap_label.pack(side="left", padx=(0, 5))
+        reset_view_btn.pack(side="right", padx=8)
 
-        # Selector de rampa de colores para rasters
-        self.colormap_var = ctk.StringVar(value="Viridis")
-        colormap_menu = ctk.CTkOptionMenu(
-            colormap_frame,
-            values=["Viridis", "Verde-Rojo", "Tierra", "Plasma", "Océano"],
-            variable=self.colormap_var,
-            command=self._change_colormap,
-            width=110,
-            height=32
-        )
-        colormap_menu.pack(side="left")
+        # Frame para selector de colormap con label (solo si no está oculto)
+        if not self.hide_colormap_controls:
+            colormap_frame = ctk.CTkFrame(top_controls, fg_color="transparent")
+            colormap_frame.pack(side="right", padx=8)
+
+            # Label para el selector
+            colormap_label = ctk.CTkLabel(
+                colormap_frame,
+                text="🎨",
+                font=ctk.CTkFont(size=12),
+                text_color=ThemeManager.COLORS['text_secondary']
+            )
+            colormap_label.pack(side="left", padx=(0, 5))
+
+            # Selector de rampa de colores para rasters
+            self.colormap_var = ctk.StringVar(value="Viridis")
+            colormap_menu = ctk.CTkOptionMenu(
+                colormap_frame,
+                values=["Viridis", "Verde-Rojo", "Tierra", "Plasma", "Océano"],
+                variable=self.colormap_var,
+                command=self._change_colormap,
+                width=110,
+                height=32
+            )
+            colormap_menu.pack(side="left")
+        else:
+            # Si está oculto, inicializar la variable con un valor por defecto
+            self.colormap_var = ctk.StringVar(value="Viridis")
 
         # Fila inferior - información
         bottom_controls = ctk.CTkFrame(controls_container, fg_color="transparent")
@@ -315,11 +337,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             })
             
             # Crear figura con mejor proporción
-            self.fig = Figure(figsize=(12, 9), facecolor='none', dpi=100)
+            # layout='none' deshabilita autolayout para mantener tamaño fijo del axes
+            self.fig = Figure(figsize=(20, 8), facecolor='none', dpi=100, layout='none')
             self.ax = self.fig.add_subplot(111)
-            
-            # Ajustar márgenes para aprovechar mejor el espacio
-            self.fig.tight_layout(pad=1.0)
+
+            # Márgenes fijos (control manual del tamaño del axes)
+            # Valores de 0 a 1 (fracción de la figura)
+            self.fig.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95)
             
             # Crear canvas embebido con más espacio
             self.canvas = FigureCanvasTkAgg(self.fig, self.map_container)
@@ -342,7 +366,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
     def _create_map(self):
         """Crear mapa inicial con vista por defecto sin bloquear la UI."""
         try:
-            self.status_label.configure(text="🌍 Cargando mapa...", text_color=ThemeManager.COLORS['warning'])
+            self.status_label.configure(text="🌍 ...", text_color=ThemeManager.COLORS['warning'])
 
             self.ax.clear()
 
@@ -354,11 +378,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             self.ax.set_ylim(south, north)
 
             # Apariencia (menos costo de repintado)
-            self.ax.set_aspect('equal')
-            self.ax.set_xlabel('Longitud', fontsize=9)
-            self.ax.set_ylabel('Latitud', fontsize=9)
+            # adjustable='box' fija el tamaño del axes, aspect='equal' mantiene proporciones del mapa
+            self.ax.set_aspect('equal', adjustable='box')
             # Evita grid por defecto (caro con imágenes grandes)
             self.ax.grid(False)
+
+            # Configurar formateadores para mostrar coordenadas en lat/lon en lugar de Web Mercator
+            self._setup_axes_formatters()
 
             # Forzar actualización del canvas para que axes se inicialice completamente
             self.canvas.draw_idle()
@@ -375,26 +401,43 @@ class MatplotlibMapViewer(ctk.CTkFrame):
     def _draw_basemap_safe(self, xlim=None, ylim=None, retry_count=0):
         """Wrapper seguro para dibujar basemap con actualización de estado y reintentos"""
         try:
-            # Verificar que axes está listo antes de intentar
-            if self.ax is None or not hasattr(self.ax, 'xaxis') or self.ax.xaxis is None:
-                if retry_count < 3:  # Máximo 3 reintentos
+            # Verificar que axes está completamente listo antes de intentar
+            if (self.ax is None or
+                not hasattr(self.ax, 'xaxis') or
+                not hasattr(self.ax, 'yaxis') or
+                self.ax.xaxis is None or
+                self.ax.yaxis is None or
+                not hasattr(self.fig, 'canvas') or
+                self.canvas is None):
+
+                if retry_count < 5:  # Aumentar a 5 reintentos
                     # Esperar más y reintentar
-                    delay = 150 * (retry_count + 1)  # 150ms, 300ms, 450ms
+                    delay = 150 * (retry_count + 1)  # 150ms, 300ms, 450ms, 600ms, 750ms
                     self.after(delay, lambda: self._draw_basemap_safe(xlim, ylim, retry_count + 1))
                     return
                 else:
-                    print("❌ Axes no se inicializó después de varios reintentos")
+                    error_msg = "❌ Axes no se inicializó después de varios reintentos"
+                    print(error_msg)
+                    self.status_label.configure(
+                        text="⚠️ Error al cargar mapa",
+                        text_color=ThemeManager.COLORS['error']
+                    )
                     return
 
             self._draw_basemap(xlim=xlim, ylim=ylim, force=True)
             self.status_label.configure(text="✅ Mapa cargado", text_color=ThemeManager.COLORS['success'])
         except Exception as e:
-            if retry_count < 3:
+            if retry_count < 5:  # Aumentar a 5 reintentos
                 # Si falla, reintentar
                 delay = 150 * (retry_count + 1)
                 self.after(delay, lambda: self._draw_basemap_safe(xlim, ylim, retry_count + 1))
             else:
-                print(f"Error en _draw_basemap_safe después de {retry_count} reintentos: {e}")
+                error_msg = f"Error en _draw_basemap_safe después de {retry_count} reintentos: {e}"
+                print(error_msg)
+                self.status_label.configure(
+                    text="⚠️ Error al cargar mapa",
+                    text_color=ThemeManager.COLORS['error']
+                )
 
     def _create_map_overlay(self):
         """
@@ -493,6 +536,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             zoom_level = int(max(0, math.floor(raw_zoom)))  # entero hacia abajo
 
             # 5) Límite por proveedor (no pidas más de lo que existe)
+            # z=4-8 precargado; z>8 se descarga bajo demanda solo para zonas exploradas
             map_type = self.map_type_var.get()
             max_zoom_limits = {
                 "OpenStreetMap": 18,
@@ -502,7 +546,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 "Stamen Terrain": 17
             }
             max_zoom = max_zoom_limits.get(map_type, 18)
-            safe_zoom = min(zoom_level, max_zoom)
+            safe_zoom = min(zoom_level, max_zoom)  # Sin límite artificial; descarga bajo demanda
 
             # Guarda el nivel para otros usos
             self.zoom_level = safe_zoom
@@ -541,11 +585,29 @@ class MatplotlibMapViewer(ctk.CTkFrame):
     def _web_mercator_to_lat_lon(self, x, y):
         """Convertir Web Mercator a lat/lon"""
         import math
-        
+
         lon = x * 180 / 20037508.34
         lat = math.atan(math.exp(y * math.pi / 20037508.34)) * 360 / math.pi - 90
-        
+
         return lat, lon
+
+    def _format_lon(self, x, pos):
+        """Formateador para eje X (longitud) - convierte Web Mercator a grados"""
+        lon = x * 180 / 20037508.34
+        return f"{lon:.2f}°"
+
+    def _format_lat(self, y, pos):
+        """Formateador para eje Y (latitud) - convierte Web Mercator a grados"""
+        import math
+        lat = math.atan(math.exp(y * math.pi / 20037508.34)) * 360 / math.pi - 90
+        return f"{lat:.2f}°"
+
+    def _setup_axes_formatters(self):
+        """Aplicar formateadores de lat/lon a los ejes (reutilizable)"""
+        self.ax.xaxis.set_major_formatter(FuncFormatter(self._format_lon))
+        self.ax.yaxis.set_major_formatter(FuncFormatter(self._format_lat))
+        self.ax.set_xlabel('Longitud', fontsize=9)
+        self.ax.set_ylabel('Latitud', fontsize=9)
 
     def _on_mouse_press(self, event):
         """Iniciar pan o seleccionar coordenadas"""
@@ -832,6 +894,15 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             print("🌍 Reset: No hay rasters, volviendo a vista por defecto")
             self._reset_to_default_view()
 
+    def _handle_reset_view(self):
+        """Manejar clic en botón de reset - usa callback personalizado si existe"""
+        if self.reset_callback:
+            # Usar callback personalizado (ej: zoom a cuenca en ventana de delimitación)
+            self.reset_callback()
+        else:
+            # Comportamiento por defecto: volver a vista de Latinoamérica
+            self._reset_to_default_view()
+
     def _reset_to_default_view(self):
         """Resetear a vista por defecto de Latinoamérica"""
         self.center_lat = 10
@@ -839,13 +910,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         self.zoom_level = 3
 
         self.status_label.configure(
-            text="🌍 Vista restablecida a Latinoamérica",
+            text="🌍 Restableciendo vista a Latinoamérica...",
             text_color=ThemeManager.COLORS['info']
         )
 
         # Recrear mapa con vista por defecto
         self._create_map()
-    
+
     def _manual_coordinates(self):
         """Abrir diálogo para ingresar coordenadas manualmente"""
         from tkinter import simpledialog
@@ -1120,6 +1191,12 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 zorder=15  # Por encima de los rasters
             )
 
+            # Restaurar tamaño fijo del axes (gdf.plot puede modificarlo)
+            self.fig.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95)
+
+            # Restaurar formateadores de lat/lon (gdf.plot puede alterarlos)
+            self._setup_axes_formatters()
+
             # Guardar referencia del GeoDataFrame
             if not hasattr(self, 'vector_layers'):
                 self.vector_layers = {}
@@ -1179,13 +1256,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             padded_bottom = bottom - padding_y
             padded_top = top + padding_y
 
-            # Asegurar área mínima visible (equivalente a zoom nivel 5 = ~625km de lado)
-            # Esto evita que cuencas pequeñas tengan zoom muy cercano
-            min_extent = 625000  # metros (equivalente a zoom 5)
+            # Asegurar área mínima visible para evitar zoom extremadamente cercano
+            # Límite reducido para permitir zoom cercano a cuencas específicas
+            min_extent = 10000  # metros (10 km mínimo para legibilidad)
             current_width = padded_right - padded_left
             current_height = padded_top - padded_bottom
 
-            # Si el área es muy pequeña, expandir para alcanzar el mínimo
+            # Si el área es muy pequeña, expandir ligeramente para alcanzar el mínimo
             if current_width < min_extent:
                 center_x = (padded_left + padded_right) / 2
                 padded_left = center_x - min_extent / 2

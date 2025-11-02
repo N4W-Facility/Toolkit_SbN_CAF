@@ -304,7 +304,8 @@
     "raster_load_error_msg": "Error loading NbS raster {0}: {1}",
     "no_sbn_loaded": "No NbS loaded to display. Please select at least one NbS first.",
     "zoom_error": "Could not zoom to loaded NbS",
-    "selection_saved": "Selection saved: {0} NbS selected"
+    "selection_saved": "Selection saved: {0} NbS selected",
+    "priority_label": "(Priority {0})"
   },
   "sbn_selection": {
     "title": "NbS Selection for Report",

@@ -304,7 +304,8 @@
     "raster_load_error_msg": "Erro ao carregar raster SbN {0}: {1}",
     "no_sbn_loaded": "Nenhuma SbN carregada para exibir. Selecione pelo menos uma SbN primeiro.",
     "zoom_error": "Não foi possível fazer zoom nas SbN carregadas",
-    "selection_saved": "Seleção salva: {0} SbN selecionadas"
+    "selection_saved": "Seleção salva: {0} SbN selecionadas",
+    "priority_label": "(Prioridade {0})"
   },
   "sbn_selection": {
     "title": "Seleção de SbN para Relatório",

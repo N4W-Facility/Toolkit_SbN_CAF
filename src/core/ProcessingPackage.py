@@ -432,6 +432,7 @@ def C01_BasinDelineation(PathOut, Path_FlowDir, lat, lon, threshold=1.0):
 
     # Nombres de archivos de salida
     output_shapefile = os.path.join(PathOut, "01-Watershed", f"Watershed.shp")
+    output_sbn      = os.path.join(PathOut, "03-SbN", f"Window_SbN.shp")
     output_accumarea = os.path.join(PathOut, "02-Rasters", f"AccumArea.tif")
 
     # Guardar raster de área acumulada recortado con compresión y factor de escala
@@ -531,6 +532,7 @@ def C01_BasinDelineation(PathOut, Path_FlowDir, lat, lon, threshold=1.0):
 
     print("   - Guardando shapefile...")
     gdf.to_file(output_shapefile)
+    gdf.to_file(output_sbn)
     print(f"   ✓ Shapefile guardado: {os.path.basename(output_shapefile)}")
     print()
 

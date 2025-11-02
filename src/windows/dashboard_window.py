@@ -14,6 +14,10 @@ from .sbn_selection_window import SbNSelectionWindow
 from .startup_window import NewProjectDialog
 from ..reports.report_generator import ReportGenerator
 
+# Tamaño delos iconos
+caf_size = (200, 45)
+n4w_size = (210, 45)
+
 class DashboardWindow(ctk.CTk):
 
     def __init__(self, window_manager=None, language=None):
@@ -28,7 +32,7 @@ class DashboardWindow(ctk.CTk):
             set_current_global_language(language)
 
         self.title(get_text("dashboard.title"))
-        self.geometry("1000x800")
+        self.geometry("1000x750")
         self.resizable(True, True)
 
         ThemeManager.configure_ctk()
@@ -48,17 +52,19 @@ class DashboardWindow(ctk.CTk):
         # Sincronizar con el idioma actual al abrir
         self._update_texts()
 
-        # Estado del flujo de trabajo
+
+        # Estado del flujo de trabajo con secuencia
         self.workflow_steps = {
-            'cuenca': {'completed': False, 'data': None},
-            'barreras': {'completed': False, 'data': None},
-            'water_security': {'completed': False, 'data': None},
-            'other_challenges': {'completed': False, 'data': None},
-            'sbn': {'completed': False, 'data': None},
-            'reporte': {'completed': False, 'data': None}
+            'cuenca': {'completed': False, 'data': None, 'order': 1, 'enabled': True},
+            'barreras': {'completed': False, 'data': None, 'order': 2, 'enabled': False},
+            'water_security': {'completed': False, 'data': None, 'order': 3, 'enabled': False},
+            'other_challenges': {'completed': False, 'data': None, 'order': 4, 'enabled': False},
+            'sbn': {'completed': False, 'data': None, 'order': 5, 'enabled': False},
+            'reporte': {'completed': False, 'data': None, 'order': 6, 'enabled': False}
         }
 
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
+
 
     def _setup_ui(self):
         # Frame principal
@@ -70,7 +76,7 @@ class DashboardWindow(ctk.CTk):
 
         # Layout principal: información del proyecto a la izquierda, botones del flujo al centro
         content_frame = ctk.CTkFrame(main_container, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, pady=(20, 0))
+        content_frame.pack(fill="both", expand=True, pady=(10, 0))
 
         # Panel de información del proyecto (izquierda) - más ancho
         project_info_frame = ctk.CTkFrame(content_frame, width=450, **ThemeManager.get_frame_style())
@@ -133,8 +139,8 @@ class DashboardWindow(ctk.CTk):
 
             if os.path.exists(caf_path):
                 caf_image = Image.open(caf_path)
-                caf_image = caf_image.resize((200, 60), Image.Resampling.LANCZOS)
-                caf_ctk_image = ctk.CTkImage(light_image=caf_image, dark_image=caf_image, size=(200, 60))
+                caf_image = caf_image.resize(caf_size, Image.Resampling.LANCZOS)
+                caf_ctk_image = ctk.CTkImage(light_image=caf_image, dark_image=caf_image, size=caf_size)
                 caf_label = ctk.CTkLabel(left_frame, image=caf_ctk_image, text="")
                 caf_label.pack()
                 # Guardar referencia para evitar garbage collection
@@ -171,8 +177,8 @@ class DashboardWindow(ctk.CTk):
 
             if os.path.exists(n4w_path):
                 n4w_image = Image.open(n4w_path)
-                n4w_image = n4w_image.resize((250, 60), Image.Resampling.LANCZOS)
-                n4w_ctk_image = ctk.CTkImage(light_image=n4w_image, dark_image=n4w_image, size=(250, 60))
+                n4w_image = n4w_image.resize(n4w_size, Image.Resampling.LANCZOS)
+                n4w_ctk_image = ctk.CTkImage(light_image=n4w_image, dark_image=n4w_image, size=n4w_size)
                 n4w_label = ctk.CTkLabel(right_frame, image=n4w_ctk_image, text="")
                 n4w_label.pack()
                 # Guardar referencia para evitar garbage collection
@@ -189,11 +195,11 @@ class DashboardWindow(ctk.CTk):
                 caf_image = Image.open(caf_path)
                 n4w_image = Image.open(n4w_path)
 
-                caf_image = caf_image.resize((150, 45), Image.Resampling.LANCZOS)
-                n4w_image = n4w_image.resize((150, 45), Image.Resampling.LANCZOS)
+                caf_image = caf_image.resize(caf_size, Image.Resampling.LANCZOS)
+                n4w_image = n4w_image.resize(n4w_size, Image.Resampling.LANCZOS)
 
-                caf_ctk_image = ctk.CTkImage(light_image=caf_image, dark_image=caf_image, size=(150, 45))
-                n4w_ctk_image = ctk.CTkImage(light_image=n4w_image, dark_image=n4w_image, size=(150, 45))
+                caf_ctk_image = ctk.CTkImage(light_image=caf_image, dark_image=caf_image, size=caf_size)
+                n4w_ctk_image = ctk.CTkImage(light_image=n4w_image, dark_image=n4w_image, size=n4w_size)
 
                 logos_frame = ctk.CTkFrame(parent, fg_color="transparent")
                 logos_frame.pack(side="top", pady=(10, 0))
@@ -302,28 +308,28 @@ class DashboardWindow(ctk.CTk):
 
             self.info_labels[field_name] = value_label
 
-        # Separador
-        separator = ctk.CTkFrame(scroll_frame, height=2, fg_color=ThemeManager.COLORS['border'])
-        separator.pack(fill="x", pady=20)
+        # # Separador
+        # separator = ctk.CTkFrame(scroll_frame, height=2, fg_color=ThemeManager.COLORS['border'])
+        # separator.pack(fill="x", pady=20)
+        #
+        # # Estado del proyecto
+        # self.status_field_label = ctk.CTkLabel(
+        #     scroll_frame,
+        #     text=get_text("dashboard.project_status"),
+        #     font=ThemeManager.FONTS['body'],
+        #     text_color=ThemeManager.COLORS['accent_primary'],
+        #     anchor="w"
+        # )
+        # self.status_field_label.pack(fill="x", pady=(0, 5))
 
-        # Estado del proyecto
-        self.status_field_label = ctk.CTkLabel(
-            scroll_frame,
-            text=get_text("dashboard.project_status"),
-            font=ThemeManager.FONTS['body'],
-            text_color=ThemeManager.COLORS['accent_primary'],
-            anchor="w"
-        )
-        self.status_field_label.pack(fill="x", pady=(0, 5))
-
-        self.status_info_label = ctk.CTkLabel(
-            scroll_frame,
-            text=get_text("dashboard.project_created"),
-            font=ThemeManager.FONTS['caption'],
-            text_color=ThemeManager.COLORS['text_light'],
-            anchor="w"
-        )
-        self.status_info_label.pack(fill="x", padx=(10, 0))
+        # self.status_info_label = ctk.CTkLabel(
+        #     scroll_frame,
+        #     text=get_text("dashboard.project_created"),
+        #     font=ThemeManager.FONTS['caption'],
+        #     text_color=ThemeManager.COLORS['text_light'],
+        #     anchor="w"
+        # )
+        # self.status_info_label.pack(fill="x", padx=(10, 0))
 
         # Agregar secciones técnicas
         self._add_technical_sections(scroll_frame)
@@ -380,30 +386,30 @@ class DashboardWindow(ctk.CTk):
             (get_text("technical.nitrogen"), "nutrients_nitrogen", "mg/L")
         ])
 
-        # Separador antes de SbN
-        separator3 = ctk.CTkFrame(parent, height=2, fg_color=ThemeManager.COLORS['border'])
-        separator3.pack(fill="x", pady=20)
-
-        # Información de análisis SbN
-        self.sbn_title = ctk.CTkLabel(
-            parent,
-            text=get_text("technical.sbn_analysis"),
-            font=ThemeManager.FONTS['body'],
-            text_color=ThemeManager.COLORS['accent_primary'],
-            anchor="w"
-        )
-        self.sbn_title.pack(fill="x", pady=(0, 10))
-
-        # Frame contenedor para datos SbN
-        sbn_container = ctk.CTkFrame(parent, fg_color=ThemeManager.COLORS['bg_secondary'])
-        sbn_container.pack(fill="x", pady=(0, 15), padx=10)
-
-        # Información SbN
-        self._create_technical_section(sbn_container, get_text("technical.analysis_status"), [
-            (get_text("technical.solutions_count"), "sbn_solutions_count", ""),
-            (get_text("technical.scenarios_count"), "sbn_scenarios_count", ""),
-            (get_text("technical.results_available"), "sbn_results_available", "")
-        ])
+        # # Separador antes de SbN
+        # separator3 = ctk.CTkFrame(parent, height=2, fg_color=ThemeManager.COLORS['border'])
+        # separator3.pack(fill="x", pady=20)
+        #
+        # # Información de análisis SbN
+        # self.sbn_title = ctk.CTkLabel(
+        #     parent,
+        #     text=get_text("technical.sbn_analysis"),
+        #     font=ThemeManager.FONTS['body'],
+        #     text_color=ThemeManager.COLORS['accent_primary'],
+        #     anchor="w"
+        # )
+        # self.sbn_title.pack(fill="x", pady=(0, 10))
+        #
+        # # Frame contenedor para datos SbN
+        # sbn_container = ctk.CTkFrame(parent, fg_color=ThemeManager.COLORS['bg_secondary'])
+        # sbn_container.pack(fill="x", pady=(0, 15), padx=10)
+        #
+        # # Información SbN
+        # self._create_technical_section(sbn_container, get_text("technical.analysis_status"), [
+        #     (get_text("technical.solutions_count"), "sbn_solutions_count", ""),
+        #     (get_text("technical.scenarios_count"), "sbn_scenarios_count", ""),
+        #     (get_text("technical.results_available"), "sbn_results_available", "")
+        # ])
 
     def _create_technical_section(self, parent, title, fields):
         """Crear una sección técnica con título y campos"""
@@ -468,11 +474,11 @@ class DashboardWindow(ctk.CTk):
             font=ThemeManager.FONTS['heading'],
             text_color=ThemeManager.COLORS['accent_primary']
         )
-        self.widget_refs['workflow_title'].pack(pady=(20, 30))
+        self.widget_refs['workflow_title'].pack(pady=(10, 0))
 
         # Contenedor para la matriz de botones
         matrix_container = ctk.CTkFrame(parent, fg_color="transparent")
-        matrix_container.pack(expand=True, padx=20, pady=20)
+        matrix_container.pack(expand=True, padx=20, pady=(10,5))
 
         # Botones del flujo de trabajo
         self.workflow_buttons = {}
@@ -547,11 +553,11 @@ class DashboardWindow(ctk.CTk):
             font=ThemeManager.FONTS['body'],
             text_color=ThemeManager.COLORS['accent_primary']
         )
-        self.image_title.pack(pady=(30, 10))
+        self.image_title.pack(pady=(5, 5))
 
         # Frame contenedor para la imagen
         self.image_frame = ctk.CTkFrame(parent, fg_color=ThemeManager.COLORS['bg_secondary'])
-        self.image_frame.pack(pady=(10, 20), padx=20, fill="x")
+        self.image_frame.pack(pady=(5, 10), padx=20, fill="x")
 
         # Label para mostrar la imagen
         self.image_label = ctk.CTkLabel(
@@ -592,6 +598,15 @@ class DashboardWindow(ctk.CTk):
             else:
                 label.configure(text=get_text('dashboard.not_specified'), text_color=ThemeManager.COLORS['text_light'])
 
+        # Restaurar estado del workflow si existe en project_data
+        if 'workflow_progress' in project_data:
+            saved_progress = project_data['workflow_progress']
+            for step_id, step_data in saved_progress.items():
+                if step_id in self.workflow_steps:
+                    # Restaurar completed y data, mantener order y enabled de valores por defecto
+                    self.workflow_steps[step_id]['completed'] = step_data.get('completed', False)
+                    self.workflow_steps[step_id]['data'] = step_data.get('data', None)
+
         # Actualizar estado del flujo de trabajo
         self._update_workflow_status()
 
@@ -603,11 +618,7 @@ class DashboardWindow(ctk.CTk):
 
         # Habilitar botones si existe el archivo Watershed.shp
         from pathlib import Path
-        project_folder = project_data.get('files', {}).get('project_folder')
-        if project_folder:
-            watershed_shp_path = Path(project_folder) / "01-Watershed" / "Watershed.shp"
-            if watershed_shp_path.exists():
-                self._enable_all_buttons()
+        # La secuencia de botones se actualiza en _update_workflow_status()
 
     def _update_workflow_status(self):
         """Actualizar el estado visual del flujo de trabajo"""
@@ -632,8 +643,8 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps['cuenca']['completed'] = False
             self._update_step_status('cuenca', False, get_text("workflow.pending"))
 
-        # Paso 2: Barreras - verificar si existe Barriers_configuration.csv
-        barriers_csv = project_folder / "Barriers_configuration.csv"
+        # Paso 2: Barreras - verificar si existe Barriers.csv
+        barriers_csv = project_folder / "Barriers.csv"
         if barriers_csv.exists():
             self.workflow_steps['barreras']['completed'] = True
             self._update_step_status('barreras', True, get_text("workflow.completed"))
@@ -641,8 +652,8 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps['barreras']['completed'] = False
             self._update_step_status('barreras', False, get_text("workflow.pending"))
 
-        # Paso 3: Water Security - verificar si existe Water_security_challenges.csv
-        water_security_csv = project_folder / "Water_security_challenges.csv"
+        # Paso 3: Water Security - verificar si existe DF_WS.csv
+        water_security_csv = project_folder / "DF_WS.csv"
         if water_security_csv.exists():
             self.workflow_steps['water_security']['completed'] = True
             self._update_step_status('water_security', True, get_text("workflow.completed"))
@@ -650,8 +661,8 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps['water_security']['completed'] = False
             self._update_step_status('water_security', False, get_text("workflow.pending"))
 
-        # Paso 4: Other Challenges - verificar si existe Other_challenges.csv
-        other_challenges_csv = project_folder / "Other_challenges.csv"
+        # Paso 4: Other Challenges - verificar si existe D_O.csv
+        other_challenges_csv = project_folder / "D_O.csv"
         if other_challenges_csv.exists():
             self.workflow_steps['other_challenges']['completed'] = True
             self._update_step_status('other_challenges', True, get_text("workflow.completed"))
@@ -661,6 +672,37 @@ class DashboardWindow(ctk.CTk):
 
         # Actualizar UI del workflow
         self._update_workflow_ui()
+
+        # Actualizar secuencia de botones habilitados
+        self._update_buttons_sequence()
+
+    def _update_buttons_sequence(self):
+        """Actualizar qué botones están habilitados según secuencia de workflow"""
+        # Ordenar pasos por orden
+        sorted_steps = sorted(self.workflow_steps.items(), key=lambda x: x[1]['order'])
+
+        # Encontrar el primer paso no completado
+        next_step_found = False
+        for step_id, step_data in sorted_steps:
+            if step_data['completed']:
+                # Pasos completados: habilitados (para poder editar)
+                step_data['enabled'] = True
+            elif not next_step_found:
+                # Primer paso no completado: habilitado
+                step_data['enabled'] = True
+                next_step_found = True
+            else:
+                # Pasos futuros: deshabilitados
+                step_data['enabled'] = False
+
+        # Aplicar estado a botones
+        for step_id, step_data in self.workflow_steps.items():
+            if step_id in self.workflow_buttons:
+                button = self.workflow_buttons[step_id]['button']
+                if step_data['enabled']:
+                    button.configure(state="normal")
+                else:
+                    button.configure(state="disabled")
 
     def _update_step_status(self, step_id, completed, status_text):
         """Actualizar el estado visual de un paso específico"""
@@ -776,15 +818,15 @@ class DashboardWindow(ctk.CTk):
             self._update_technical_field('nutrients_phosphorus', nutrients.get('phosphorus'))
             self._update_technical_field('nutrients_nitrogen', nutrients.get('nitrogen'))
 
-            # Actualizar análisis SbN
-            sbn_analysis = self.project_data.get('sbn_analysis', {})
-            solutions_count = len(sbn_analysis.get('selected_solutions', []))
-            scenarios_count = len(sbn_analysis.get('scenarios', []))
-            results_available = "Sí" if sbn_analysis.get('results') else "No"
-
-            self._update_technical_field('sbn_solutions_count', solutions_count if solutions_count > 0 else None)
-            self._update_technical_field('sbn_scenarios_count', scenarios_count if scenarios_count > 0 else None)
-            self._update_technical_field('sbn_results_available', results_available if sbn_analysis.get('results') else None)
+            # # Actualizar análisis SbN
+            # sbn_analysis = self.project_data.get('sbn_analysis', {})
+            # solutions_count = len(sbn_analysis.get('selected_solutions', []))
+            # scenarios_count = len(sbn_analysis.get('scenarios', []))
+            # results_available = "Sí" if sbn_analysis.get('results') else "No"
+            #
+            # self._update_technical_field('sbn_solutions_count', solutions_count if solutions_count > 0 else None)
+            # self._update_technical_field('sbn_scenarios_count', scenarios_count if scenarios_count > 0 else None)
+            # self._update_technical_field('sbn_results_available', results_available if sbn_analysis.get('results') else None)
 
         except Exception as e:
             print(f"Error al actualizar información técnica: {str(e)}")
@@ -899,10 +941,9 @@ class DashboardWindow(ctk.CTk):
 
         if hasattr(delimitation_window, 'result') and delimitation_window.result:
             self.project_data = delimitation_window.result
-            self._update_workflow_status()
+            self._update_workflow_status()  # Actualiza estado y secuencia de botones
             self._load_watershed_image()  # Recargar imagen
             self._update_technical_info()  # Actualizar información técnica
-            self._enable_all_buttons()  # Habilitar todos los botones
             self._save_project()  # Guardar automáticamente
 
     def _open_barreras(self):
@@ -912,7 +953,9 @@ class DashboardWindow(ctk.CTk):
                 window_manager=self,
                 project_path=self.current_project_path
             )
-            barriers_window.mainloop()
+            self.wait_window(barriers_window)
+            # Actualizar workflow después de cerrar
+            self._update_workflow_status()
         except Exception as e:
             messagebox.showerror(
                 get_text("errors.generic_title"),
@@ -926,7 +969,9 @@ class DashboardWindow(ctk.CTk):
                 window_manager=self,
                 project_path=self.current_project_path
             )
-            water_security_window.mainloop()
+            self.wait_window(water_security_window)
+            # Actualizar workflow después de cerrar
+            self._update_workflow_status()
         except Exception as e:
             messagebox.showerror(
                 get_text("errors.generic_title"),
@@ -940,7 +985,9 @@ class DashboardWindow(ctk.CTk):
             return
 
         window = OtherChallengesWindow(window_manager=self, project_path=self.current_project_path)
-        window.mainloop()
+        self.wait_window(window)
+        # Actualizar workflow después de cerrar
+        self._update_workflow_status()
 
     def _open_sbn(self):
         """Abrir módulo de SbN"""
@@ -955,7 +1002,10 @@ class DashboardWindow(ctk.CTk):
                 project_path=self.current_project_path,
                 language=get_current_global_language()
             )
-            window.mainloop()
+            self.wait_window(window)
+            # Actualizar workflow después de cerrar
+            self._update_workflow_status()
+            self._save_project()
         except Exception as e:
             messagebox.showerror(
                 get_text("messages.error"),
@@ -1027,6 +1077,9 @@ class DashboardWindow(ctk.CTk):
             return
 
         try:
+            # Guardar estado del workflow en project_data
+            self.project_data['workflow_progress'] = self.workflow_steps
+
             if self.current_project_path:
                 # Guardar en ubicación existente
                 project_json_path = os.path.join(self.current_project_path, 'project.json')
@@ -1117,15 +1170,15 @@ class DashboardWindow(ctk.CTk):
                     if field_name in field_translations:
                         label.configure(text=field_translations[field_name])
 
-            # Actualizar etiqueta de estado del proyecto
-            if hasattr(self, 'status_field_label'):
-                self.status_field_label.configure(text=get_text("dashboard.project_status"))
+            # # Actualizar etiqueta de estado del proyecto
+            # if hasattr(self, 'status_field_label'):
+            #     self.status_field_label.configure(text=get_text("dashboard.project_status"))
 
             # Actualizar títulos de secciones técnicas
             if hasattr(self, 'watershed_title'):
                 self.watershed_title.configure(text=get_text("technical.watershed_info"))
-            if hasattr(self, 'sbn_title'):
-                self.sbn_title.configure(text=get_text("technical.sbn_analysis"))
+            # if hasattr(self, 'sbn_title'):
+            #     self.sbn_title.configure(text=get_text("technical.sbn_analysis"))
             if hasattr(self, 'image_title'):
                 self.image_title.configure(text=get_text("technical.watershed_image"))
             if hasattr(self, 'no_image_label'):
@@ -1185,6 +1238,7 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps[step_id]['completed'] = completed
             self.workflow_steps[step_id]['data'] = data
             self._update_workflow_ui()
+            self._update_buttons_sequence()  # Actualizar habilitación secuencial de botones
 
     def _on_closing(self):
         """Manejar cierre de ventana"""

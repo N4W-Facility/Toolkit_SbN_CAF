@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
+from .sbn_prioritization import SbNPrioritization
 
 class ProjectManager:
     
@@ -96,7 +97,13 @@ class ProjectManager:
         
         for folder in folders:
             os.makedirs(folder, exist_ok=True)
-        
+
+        # Copiar template de SbN_Prioritization.csv al nuevo proyecto
+        try:
+            SbNPrioritization.copy_template_to_project(project_folder)
+        except Exception as e:
+            print(f"Warning: No se pudo copiar SbN_Prioritization.csv template: {e}")
+
         return project_folder
     
     @staticmethod

@@ -6,9 +6,10 @@ from datetime import datetime
 from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes
 from ..utils.resource_path import get_resource_path
+from ..utils.sbn_prioritization import SbNPrioritization
 
 
-class BarriersWindow(ctk.CTk):
+class BarriersWindow(ctk.CTkToplevel):
 
     def __init__(self, window_manager=None, project_path=None):
         super().__init__()
@@ -20,6 +21,15 @@ class BarriersWindow(ctk.CTk):
         self.title(get_text("barriers.title"))
         self.geometry("1000x700")
         self.resizable(True, True)
+
+        # Configurar ventana modal al frente
+        if window_manager:
+            self.transient(window_manager)  # Vincular al dashboard
+            self.grab_set()  # Hacer modal
+        self.lift()  # Traer al frente
+        self.focus_force()  # Forzar foco
+        self.attributes('-topmost', True)  # Temporal
+        self.after(100, lambda: self.attributes('-topmost', False))  # Quitar topmost después
 
         # Aplicar tema
         ThemeManager.configure_ctk()
@@ -54,7 +64,6 @@ class BarriersWindow(ctk.CTk):
         subscribe_to_language_changes(self._update_texts)
 
         self._setup_ui()
-        self._update_texts()
 
     def _load_barriers_data(self):
         """Carga los datos de barreras desde el archivo CSV según el idioma actual"""
@@ -75,7 +84,8 @@ class BarriersWindow(ctk.CTk):
             df = pd.read_csv(csv_path, encoding='utf-8-sig')
 
             # Normalizar nombres de columnas (los headers varían por idioma)
-            df.columns = ['Codigo_Barrera', 'Descripcion', 'Grupo', 'Codigo_Grupo']
+            # Formato nuevo con 5 columnas: Codigo_Barrera, Descripcion, Subcategoria, Grupo, Codigo_Grupo
+            df.columns = ['Codigo_Barrera', 'Descripcion', 'Subcategoria', 'Grupo', 'Codigo_Grupo']
 
             barriers_data = {
                 'GB01': {'name': get_text('barriers.groups.GB01'), 'barriers': []},
@@ -89,12 +99,14 @@ class BarriersWindow(ctk.CTk):
             for _, row in df.iterrows():
                 codigo_barrera = str(row['Codigo_Barrera']) if pd.notna(row['Codigo_Barrera']) else None
                 descripcion = str(row['Descripcion']) if pd.notna(row['Descripcion']) else None
+                subcategoria = str(row['Subcategoria']) if pd.notna(row['Subcategoria']) else ''
                 codigo_grupo = str(row['Codigo_Grupo']) if pd.notna(row['Codigo_Grupo']) else None
 
                 if codigo_barrera and descripcion and codigo_grupo in barriers_data:
                     barrier_item = {
                         'code': codigo_barrera,
                         'description': descripcion,
+                        'subcategory': subcategoria,
                         'default_value': 1  # "No hay barreras" por defecto
                     }
                     barriers_data[codigo_grupo]['barriers'].append(barrier_item)
@@ -104,6 +116,49 @@ class BarriersWindow(ctk.CTk):
         except Exception as e:
             print(f"Error cargando datos de barreras: {e}")
             return self._get_default_barriers_data()
+
+    def _create_default_barriers_file(self):
+        """Crea el archivo CSV de barreras con configuración por defecto"""
+        try:
+            if not self.project_path:
+                return
+
+            # Si project_path es un archivo, obtener el directorio padre
+            if os.path.isfile(self.project_path):
+                project_dir = os.path.dirname(self.project_path)
+            else:
+                project_dir = self.project_path
+
+            if not os.path.exists(project_dir):
+                os.makedirs(project_dir, exist_ok=True)
+
+            # Obtener encabezados traducidos
+            header_barrier_code = get_text("barriers.csv_headers.barrier_code")
+            header_numeric_value = get_text("barriers.csv_headers.numeric_value")
+            header_group_code = get_text("barriers.csv_headers.group_code")
+            header_group_enabled = get_text("barriers.csv_headers.group_enabled")
+
+            # Preparar datos por defecto
+            csv_data = []
+            for group_code, group_data in self.barriers_data.items():
+                for barrier in group_data['barriers']:
+                    csv_data.append({
+                        header_barrier_code: barrier['code'],
+                        header_numeric_value: 1,  # Valor por defecto: "No hay barreras"
+                        header_group_code: group_code,
+                        header_group_enabled: 1  # Todos los grupos habilitados por defecto
+                    })
+
+            # Crear DataFrame y guardar
+            df = pd.DataFrame(csv_data)
+            filename = "Barriers.csv"  # Nombre fijo sin traducir
+            file_path = os.path.join(project_dir, filename)
+            df.to_csv(file_path, index=False, encoding='utf-8-sig')
+
+            print(f"Archivo de barreras por defecto creado en: {file_path}")
+
+        except Exception as e:
+            print(f"Error creando archivo de barreras por defecto: {e}")
 
     def _load_previous_evaluation(self):
         """Carga la evaluación previa desde el CSV (soporta múltiples idiomas en encabezados)"""
@@ -120,23 +175,18 @@ class BarriersWindow(ctk.CTk):
             if not os.path.exists(project_dir):
                 return
 
-            # Buscar archivo en todos los idiomas posibles (backward compatibility)
-            possible_filenames = [
-                "Barreras.csv",           # Español
-                "Barriers.csv",           # Inglés
-                "Barreiras.csv",          # Portugués
-                "evaluacion_barreras.csv" # Legacy
-            ]
+            # Buscar archivo con nombre estándar
+            csv_file_path = os.path.join(project_dir, "Barriers.csv")
 
-            csv_file_path = None
-            for filename in possible_filenames:
-                test_path = os.path.join(project_dir, filename)
-                if os.path.exists(test_path):
-                    csv_file_path = test_path
-                    break
+            if not os.path.exists(csv_file_path):
+                # Si no existe, crear uno por defecto
+                print("No se encontró archivo de barreras. Creando configuración por defecto...")
+                self._create_default_barriers_file()
 
-            if not csv_file_path:
-                return
+                # Verificar que se creó correctamente
+                if not os.path.exists(csv_file_path):
+                    print("No se pudo crear el archivo de barreras")
+                    return
 
             # Cargar datos del CSV
             df = pd.read_csv(csv_file_path, encoding='utf-8-sig')
@@ -171,8 +221,9 @@ class BarriersWindow(ctk.CTk):
             # Marcar que se cargó configuración previa
             self.has_previous_data = True
 
-            # Actualizar los ComboBox ya creados con los valores cargados
-            self._update_widgets_with_loaded_values()
+            # Actualizar los widgets SOLO si ya fueron creados (cuando se llama desde _update_texts)
+            if self.group_widgets:
+                self._update_widgets_with_loaded_values()
 
         except Exception as e:
             print(f"Error cargando evaluación previa: {e}")
@@ -265,11 +316,11 @@ class BarriersWindow(ctk.CTk):
         )
         self.scroll_frame.pack(fill="both", expand=True, pady=(0, 20))
 
-        # Crear grupos de barreras
-        self._create_barrier_groups()
-
-        # Cargar evaluación previa DESPUÉS de crear los widgets
+        # Cargar evaluación previa (o crear archivo por defecto si no existe)
         self._load_previous_evaluation()
+
+        # Crear grupos de barreras con los valores ya cargados
+        self._create_barrier_groups()
 
         # Frame para botones
         buttons_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -278,7 +329,7 @@ class BarriersWindow(ctk.CTk):
         # Botón Cancelar
         cancel_btn = ctk.CTkButton(
             buttons_frame,
-            text="",
+            text=get_text("barriers.cancel"),
             command=self._cancel,
             fg_color=ThemeManager.COLORS['error'],
             hover_color=ThemeManager.COLORS['error_hover'],
@@ -292,7 +343,7 @@ class BarriersWindow(ctk.CTk):
         # Botón Guardar
         save_btn = ctk.CTkButton(
             buttons_frame,
-            text="",
+            text=get_text("barriers.save"),
             command=self._save,
             fg_color=ThemeManager.COLORS['success'],
             hover_color=ThemeManager.COLORS['success_hover'],
@@ -314,7 +365,8 @@ class BarriersWindow(ctk.CTk):
                 is_enabled=self.group_states[group_code],
                 value_colors=self._get_value_colors(),
                 on_group_toggle=self._on_group_toggle,
-                on_value_change=self._on_barrier_value_change
+                on_value_change=self._on_barrier_value_change,
+                barrier_values=self.barrier_values  # Pasar valores ya cargados
             )
             group_widget.pack(fill="x", padx=10, pady=5)
             self.group_widgets[group_code] = group_widget
@@ -399,10 +451,17 @@ class BarriersWindow(ctk.CTk):
                 if not os.path.exists(project_dir):
                     os.makedirs(project_dir, exist_ok=True)
 
-                filename = get_text("barriers.csv_filename")
+                filename = "Barriers.csv"  # Nombre fijo sin traducir
                 file_path = os.path.join(project_dir, filename)
 
                 df.to_csv(file_path, index=False, encoding='utf-8-sig')
+
+                # Actualizar priorización de SbN
+                try:
+                    SbNPrioritization.update_barriers(project_dir)
+                except Exception as e:
+                    print(f"Error actualizando priorización SbN: {e}")
+
                 messagebox.showinfo(
                     get_text("barriers.save_success_title"),
                     get_text("barriers.save_success_message")
@@ -440,8 +499,8 @@ class BarriersWindow(ctk.CTk):
 
         if 'title' in self.widget_refs:
             title_text = get_text("barriers.main_title")
-            if self.has_previous_data:
-                title_text += "\n" + get_text("status.config_loaded")
+            # if self.has_previous_data:
+            #     title_text += "\n" + get_text("status.config_loaded")
             self.widget_refs['title'].configure(text=title_text)
         if 'save_btn' in self.widget_refs:
             self.widget_refs['save_btn'].configure(text=get_text("barriers.save"))
@@ -459,12 +518,15 @@ class BarriersWindow(ctk.CTk):
         # Recrear widgets con nuevos datos traducidos
         self._create_barrier_groups()
 
+        # Recargar datos guardados después de recrear widgets
+        self._load_previous_evaluation()
+
 
 class BarrierGroup(ctk.CTkFrame):
     """Widget para mostrar un grupo de barreras"""
 
     def __init__(self, parent, group_code, group_name, barriers, is_enabled,
-                 value_colors, on_group_toggle, on_value_change):
+                 value_colors, on_group_toggle, on_value_change, barrier_values=None):
         super().__init__(parent, fg_color=ThemeManager.COLORS['bg_tertiary'])
 
         self.group_code = group_code
@@ -474,6 +536,7 @@ class BarrierGroup(ctk.CTkFrame):
         self.value_colors = value_colors
         self.on_group_toggle = on_group_toggle
         self.on_value_change = on_value_change
+        self.barrier_values = barrier_values if barrier_values is not None else {}
 
         self.is_expanded = False
         self.barrier_widgets = {}
@@ -525,20 +588,47 @@ class BarrierGroup(ctk.CTkFrame):
         self._update_enabled_state()
 
     def _create_barriers(self):
-        """Crea los widgets de las barreras"""
+        """Crea los widgets de las barreras agrupadas por subcategoría"""
+        from collections import OrderedDict
+
+        # Agrupar barreras por subcategoría
+        subcategories = OrderedDict()
         for barrier in self.barriers:
-            # Siempre usar valor por defecto al crear, la carga se hace después
-            barrier_widget = BarrierItem(
-                parent=self.content_frame,
-                barrier_code=barrier['code'],
-                description=barrier['description'],
-                default_value=barrier['default_value'],  # Siempre valor por defecto
-                value_colors=self.value_colors,
-                on_value_change=self.on_value_change,
-                is_enabled=self.is_enabled
-            )
-            barrier_widget.pack(fill="x", padx=5, pady=2)
-            self.barrier_widgets[barrier['code']] = barrier_widget
+            subcat = barrier.get('subcategory', '')
+            if subcat not in subcategories:
+                subcategories[subcat] = []
+            subcategories[subcat].append(barrier)
+
+        # Crear widgets por subcategoría
+        for subcategory, barriers_in_subcat in subcategories.items():
+            # Si hay subcategoría, mostrar header
+            if subcategory:
+                subcat_label = ctk.CTkLabel(
+                    self.content_frame,
+                    text=subcategory,
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color=ThemeManager.COLORS['accent_primary'],
+                    anchor="w"
+                )
+                subcat_label.pack(fill="x", padx=10, pady=(10, 5))
+
+            # Crear widgets de barreras
+            for barrier in barriers_in_subcat:
+                # Usar valor cargado si existe, sino usar valor por defecto
+                barrier_code = barrier['code']
+                initial_value = self.barrier_values.get(barrier_code, barrier['default_value'])
+
+                barrier_widget = BarrierItem(
+                    parent=self.content_frame,
+                    barrier_code=barrier_code,
+                    description=barrier['description'],
+                    default_value=initial_value,  # Usar valor cargado o por defecto
+                    value_colors=self.value_colors,
+                    on_value_change=self.on_value_change,
+                    is_enabled=self.is_enabled
+                )
+                barrier_widget.pack(fill="x", padx=5, pady=2)
+                self.barrier_widgets[barrier_code] = barrier_widget
 
     def _toggle_group(self):
         """Alterna el estado habilitado/deshabilitado del grupo"""

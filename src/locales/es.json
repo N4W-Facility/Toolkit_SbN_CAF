@@ -10,13 +10,14 @@
     "no_recent": "No hay proyectos recientes"
   },
   "project_form": {
-    "title": "Crear Nuevo Proyecto",
+    "title": "Información del Proyecto",
     "edit_title": "Editar Información del Proyecto",
     "name_label": "Nombre del Proyecto:",
     "name_placeholder": "Ej: Cuenca del Rio Piraí",
     "description_label": "Descripción:",
     "location_label": "Localización:",
     "location_placeholder": "Ej: Latinoamerica, Bolivia",
+    "country_label": "País:",
     "objective_label": "Objetivo:",
     "cancel": "Cancelar",
     "create": "Crear Proyecto",
@@ -320,6 +321,23 @@
     "save_error": "Error al guardar la selección:",
     "no_project_path": "No se encontró la ruta del proyecto."
   },
+  "sbn_prioritization": {
+    "title": "Opciones de priorización",
+    "financial_title": "Opciones financieras de priorización",
+    "financial_description": "Seleccione la configuración de costos con la cual desea priorizar las SbN",
+    "sbn_selection_title": "Soluciones Basadas en la Naturaleza a Analizar",
+    "select_all": "Seleccionar todas",
+    "deselect_all": "Deseleccionar todas",
+    "next": "Siguiente",
+    "cancel": "Cancelar",
+    "not_available": "(No disponible en esta cuenca)",
+    "no_selection_error": "Debe seleccionar al menos una SbN para continuar",
+    "financial_options": {
+      "investment": "Costos de Inversión",
+      "maintenance": "Costos de Mantenimiento",
+      "investment_and_maintenance": "Costos de Inversión y Mantenimiento"
+    }
+  },
   "sbn_solutions": {
     "1": "Conservación del Bosque",
     "2": "Restauración Pasiva",
@@ -346,7 +364,7 @@
   "report": {
     "title": "Reporte final de analisis - Proyecto",
     "intro_title": "1 Introducción",
-    "intro_text": "Este documento fue generado automáticamente por la herramienta digital del Marco Metodológico para incorporar Soluciones basadas en la Naturaleza en proyectos de Seguridad Hídrica de CAF, versión 2.0.",
+    "intro_text": "Este documento fue generado automáticamente por la herramienta digital del Marco Metodológico para incorporar Soluciones basadas en la Naturaleza en proyectos de Seguridad Hídrica de CAF, versión 2.0. Los análisis fueron generados a partir de bases de datos globales e información local suministrada por el usuario. Los resultados generados corresponden a recomendaciones a nivel de prefactibilidad que deberán ser verificadas y detalladas en fases posteriores del proyecto y no sustituyen los diseños detallados de las soluciones a implementar. \nPara más información sobre el Marco Metodológico y la herramienta digital, favor contactar a equipo de CAF",
     "section2_title": "2 Descripción general del proyecto",
     "section2_table_title": "Datos del Programa y Proyecto de Inversión",
     "acronym": "Acrónimo",

@@ -17,6 +17,7 @@
     "description_label": "Descrição:",
     "location_label": "Localização:",
     "location_placeholder": "Ex: Região Andina, Colômbia",
+    "country_label": "País:",
     "objective_label": "Objetivo:",
     "cancel": "Cancelar",
     "create": "Criar Projeto",
@@ -319,6 +320,23 @@
     "save_success": "Seleção salva: {0} SbN selecionadas. Gerando relatório...",
     "save_error": "Erro ao salvar seleção:",
     "no_project_path": "Caminho do projeto não encontrado."
+  },
+  "sbn_prioritization": {
+    "title": "Opções de priorização",
+    "financial_title": "Opções financeiras de priorização",
+    "financial_description": "Selecione a configuração de custos com a qual deseja priorizar as SbN",
+    "sbn_selection_title": "Soluções Baseadas na Natureza a Analisar",
+    "select_all": "Selecionar todas",
+    "deselect_all": "Desmarcar todas",
+    "next": "Próximo",
+    "cancel": "Cancelar",
+    "not_available": "(Não disponível nesta bacia)",
+    "no_selection_error": "Você deve selecionar pelo menos uma SbN para continuar",
+    "financial_options": {
+      "investment": "Custos de Investimento",
+      "maintenance": "Custos de Manutenção",
+      "investment_and_maintenance": "Custos de Investimento e Manutenção"
+    }
   },
   "sbn_solutions": {
     "1": "Conservação da Floresta",

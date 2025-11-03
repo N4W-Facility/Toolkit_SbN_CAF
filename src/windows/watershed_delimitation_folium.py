@@ -8,7 +8,8 @@ from ..core.language_manager import get_text, subscribe_to_language_changes, get
 from ..core.database_manager import DatabaseManager
 from ..components.matplotlib_map_viewer import MatplotlibMapViewer
 from .database_processing_dialog import DatabaseProcessingDialog
-from ..core import ProcessingPackage as PackCAF 
+from ..core import ProcessingPackage as PackCAF
+from ..core.normalize_raster_sbn import normalize_raster 
 
 class WatershedDelimitationFolium(ctk.CTkToplevel):
     
@@ -500,6 +501,10 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             watershed_shp_path = Path(project_folder) / "01-Watershed" / "Watershed.shp"
             if watershed_shp_path.exists():
                 print("Cargando shapefile generado en el mapa...")
+
+                # Actualizar referencia al shapefile para que el botón de zoom funcione
+                self.watershed_shapefile = str(watershed_shp_path)
+
                 self.map_viewer.add_vector_layer(
                     str(watershed_shp_path),
                     layer_name="watershed",
@@ -655,6 +660,15 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             # Deshabilitar botón de SbN mientras punto está activo
             if hasattr(self, 'define_sbn_btn'):
                 self.define_sbn_btn.configure(state="disabled")
+
+            # Borrar marcador anterior si existe
+            if hasattr(self, 'map_viewer') and self.map_viewer.current_marker:
+                try:
+                    self.map_viewer.current_marker.remove()
+                    self.map_viewer.current_marker = None
+                    self.map_viewer.canvas.draw_idle()
+                except:
+                    pass
 
             # Habilitar selección de punto en el mapa
             if hasattr(self, 'map_viewer'):
@@ -866,6 +880,9 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             total_rasters = len(NameRaster)
             progress_dialog = DatabaseProcessingDialog(self, total_rasters)
 
+            # Diccionario para almacenar idoneidad de cada SbN {sbn_id: 0 o 1}
+            sbn_suitability = {}
+
             # Procesar cada raster
             processed_count = 0
             for index, (raster_name, ref_path) in enumerate(NameRaster.items()):
@@ -888,6 +905,27 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                         raster_referencia=NameRaster[raster_name][0],
                     )
 
+                    # Normalizar SOLO los rasters de SbN (SbN_01 a SbN_21)
+                    if raster_name.startswith('SbN_'):
+                        try:
+                            # Normalizar y obtener información
+                            result      = normalize_raster(output_path)
+                            max_value   = result.get('max_value', 0.0)
+                            has_data    = result.get('has_data', False)
+
+                            # Extraer ID de SbN (SbN_01 → 1, SbN_21 → 21)
+                            sbn_id = int(raster_name.split('_')[1])
+
+                            # Determinar idoneidad: 1 si tiene datos, 0 si no
+                            sbn_suitability[sbn_id] = 1 if has_data else 0
+
+                            print(f"✓ Raster {raster_name} normalizado (max: {max_value:.2f}, idoneidad: {sbn_suitability[sbn_id]})")
+                        except Exception as norm_error:
+                            print(f"⚠ Error normalizando {raster_name}: {str(norm_error)}")
+                            # Si falla, asumir idoneidad = 0
+                            sbn_id = int(raster_name.split('_')[1])
+                            sbn_suitability[sbn_id] = 0
+
                     processed_count += 1
 
                 except Exception as e:
@@ -898,6 +936,10 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             # Finalizar procesamiento
             progress_dialog.finish_processing()
             progress_dialog.destroy()
+
+            # Actualizar columna Idoneidad en SbN_Prioritization.csv
+            if sbn_suitability:
+                self._update_sbn_suitability(project_folder, sbn_suitability)
 
             # Calcular estadísticas de la cuenca
             self._calculate_watershed_statistics()
@@ -1386,6 +1428,51 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             print(f"Error calculando valores de otros desafíos: {str(e)}")
             # No mostrar error al usuario, solo log
 
+    def _update_sbn_suitability(self, project_folder, sbn_suitability):
+        """
+        Actualiza la columna Idoneidad en SbN_Prioritization.csv basado en la
+        disponibilidad de datos en los rasters SbN.
+
+        Args:
+            project_folder: Ruta de la carpeta del proyecto
+            sbn_suitability: dict {sbn_id: 0 o 1}
+                             1 = tiene datos válidos (idóneo)
+                             0 = sin datos o solo nodata (no idóneo)
+        """
+        import pandas as pd
+
+        try:
+            prioritization_file = os.path.join(project_folder, 'SbN_Prioritization.csv')
+
+            if not os.path.exists(prioritization_file):
+                print(f"⚠ No se encontró {prioritization_file}")
+                return
+
+            # Leer archivo de priorización
+            df = pd.read_csv(prioritization_file, encoding='utf-8-sig')
+
+            # Actualizar columna Idoneidad
+            for sbn_id, suitability in sbn_suitability.items():
+                mask = df['ID'] == sbn_id
+                if mask.any():
+                    df.loc[mask, 'Idoneidad'] = suitability
+
+            # Guardar archivo actualizado (NO recalculamos Prioridad aquí)
+            df.to_csv(prioritization_file, index=False, encoding='utf-8-sig')
+
+            # Contar SbN idóneas y no idóneas
+            suitable_count = sum(1 for v in sbn_suitability.values() if v == 1)
+            unsuitable_count = sum(1 for v in sbn_suitability.values() if v == 0)
+
+            print(f"✅ Idoneidad actualizada en SbN_Prioritization.csv")
+            print(f"   SbN idóneas (con datos): {suitable_count}")
+            print(f"   SbN no idóneas (sin datos): {unsuitable_count}")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"⚠ Error actualizando idoneidad SbN: {str(e)}")
+
     def _update_texts(self):
         """Actualizar todos los textos cuando cambia el idioma"""
         try:
@@ -1479,17 +1566,38 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 print("❌ Shapefile vacío")
                 return
 
-            # Obtener centroide de la primera geometría (en CRS original)
-            if gdf.crs and gdf.crs.to_string() != 'EPSG:4326':
-                # Reproyectar a lat/lon para obtener coordenadas
-                gdf_latlon = gdf.to_crs('EPSG:4326')
-                centroid = gdf_latlon.geometry.iloc[0].centroid
-            else:
-                centroid = gdf.geometry.iloc[0].centroid
+            # Obtener coordenadas del punto de cierre desde project_data
+            outlet_lat = None
+            outlet_lon = None
 
-            self.lat = centroid.y
-            self.lon = centroid.x
-            print(f"✓ Coordenadas del centroide: lat={self.lat}, lon={self.lon}")
+            if self.project_data:
+                # Intentar obtener desde point_of_interest (prioridad 1)
+                point_of_interest = self.project_data.get('watershed_data', {}).get('point_of_interest', {})
+                outlet_lat = point_of_interest.get('lat')
+                outlet_lon = point_of_interest.get('lon')
+
+                # Fallback: usar coordinates si point_of_interest no existe (prioridad 2)
+                if outlet_lat is None or outlet_lon is None:
+                    coordinates = self.project_data.get('watershed_data', {}).get('coordinates', {})
+                    outlet_lat = coordinates.get('latitude')
+                    outlet_lon = coordinates.get('longitude')
+
+            # Si encontramos coordenadas guardadas, usarlas
+            if outlet_lat is not None and outlet_lon is not None:
+                self.lat = outlet_lat
+                self.lon = outlet_lon
+                print(f"✓ Coordenadas del punto de cierre: lat={self.lat}, lon={self.lon}")
+            else:
+                # Fallback: calcular centroide si no hay coordenadas guardadas
+                if gdf.crs and gdf.crs.to_string() != 'EPSG:4326':
+                    gdf_latlon = gdf.to_crs('EPSG:4326')
+                    centroid = gdf_latlon.geometry.iloc[0].centroid
+                else:
+                    centroid = gdf.geometry.iloc[0].centroid
+
+                self.lat = centroid.y
+                self.lon = centroid.x
+                print(f"✓ Coordenadas del centroide (fallback): lat={self.lat}, lon={self.lon}")
 
             # Extraer nombre de la cuenca si existe en los atributos
             watershed_name = "Cuenca_Existente"
@@ -1574,8 +1682,13 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 )
                 print(f"{'✓' if success_vector else '❌'} add_vector_layer: {success_vector}")
 
+                # Marcar punto de cierre en el mapa
+                if self.lat is not None and self.lon is not None:
+                    self.map_viewer.set_coordinates(self.lat, self.lon)
+                    print(f"✓ Punto de cierre marcado en el mapa")
+
                 # Centrar y hacer zoom específico a la cuenca con margen mínimo
-                if success_vector:
+                # if success_vector:
                     self.map_viewer.zoom_to_vector(self.watershed_shapefile, padding_factor=0.05)
             else:
                 print("❌ map_viewer NO disponible")

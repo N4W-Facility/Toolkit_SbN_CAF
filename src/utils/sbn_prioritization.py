@@ -60,16 +60,30 @@ class SbNPrioritization:
         Returns:
             dict: {sbn_id: score} for all 21 SbN options
         """
-        # Read user evaluation
-        ws_file = os.path.join(project_path, 'DF_WS.csv')
-        if not os.path.exists(ws_file):
+        # Intentar leer archivo ajustado por costos primero
+        ws_file_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_WS.csv')
+        ws_file_original = os.path.join(project_path, 'DF_WS.csv')
+
+        if os.path.exists(ws_file_adjusted):
+            print("✓ Usando matriz de pesos ajustada por costos")
+            ws_file = ws_file_adjusted
+        elif os.path.exists(ws_file_original):
+            print("⚠️ Usando desafíos de seguridad hídrica originales (sin ajuste de costos)")
+            ws_file = ws_file_original
+        else:
             return {}
 
         df_ws = pd.read_csv(ws_file, encoding='utf-8-sig')
 
-        # Read weight matrix
-        weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
-        df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Seguridad_Hidrica')
+        # Si se usa el archivo ajustado, df_ws ya contiene los pesos recategorizados
+        # Si se usa el original, necesitamos leer los pesos de Weight_Matrix
+        if ws_file == ws_file_adjusted:
+            # Los pesos ya están en df_ws, no necesitamos leer Weight_Matrix
+            df_weights = df_ws
+        else:
+            # Leer matriz de pesos original
+            weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
+            df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Seguridad_Hidrica')
 
         # Calculate scores
         return SbNPrioritization._calculate_scores(df_ws, df_weights)
@@ -85,16 +99,30 @@ class SbNPrioritization:
         Returns:
             dict: {sbn_id: score} for all 21 SbN options
         """
-        # Read user evaluation
-        oc_file = os.path.join(project_path, 'D_O.csv')
-        if not os.path.exists(oc_file):
+        # Intentar leer archivo ajustado por costos primero
+        oc_file_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_O.csv')
+        oc_file_original = os.path.join(project_path, 'D_O.csv')
+
+        if os.path.exists(oc_file_adjusted):
+            print("✓ Usando matriz de pesos ajustada por costos")
+            oc_file = oc_file_adjusted
+        elif os.path.exists(oc_file_original):
+            print("⚠️ Usando otros desafíos originales (sin ajuste de costos)")
+            oc_file = oc_file_original
+        else:
             return {}
 
         df_oc = pd.read_csv(oc_file, encoding='utf-8-sig')
 
-        # Read weight matrix
-        weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
-        df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Otros')
+        # Si se usa el archivo ajustado, df_oc ya contiene los pesos recategorizados
+        # Si se usa el original, necesitamos leer los pesos de Weight_Matrix
+        if oc_file == oc_file_adjusted:
+            # Los pesos ya están en df_oc, no necesitamos leer Weight_Matrix
+            df_weights = df_oc
+        else:
+            # Leer matriz de pesos original
+            weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
+            df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Otros')
 
         # Calculate scores
         return SbNPrioritization._calculate_scores(df_oc, df_weights)
@@ -328,7 +356,7 @@ class SbNPrioritization:
             SbNPrioritization.update_sbn_prioritization(project_path, 'Other', scores)
 
     @staticmethod
-    def get_sbn_priorities(project_path):
+    def get_sbn_priorities_Old(project_path):
         """
         Get final priority for each SbN from SbN_Prioritization.csv.
 
@@ -387,6 +415,60 @@ class SbNPrioritization:
                 }
 
             return result
+
+        except Exception as e:
+            print(f"Error getting SbN priorities: {e}")
+            return {}
+
+    def get_sbn_priorities(project_path):
+        """
+        Igual que antes, pero el dict queda ordenado por priority_rank
+        (primero las habilitadas por prioridad, luego las de 0).
+        """
+
+        from collections import OrderedDict
+
+        try:
+            prioritization_file = os.path.join(project_path, 'SbN_Prioritization.csv')
+
+            if not os.path.exists(prioritization_file):
+                print(f"Warning: {prioritization_file} not found")
+                return {}
+
+            df = pd.read_csv(prioritization_file, encoding='utf-8-sig')
+
+            result_tmp = {}
+
+            # habilitadas > 0
+            enabled_df = df[df['Prioridad'] > 0].copy()
+            enabled_df = enabled_df.sort_values('Prioridad', ascending=False)
+
+            for rank, (_, row) in enumerate(enabled_df.iterrows(), start=1):
+                sbn_id = int(row['ID'])
+                result_tmp[sbn_id] = {
+                    'priority_value': float(row['Prioridad']),
+                    'priority_rank': rank,
+                    'is_enabled': True
+                }
+
+            # deshabilitadas = 0
+            disabled_df = df[df['Prioridad'] == 0]
+            for _, row in disabled_df.iterrows():
+                sbn_id = int(row['ID'])
+                result_tmp[sbn_id] = {
+                    'priority_value': 0.0,
+                    'priority_rank': None,
+                    'is_enabled': False
+                }
+
+            # 👇 ordenar por priority_rank (None al final)
+            ordered = OrderedDict(
+                sorted(
+                    result_tmp.items(),
+                    key=lambda x: (x[1]['priority_rank'] is None, x[1]['priority_rank'] or 0)
+                )
+            )
+            return ordered
 
         except Exception as e:
             print(f"Error getting SbN priorities: {e}")

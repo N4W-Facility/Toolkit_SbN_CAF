@@ -390,7 +390,32 @@ class NewProjectDialog(ctk.CTkToplevel):
         self.location_label.pack(anchor="w", padx=20, pady=(0, 5))
         self.location_entry = ctk.CTkEntry(form_frame, placeholder_text=get_text("project_form.location_placeholder"), **ThemeManager.get_entry_style())
         self.location_entry.pack(fill="x", padx=20, pady=(0, 15))
-        
+
+        # Selector de país
+        self.country_label = ctk.CTkLabel(form_frame, text=get_text("project_form.country_label"), **ThemeManager.get_label_style('body'))
+        self.country_label.pack(anchor="w", padx=20, pady=(0, 5))
+
+        # Cargar lista de países desde Weight_Matrix.xlsx
+        self.countries_dict = self._load_countries()
+        country_names = list(self.countries_dict.keys())
+
+        self.country_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=country_names if country_names else ["No countries available"],
+            state="readonly",
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            button_color=ThemeManager.COLORS['accent_primary'],
+            button_hover_color=ThemeManager.COLORS['accent_secondary'],
+            dropdown_fg_color=ThemeManager.COLORS['bg_card'],
+            dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body']
+        )
+        self.country_combobox.pack(fill="x", padx=20, pady=(0, 15))
+        if country_names:
+            self.country_combobox.set(country_names[0])  # Seleccionar primer país por defecto
+
         self.objective_label = ctk.CTkLabel(form_frame, text=get_text("project_form.objective_label"), **ThemeManager.get_label_style('body'))
         self.objective_label.pack(anchor="w", padx=20, pady=(0, 5))
         self.objective_entry = ctk.CTkTextbox(
@@ -444,12 +469,71 @@ class NewProjectDialog(ctk.CTkToplevel):
             self.description_entry.insert("1.0", project_info.get('description', ''))
             self.location_entry.insert(0, project_info.get('location', ''))
             self.objective_entry.insert("1.0", project_info.get('objective', ''))
-    
+
+            # Cargar país si existe
+            if 'country_code' in project_info and hasattr(self, 'country_combobox'):
+                country_code = project_info.get('country_code')
+                country_name = project_info.get('country_name', '')
+                # Buscar y seleccionar el país en el combobox
+                if country_name in self.countries_dict.keys():
+                    self.country_combobox.set(country_name)
+
+    def _load_countries(self):
+        """
+        Cargar lista de países desde Weight_Matrix.xlsx
+
+        Returns:
+            dict: {country_name: (country_code, factor)}
+        """
+        try:
+            import pandas as pd
+            base_path = os.path.dirname(os.path.dirname(__file__))
+            weight_matrix_path = os.path.join(base_path, "locales", "Weight_Matrix.xlsx")
+
+            if not os.path.exists(weight_matrix_path):
+                print(f"⚠️ No se encontró Weight_Matrix.xlsx")
+                return {}
+
+            # Leer hoja FactorCost
+            df = pd.read_excel(weight_matrix_path, sheet_name="FactorCost")
+
+            # Columna 0 = código, Columna 1 = nombre, Columna 2 = factor
+            countries = {}
+            for idx, row in df.iterrows():
+                country_code = row.iloc[0]  # Primera columna = código numérico
+                country_name = row.iloc[1] if len(row) > 1 else f"País {country_code}"
+                country_factor = row.iloc[2] if len(row) > 2 else 1.0
+
+                # Asegurar que el código sea numérico
+                try:
+                    country_code = int(country_code)
+                    country_factor = float(country_factor)
+                    countries[str(country_name)] = (country_code, country_factor)
+                except (ValueError, TypeError):
+                    continue
+
+            print(f"✓ Cargados {len(countries)} países desde Weight_Matrix.xlsx")
+            return countries
+
+        except Exception as e:
+            print(f"⚠️ Error cargando países: {e}")
+            return {}
+
     def _create_project(self):
         name        = self.name_entry.get().strip()
         description = self.description_entry.get("1.0", "end-1c").strip()
         location    = self.location_entry.get().strip()
         objective   = self.objective_entry.get("1.0", "end-1c").strip()
+
+        # Obtener país seleccionado
+        country_name = None
+        country_code = None
+        country_factor = None
+        if hasattr(self, 'country_combobox'):
+            country_name = self.country_combobox.get()
+            country_data = self.countries_dict.get(country_name)
+            if country_data:
+                country_code, country_factor = country_data
 
         if not name:
             messagebox.showerror(get_text("messages.error"), get_text("project_form.name_required"))
@@ -462,7 +546,10 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'name': name,
                     'description': description,
                     'location': location,
-                    'objective': objective
+                    'objective': objective,
+                    'country_code': country_code,
+                    'country_name': country_name,
+                    'country_factor': country_factor
                 })
                 self.result = self.project_data
                 self.destroy()
@@ -481,7 +568,10 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'name': name,
                     'description': description,
                     'location': location,
-                    'objective': objective
+                    'objective': objective,
+                    'country_code': country_code,
+                    'country_name': country_name,
+                    'country_factor': country_factor
                 })
 
                 # Establecer rutas de archivos
@@ -513,6 +603,8 @@ class NewProjectDialog(ctk.CTkToplevel):
             self.name_label.configure(text=get_text("project_form.name_label"))
             self.description_label.configure(text=get_text("project_form.description_label"))
             self.location_label.configure(text=get_text("project_form.location_label"))
+            if hasattr(self, 'country_label'):
+                self.country_label.configure(text=get_text("project_form.country_label"))
             self.objective_label.configure(text=get_text("project_form.objective_label"))
             self.cancel_btn.configure(text=get_text("project_form.cancel"))
             self.create_btn.configure(text=get_text("project_form.create"))

@@ -17,6 +17,7 @@
     "description_label": "Description:",
     "location_label": "Location:",
     "location_placeholder": "Ex: Andean Region, Colombia",
+    "country_label": "Country:",
     "objective_label": "Objective:",
     "cancel": "Cancel",
     "create": "Create Project",
@@ -319,6 +320,23 @@
     "save_success": "Selection saved: {0} NbS selected. Generating report...",
     "save_error": "Error saving selection:",
     "no_project_path": "Project path not found."
+  },
+  "sbn_prioritization": {
+    "title": "Prioritization Options",
+    "financial_title": "Financial Prioritization Options",
+    "financial_description": "Select the cost configuration with which you want to prioritize NbS",
+    "sbn_selection_title": "Nature-based Solutions to Analyze",
+    "select_all": "Select all",
+    "deselect_all": "Deselect all",
+    "next": "Next",
+    "cancel": "Cancel",
+    "not_available": "(Not available in this watershed)",
+    "no_selection_error": "You must select at least one NbS to continue",
+    "financial_options": {
+      "investment": "Investment Costs",
+      "maintenance": "Maintenance Costs",
+      "investment_and_maintenance": "Investment and Maintenance Costs"
+    }
   },
   "sbn_solutions": {
     "1": "Forest Conservation",

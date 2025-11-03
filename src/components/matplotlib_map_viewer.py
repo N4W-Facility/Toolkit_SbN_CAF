@@ -379,7 +379,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
 
             # Apariencia (menos costo de repintado)
             # adjustable='box' fija el tamaño del axes, aspect='equal' mantiene proporciones del mapa
-            self.ax.set_aspect('equal', adjustable='box')
+            self.ax.set_aspect('equal', adjustable='datalim')
             # Evita grid por defecto (caro con imágenes grandes)
             self.ax.grid(False)
 
@@ -610,17 +610,32 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         self.ax.set_ylabel('Latitud', fontsize=9)
 
     def _on_mouse_press(self, event):
-        """Iniciar pan o seleccionar coordenadas"""
         if event.inaxes != self.ax:
             return
         if event.button == 1:
-            self.is_panning = True
-            self.pan_start_x = event.xdata
-            self.pan_start_y = event.ydata
-            self.last_xlim = self.ax.get_xlim()
-            self.last_ylim = self.ax.get_ylim()
+            # cancelar redraw pendiente
+            if getattr(self, "_reload_job", None):
+                self.after_cancel(self._reload_job)
+                self._reload_job = None
 
-            # Modo rápido: nearest durante el pan (menos CPU)
+            self.is_panning = True
+
+            bbox = self.ax.bbox  # posición del axes en píxeles
+            # origen del pan EN COORDENADAS DEL AXES
+            self._pan_start_px = (event.x - bbox.x0, event.y - bbox.y0)
+
+            # Guardar posición inicial para detectar clic vs drag
+            self._click_start_pos = (event.x, event.y)
+            self._moved_distance = 0
+
+            # límites de datos al inicio
+            self._pan_xlim0 = self.ax.get_xlim()
+            self._pan_ylim0 = self.ax.get_ylim()
+
+            # factores datos/px
+            self._pan_x_per_px = (self._pan_xlim0[1] - self._pan_xlim0[0]) / bbox.width
+            self._pan_y_per_px = (self._pan_ylim0[1] - self._pan_ylim0[0]) / bbox.height
+
             if self._basemap_im is not None:
                 try:
                     self._basemap_im.set_interpolation('nearest')
@@ -628,80 +643,98 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                     pass
             self._pan_fast_mode = True
 
-    def _on_mouse_release(self, event):
-        """Finaliza pan/selección y repinta fino (debounced)"""
-        if event.inaxes != self.ax:
-            self.is_panning = False
-            return
-
-        if event.button == 1:
-            if self.is_panning:
-                # Click corto = selección o dibujo según modo activo
-                if (self.pan_start_x is not None and self.pan_start_y is not None and
-                        abs(event.xdata - self.pan_start_x) < 50000 and
-                        abs(event.ydata - self.pan_start_y) < 50000):
-
-                    # Selección de punto (solo si modo activo)
-                    if self.point_selection_mode:
-                        self._select_coordinates(event.xdata, event.ydata)
-
-                    # Dibujo de rectángulo (solo si modo activo)
-                    elif self.rectangle_draw_mode:
-                        self._on_rectangle_click(event.xdata, event.ydata)
-
-                self.is_panning = False
-
-                # Restaurar interpolación bonita
-                if self._basemap_im is not None and self._pan_fast_mode:
-                    try:
-                        self._basemap_im.set_interpolation('bilinear')
-                    except Exception:
-                        pass
-                self._pan_fast_mode = False
-
-                # Tras terminar el pan, dispara recarga (debounced)
-                # NO recargar si estamos en modo dibujo de rectángulo (evita movimiento extraño)
-                if not self.rectangle_draw_mode:
-                    self._schedule_redraw()
-
     def _on_mouse_move(self, event):
-        """Pan suave + throttle; coords con límite de frecuencia"""
         if event.inaxes != self.ax:
+            # Restaurar status cuando sale del mapa
+            if not self.is_panning:
+                self.status_label.configure(
+                    text="✅ Mapa cargado",
+                    text_color=ThemeManager.COLORS['success']
+                )
             return
         try:
             import time
-            x, y = event.xdata, event.ydata
+            import math
             now_ms = int(time.perf_counter() * 1000)
 
-            # Si estamos paneando, reducir tasa de repintado (~60 FPS = 16 ms)
-            if self.is_panning and self.pan_start_x is not None and x is not None and y is not None:
-                if (now_ms - self._last_paint_ms) < 33:  # ajusta a 16–33 ms
+            if self.is_panning and event.x is not None and event.y is not None:
+                if (now_ms - getattr(self, "_last_paint_ms", 0)) < 25:
                     return
 
-                dx = self.pan_start_x - x
-                dy = self.pan_start_y - y
-                new_xlim = (self.last_xlim[0] + dx, self.last_xlim[1] + dx)
-                new_ylim = (self.last_ylim[0] + dy, self.last_ylim[1] + dy)
+                bbox = self.ax.bbox
+                # posición actual del mouse relativa al axes
+                cur_x = event.x - bbox.x0
+                cur_y = event.y - bbox.y0
+
+                dx_px = cur_x - self._pan_start_px[0]
+                dy_px = cur_y - self._pan_start_px[1]
+
+                # Calcular distancia movida desde el inicio
+                if hasattr(self, '_click_start_pos'):
+                    dist = math.sqrt((event.x - self._click_start_pos[0])**2 +
+                                   (event.y - self._click_start_pos[1])**2)
+                    self._moved_distance = max(self._moved_distance, dist)
+
+                dx_data = dx_px * self._pan_x_per_px
+                dy_data = dy_px * self._pan_y_per_px
+
+                # 👇 ojo con el signo en Y (pantalla baja, datos suben)
+                new_xlim = (self._pan_xlim0[0] - dx_data,
+                            self._pan_xlim0[1] - dx_data)
+                # después: invertir el signo
+                new_ylim = (self._pan_ylim0[0] - dy_data,
+                            self._pan_ylim0[1] - dy_data)
+
                 self.ax.set_xlim(new_xlim)
                 self.ax.set_ylim(new_ylim)
-
-                # No toques labels mientras panes (evita reflow Tk)
                 self.canvas.draw_idle()
+
                 self._last_paint_ms = now_ms
                 return
 
-            # Si NO estamos paneando: actualiza coords con throttle (cada 80 ms)
-            if x is not None and y is not None and (now_ms - self._last_coords_ms) > 80:
-                lat, lon = self._web_mercator_to_lat_lon(x, y)
-                if -90 <= lat <= 90 and -180 <= lon <= 180:
-                    self.status_label.configure(
-                        text=f"🎯 {lat:.4f}, {lon:.4f}",
-                        text_color=ThemeManager.COLORS['text_secondary']
-                    )
-                self._last_coords_ms = now_ms
-
+            # Mostrar coordenadas en tiempo real cuando no está haciendo pan
+            if event.xdata and event.ydata and not self.is_panning:
+                try:
+                    lat, lon = self._web_mercator_to_lat_lon(event.xdata, event.ydata)
+                    if -90 <= lat <= 90 and -180 <= lon <= 180:
+                        self.status_label.configure(
+                            text=f"📍 Lat: {lat:.6f}, Lon: {lon:.6f}",
+                            text_color=ThemeManager.COLORS['text_secondary']
+                        )
+                except:
+                    pass
         except Exception:
             pass
+
+    def _on_mouse_release(self, event):
+        if event.button == 1:
+            was_panning = self.is_panning
+            self.is_panning = False
+
+            # Determinar si fue un clic o un drag basado en distancia movida
+            moved_dist = getattr(self, '_moved_distance', 0)
+            is_click = moved_dist < 5  # Menos de 5 píxeles = clic
+
+            if self._basemap_im is not None and self._pan_fast_mode:
+                try:
+                    self._basemap_im.set_interpolation('bilinear')
+                except Exception:
+                    pass
+            self._pan_fast_mode = False
+
+            if was_panning and not self.rectangle_draw_mode and not is_click:
+                self._schedule_redraw()
+
+            # Detectar clic corto (no pan) para modos de selección
+            if event.inaxes == self.ax and event.xdata and event.ydata:
+                # Si fue un clic corto (no drag), procesar modos
+                if is_click:
+                    x, y = event.xdata, event.ydata
+
+                    if self.rectangle_draw_mode:
+                        self._on_rectangle_click(x, y)
+                    elif self.point_selection_mode:
+                        self._select_coordinates(x, y)
 
     def _on_scroll(self, event):
         """Zoom fluido con debounce de recarga de tiles."""
@@ -1071,9 +1104,27 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # Leer el raster
             with rasterio.open(raster_path) as src:
                 # Leer los datos y la transformación
-                raster_data = src.read(1)  # Leer la primera banda
+                # Usar masked=True para respetar valores nodata
+                raster_data = src.read(1, masked=True)  # Leer la primera banda con máscara
                 transform = src.transform
                 crs = src.crs
+                nodata = src.nodata
+
+                # Convertir masked array a array numpy con NaN para valores nodata
+                # Esto permite que matplotlib los trate como transparentes
+                import numpy as np
+                if isinstance(raster_data, np.ma.MaskedArray):
+                    raster_data = np.ma.filled(raster_data, np.nan)
+
+                # Calcular rango de valores válidos (sin NaN)
+                valid_data = raster_data[~np.isnan(raster_data)]
+                if len(valid_data) > 0:
+                    vmin = np.nanmin(raster_data)
+                    vmax = np.nanmax(raster_data)
+                    print(f"✓ Rango de valores válidos: [{vmin:.4f}, {vmax:.4f}]")
+                else:
+                    vmin, vmax = 0, 1
+                    print("⚠️ No hay valores válidos en el raster")
 
                 # Obtener las coordenadas de las esquinas
                 bounds = src.bounds
@@ -1093,15 +1144,17 @@ class MatplotlibMapViewer(ctk.CTkFrame):
 
                 # Usar colormap seleccionado actualmente
                 cmap = self._get_colormap()
-                cmap.set_bad(alpha=0)  # Valores no válidos transparentes
+                cmap.set_bad(alpha=0)  # Valores NaN (nodata) transparentes
 
-                # Mostrar el raster en el mapa
+                # Mostrar el raster en el mapa con rango fijo
                 raster_plot = self.ax.imshow(
                     raster_data,
                     extent=[left, right, bottom, top],
                     alpha=alpha,
                     cmap=cmap,
                     interpolation='bilinear',
+                    vmin=vmin,  # Valor mínimo para el colorbar
+                    vmax=vmax,  # Valor máximo para el colorbar
                     zorder=10  # Asegurar que aparezca sobre el mapa base
                 )
 
@@ -1110,6 +1163,26 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                     self.raster_layers = {}
 
                 self.raster_layers[layer_name] = raster_plot
+
+                # Crear colorbar solo la primera vez
+                # No se remueve ni recrea para evitar reducir el tamaño del mapa
+                try:
+                    if not hasattr(self, 'raster_colorbar') or self.raster_colorbar is None:
+                        # Crear colorbar solo si no existe
+                        self.raster_colorbar = self.fig.colorbar(
+                            raster_plot,
+                            ax=self.ax,
+                            orientation='vertical',
+                            pad=0.02,
+                            shrink=0.7,
+                            label='Valores'
+                        )
+                        print(f"✓ Colorbar creado")
+                    else:
+                        # Colorbar ya existe, se mostrará el rango del último raster cargado
+                        print(f"✓ Colorbar existente (mostrando rango del último raster)")
+                except Exception as e:
+                    print(f"⚠️ Error con colorbar: {e}")
 
                 # Actualizar el canvas
                 self.canvas.draw()
@@ -1129,6 +1202,16 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 # Remover el plot del matplotlib
                 self.raster_layers[layer_name].remove()
                 del self.raster_layers[layer_name]
+
+                # Si no quedan rasters, remover el colorbar
+                if len(self.raster_layers) == 0:
+                    if hasattr(self, 'raster_colorbar') and self.raster_colorbar is not None:
+                        try:
+                            self.raster_colorbar.remove()
+                            self.raster_colorbar = None
+                            print(f"✓ Colorbar removido (no quedan rasters)")
+                        except Exception as e:
+                            print(f"⚠️ Error removiendo colorbar: {e}")
 
                 # Actualizar el canvas
                 self.canvas.draw()
@@ -1240,8 +1323,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 gdf = gdf.to_crs('EPSG:3857')
 
             # Obtener bounds
-            bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
-            left, bottom, right, top = bounds
+            left, bottom, right, top = gdf.total_bounds
             print(f"📐 Bounds originales: left={left:.2f}, right={right:.2f}, bottom={bottom:.2f}, top={top:.2f}")
 
             # Calcular padding
@@ -1250,45 +1332,44 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             padding_x = width * padding_factor
             padding_y = height * padding_factor
 
-            # Aplicar padding inicial
             padded_left = left - padding_x
             padded_right = right + padding_x
             padded_bottom = bottom - padding_y
             padded_top = top + padding_y
 
-            # Asegurar área mínima visible para evitar zoom extremadamente cercano
-            # Límite reducido para permitir zoom cercano a cuencas específicas
-            min_extent = 10000  # metros (10 km mínimo para legibilidad)
+            # Área mínima
+            min_extent = 2000
             current_width = padded_right - padded_left
             current_height = padded_top - padded_bottom
 
-            # Si el área es muy pequeña, expandir ligeramente para alcanzar el mínimo
             if current_width < min_extent:
-                center_x = (padded_left + padded_right) / 2
-                padded_left = center_x - min_extent / 2
-                padded_right = center_x + min_extent / 2
-                print(f"📏 Área muy pequeña en X, expandida a {min_extent/1000:.1f} km")
+                cx = (padded_left + padded_right) / 2
+                padded_left = cx - min_extent / 2
+                padded_right = cx + min_extent / 2
+                print(f"📏 Área muy pequeña en X, expandida a {min_extent / 1000:.1f} km")
 
             if current_height < min_extent:
-                center_y = (padded_bottom + padded_top) / 2
-                padded_bottom = center_y - min_extent / 2
-                padded_top = center_y + min_extent / 2
-                print(f"📏 Área muy pequeña en Y, expandida a {min_extent/1000:.1f} km")
+                cy = (padded_bottom + padded_top) / 2
+                padded_bottom = cy - min_extent / 2
+                padded_top = cy + min_extent / 2
+                print(f"📏 Área muy pequeña en Y, expandida a {min_extent / 1000:.1f} km")
 
-            print(f"📐 Bounds finales: left={padded_left:.2f}, right={padded_right:.2f}, bottom={padded_bottom:.2f}, top={padded_top:.2f}")
+            print(
+                f"📐 Bounds finales: left={padded_left:.2f}, right={padded_right:.2f}, bottom={padded_bottom:.2f}, top={padded_top:.2f}")
 
-            # Establecer límites
+            # 1) pones los límites
             self.ax.set_xlim(padded_left, padded_right)
             self.ax.set_ylim(padded_bottom, padded_top)
 
-            # Redibujar basemap con los nuevos límites (igual que en _set_coordinates_and_center)
-            xlim = (padded_left, padded_right)
-            ylim = (padded_bottom, padded_top)
-            print(f"🗺️ Redibujando basemap con nuevos límites...")
-            self._draw_basemap(xlim=xlim, ylim=ylim, force=True)
+            # 2) 👇 aquí el cambio: pregunta cuáles quedaron DE VERDAD
+            final_xlim = self.ax.get_xlim()
+            final_ylim = self.ax.get_ylim()
 
-            # Actualizar canvas
-            print(f"🔄 Actualizando canvas después del zoom...")
+            # 3) dibuja el basemap con esos reales
+            print("🗺️ Redibujando basemap con límites finales del axes...")
+            self._draw_basemap(xlim=final_xlim, ylim=final_ylim, force=True)
+
+            # 4) refresca
             self.canvas.draw_idle()
 
             print(f"✅ Zoom aplicado a vector: {os.path.basename(vector_path)}")
@@ -1324,10 +1405,10 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                     left, bottom, right, top = bounds.left, bounds.bottom, bounds.right, bounds.top
 
                 # Calcular padding para que el raster no esté pegado a los bordes
-                width = right - left
-                height = top - bottom
-                padding_x = width * padding_factor
-                padding_y = height * padding_factor
+                width       = right - left
+                height      = top - bottom
+                padding_x   = width * padding_factor
+                padding_y   = height * padding_factor
 
                 # Aplicar padding
                 padded_left = left - padding_x

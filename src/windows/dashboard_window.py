@@ -11,6 +11,7 @@ from .water_security_window import WaterSecurityWindow
 from .other_challenges_window import OtherChallengesWindow
 from .sbn_window import SbNWindow
 from .sbn_selection_window import SbNSelectionWindow
+from .sbn_prioritization_config_dialog import SbnPrioritizationConfigDialog
 from .startup_window import NewProjectDialog
 from ..reports.report_generator import ReportGenerator
 
@@ -670,6 +671,21 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps['other_challenges']['completed'] = False
             self._update_step_status('other_challenges', False, get_text("workflow.pending"))
 
+        # Paso 5: SbN - verificar si existe SbN_Prioritization.csv
+        sbn_csv = project_folder / "SbN_Prioritization.csv"
+        if sbn_csv.exists():
+            # Si el archivo existe, marcar como completado
+            if not self.workflow_steps['sbn']['completed']:
+                self.workflow_steps['sbn']['completed'] = True
+                self._update_step_status('sbn', True, get_text("workflow.completed"))
+        else:
+            # Si no existe el archivo pero el paso está marcado como completado (en workflow_progress),
+            # mantener ese estado (puede ser que aún no se ha guardado el archivo pero ya se abrió la ventana)
+            if self.workflow_steps['sbn']['completed']:
+                self._update_step_status('sbn', True, get_text("workflow.completed"))
+            else:
+                self._update_step_status('sbn', False, get_text("workflow.pending"))
+
         # Actualizar UI del workflow
         self._update_workflow_ui()
 
@@ -996,17 +1012,97 @@ class DashboardWindow(ctk.CTk):
             return
 
         try:
+            # Paso 1: Abrir ventana de configuración de priorización
+            config_dialog = SbnPrioritizationConfigDialog(
+                parent=self,
+                project_data=self.project_data
+            )
+            self.wait_window(config_dialog)
+
+            # Si el usuario canceló, no continuar
+            if not config_dialog.result:
+                print("⭕ Usuario canceló la configuración de SbN")
+                return
+
+            # Guardar configuración en project_data
+            if 'sbn_analysis' not in self.project_data:
+                self.project_data['sbn_analysis'] = {}
+
+            if 'prioritization_config' not in self.project_data['sbn_analysis']:
+                self.project_data['sbn_analysis']['prioritization_config'] = {}
+
+            self.project_data['sbn_analysis']['prioritization_config'] = config_dialog.result
+
+            # Guardar cambios en project.json
+            self._save_project()
+
+            print(f"✓ Configuración guardada: {len(config_dialog.result['selected_sbn_codes'])} SbN, " +
+                  f"opción financiera: {config_dialog.result['financial_option']}")
+
+            # Paso 2: Procesar costos ajustados por país
+            from ..core.cost_processor import CostProcessor
+
+            project_folder = self.project_data.get('files', {}).get('project_folder')
+            country_code = self.project_data.get('project_info', {}).get('country_code')
+            financial_option = config_dialog.result['financial_option']
+
+            if project_folder:
+                print("📊 Procesando costos ajustados por país...")
+                processor = CostProcessor(project_folder, country_code)
+                success = processor.process_all(financial_option)
+
+                if not success:
+                    print("⚠️ Advertencia: El procesamiento de costos tuvo errores")
+                    messagebox.showwarning(
+                        get_text("messages.warning"),
+                        "El ajuste de costos por país tuvo errores. Se continuará con los datos disponibles."
+                    )
+
+            # Paso 3: Abrir ventana de SbN con la configuración
             window = SbNWindow(
                 parent=self,
                 project_data=self.project_data,
                 project_path=self.current_project_path,
+                window_manager=self,
                 language=get_current_global_language()
             )
+
+            # Habilitar botón de reporte apenas se abre la ventana de SbN
+            print("🔍 DEBUG: Habilitando botón de reporte...")
+            print(f"🔍 DEBUG: workflow_buttons tiene 'reporte'? {'reporte' in self.workflow_buttons}")
+
+            self.workflow_steps['reporte']['enabled'] = True
+
+            if 'reporte' in self.workflow_buttons:
+                reporte_btn = self.workflow_buttons['reporte']['button']
+                reporte_btn.configure(
+                    state="normal",
+                    fg_color=ThemeManager.COLORS['accent_primary']
+                )
+                # Forzar actualización visual
+                reporte_btn.update_idletasks()
+                self.update_idletasks()
+                print("✓ Botón de reporte habilitado y actualizado")
+            else:
+                print("❌ ERROR: 'reporte' no está en workflow_buttons")
+                print(f"🔍 DEBUG: Keys en workflow_buttons: {list(self.workflow_buttons.keys())}")
+
             self.wait_window(window)
+
+            # Marcar SbN como completado después de cerrar la ventana
+            self.workflow_steps['sbn']['completed'] = True
+            self._update_step_status('sbn', True, get_text("workflow.completed"))
+            print("✓ Paso SbN marcado como completado")
+
             # Actualizar workflow después de cerrar
+            # _update_workflow_status ya actualiza los colores según el estado
             self._update_workflow_status()
+            # _save_project guardará automáticamente workflow_progress = self.workflow_steps
             self._save_project()
+
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             messagebox.showerror(
                 get_text("messages.error"),
                 f"Error al abrir la ventana de SbN: {str(e)}"

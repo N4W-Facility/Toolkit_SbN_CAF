@@ -9,10 +9,11 @@ from ..utils.sbn_prioritization import SbNPrioritization
 
 class SbNWindow(ctk.CTkToplevel):
 
-    def __init__(self, parent, project_data=None, project_path=None, language=None):
+    def __init__(self, parent, project_data=None, project_path=None, window_manager=None, language=None):
         super().__init__(parent)
 
         self.parent = parent
+        self.window_manager = window_manager
         self.project_data = project_data
         self.project_path = project_path
 
@@ -32,8 +33,8 @@ class SbNWindow(ctk.CTkToplevel):
         self.map_viewer = None
         self.loaded_rasters = {}  # {sbn_id: raster_layer}
 
-        # Lista de SbN con iconos apropiados
-        self.sbn_list = [
+        # Lista completa de SbN con iconos apropiados
+        all_sbn_list = [
             {'id': 1, 'icon': '🌲'},
             {'id': 2, 'icon': '🌱'},
             {'id': 3, 'icon': '🌿'},
@@ -56,6 +57,17 @@ class SbNWindow(ctk.CTkToplevel):
             {'id': 20, 'icon': '🌾'},
             {'id': 21, 'icon': '💧'}
         ]
+
+        # Filtrar lista según configuración de priorización
+        selected_sbn_codes = self._get_selected_sbn_from_config()
+        if selected_sbn_codes:
+            # Solo mostrar SbN seleccionadas en la configuración
+            self.sbn_list = [sbn for sbn in all_sbn_list if sbn['id'] in selected_sbn_codes]
+            print(f"✓ Mostrando {len(self.sbn_list)}/{len(all_sbn_list)} SbN según configuración")
+        else:
+            # Si no hay configuración, mostrar todas (comportamiento por defecto)
+            self.sbn_list = all_sbn_list
+            print(f"⚠️ No hay configuración de SbN, mostrando todas las 21 SbN")
 
         # Referencias a widgets para actualización de texto
         self.widget_refs = {}
@@ -236,6 +248,17 @@ class SbNWindow(ctk.CTkToplevel):
         )
         scroll_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
+        # self.sbn_priorities es tu OrderedDict
+        prio = self.sbn_priorities
+
+        self.sbn_list = sorted(
+            self.sbn_list,
+            key=lambda item: (
+                prio.get(item['id'], {}).get('priority_rank') is None,  # los sin prioridad al final
+                prio.get(item['id'], {}).get('priority_rank', 9999)  # y dentro, por rank
+            )
+        )
+
         # Crear checkboxes para cada SbN
         for sbn in self.sbn_list:
             self._create_sbn_checkbox(scroll_frame, sbn)
@@ -255,10 +278,10 @@ class SbNWindow(ctk.CTkToplevel):
         if priority_info and priority_info.get('is_enabled') and priority_info.get('priority_rank'):
             # SbN habilitada con ranking
             priority_text = get_text('sbn.priority_label').format(priority_info['priority_rank'])
-            checkbox_text = f"{sbn['icon']} {sbn_name} {priority_text}"
+            checkbox_text = f"{sbn_name} {sbn['icon']} {priority_text}"
         else:
             # SbN sin prioridad o deshabilitada
-            checkbox_text = f"{sbn['icon']} {sbn_name}"
+            checkbox_text = f"{sbn_name} {sbn['icon']}"
 
         # Checkbox
         checkbox = ctk.CTkCheckBox(
@@ -438,11 +461,22 @@ class SbNWindow(ctk.CTkToplevel):
         self.widget_refs['zoom_all_button'] = zoom_all_button
 
     def _save_selection(self):
-        """Guardar selección actual de SbN"""
-        # TODO: Implementar guardado de selección
+        """Guardar selección actual de SbN y actualizar workflow"""
         selected_sbn = [sbn_id for sbn_id, checkbox in self.sbn_checkboxes.items() if checkbox.get()]
         print(f"SbN seleccionadas: {selected_sbn}")
-        messagebox.showinfo("Guardado", get_text("sbn.selection_saved").format(len(selected_sbn)))
+
+        # Actualizar workflow en el dashboard
+        if self.window_manager:
+            # Marcar el paso de SbN como completado con datos de selección
+            self.window_manager.update_workflow_step('sbn', True, selected_sbn)
+
+        messagebox.showinfo(
+            get_text("messages.success"),
+            get_text("sbn.selection_saved").format(len(selected_sbn))
+        )
+
+        # Cerrar la ventana
+        self._on_closing()
 
     def _zoom_to_all_rasters(self):
         """Hacer zoom para mostrar todas las SbN cargadas con padding extra"""
@@ -464,6 +498,28 @@ class SbNWindow(ctk.CTkToplevel):
                 get_text("messages.error"),
                 get_text("sbn.zoom_error")
             )
+
+    def _get_selected_sbn_from_config(self):
+        """
+        Obtener lista de SbN seleccionadas desde la configuración de priorización.
+        Retorna lista de IDs de SbN o None si no hay configuración.
+        """
+        try:
+            if not self.project_data:
+                return None
+
+            config = self.project_data.get('sbn_analysis', {}).get('prioritization_config', {})
+            selected_codes = config.get('selected_sbn_codes', [])
+
+            if selected_codes:
+                print(f"✓ Configuración cargada: {len(selected_codes)} SbN seleccionadas")
+                return selected_codes
+            else:
+                return None
+
+        except Exception as e:
+            print(f"⚠️ Error leyendo configuración de SbN: {e}")
+            return None
 
     def _update_texts(self):
         """Actualizar todos los textos según el idioma actual"""

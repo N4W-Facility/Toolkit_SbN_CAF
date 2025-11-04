@@ -75,8 +75,15 @@ class ReportGenerator:
             with open(ind_path, 'r', encoding='utf-8') as f:
                 self.indicators_data = json.load(f)
 
-        # Taxonomía CAF
-        tax_path = get_resource_path(os.path.join('locales', 'CAF_taxonomy_tree.json'))
+        # Taxonomía CAF (según idioma)
+        tax_filename = f'CAF_taxonomy_tree_{self.language}.json'
+        tax_path = get_resource_path(os.path.join('locales', tax_filename))
+
+        # Si no existe el archivo del idioma, usar español como fallback
+        if not os.path.exists(tax_path):
+            tax_filename = 'CAF_taxonomy_tree_es.json'
+            tax_path = get_resource_path(os.path.join('locales', tax_filename))
+
         if os.path.exists(tax_path):
             with open(tax_path, 'r', encoding='utf-8') as f:
                 self.taxonomy_tree = json.load(f)

@@ -1,19 +1,19 @@
 {
-  "B.2. [Protección y restauración de la biodiversidad y los ecosistemas]": {
-    "B.2.1. [Conservación y restauración de ecosistemas estratégicos terrestres.]": {
-      "B.2.1.6. [Restauración de suelos degradados y regeneración de la fertilidad del suelo.]": [
+  "B.2. Protección y restauración de la biodiversidad y los ecosistemas": {
+    "B.2.1. Conservación y restauración de ecosistemas estratégicos terrestres.": {
+      "B.2.1.6. Restauración de suelos degradados y regeneración de la fertilidad del suelo.": [
         {
           "id": 2,
           "SbN": "Restauración pasiva"
         }
       ],
-      "B.2.1.1. [Conservación de bosques y otros ecosistemas estratégicos terrestres.]": [
+      "B.2.1.1. Conservación de bosques y otros ecosistemas estratégicos terrestres.": [
         {
           "id": 1,
           "SbN": "Conservación del bosque"
         }
       ],
-      "B.2.1.2. [Recuperación de ecosistemas terrestres degradados por actividades productivas.]": [
+      "B.2.1.2. Recuperación de ecosistemas terrestres degradados por actividades productivas.": [
         {
           "id": 4,
           "SbN": "Restauración activa - Nucleación"
@@ -23,15 +23,15 @@
           "SbN": "Restauración activa - enriquecimiento"
         }
       ],
-      "B.2.1.4. [Reforestación o arborización urbana para mejorar calidad del aire y regular temperatura.]": [
+      "B.2.1.4. Reforestación o arborización urbana para mejorar calidad del aire y regular temperatura.": [
         {
           "id": null,
           "SbN": "nan"
         }
       ]
     },
-    "B.2.2. [Agricultura, forestal y otros usos sostenibles del suelo.]": {
-      "B.2.2.3. [Usos mixtos agroforestales y producción pecuaria sostenible.]": [
+    "B.2.2. Agricultura, forestal y otros usos sostenibles del suelo.": {
+      "B.2.2.3. Usos mixtos agroforestales y producción pecuaria sostenible.": [
         {
           "id": 20,
           "SbN": "Agroforestería"
@@ -39,9 +39,9 @@
       ]
     }
   },
-  "A.3. [Adaptación basada en ecosistemas]": {
-    "A.3.1. [Uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático.]": {
-      "A.3.1.9. [Otras actividades con uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático. Economía azul sostenible: Clasifica si trata de biodiversidad o servicios ecosistémicos marino costeros.]": [
+  "A.3. Adaptación basada en ecosistemas": {
+    "A.3.1. Uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático.": {
+      "A.3.1.9. Otras actividades con uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático. Economía azul sostenible: Clasifica si trata de biodiversidad o servicios ecosistémicos marino costeros.": [
         {
           "id": null,
           "SbN": "nan"
@@ -83,7 +83,7 @@
           "SbN": "nan"
         }
       ],
-      "A.3.1.3. [Restauración y gestión integral de cuencas y subcuencas hidrográficas. Economía azul sostenible: Clasifica cuando genere un impacto positivo sobre la zona marino-costera.]": [
+      "A.3.1.3. Restauración y gestión integral de cuencas y subcuencas hidrográficas. Economía azul sostenible: Clasifica cuando genere un impacto positivo sobre la zona marino-costera.": [
         {
           "id": null,
           "SbN": "nan"
@@ -93,7 +93,7 @@
           "SbN": "nan"
         }
       ],
-      "A.3.1.4. [Recuperación y/o reforestación de bosques urbanos que cumplen funciones vitales para la sostenibilidad y contribuyen a la mitigación del riesgo climático.]": [
+      "A.3.1.4. Recuperación y/o reforestación de bosques urbanos que cumplen funciones vitales para la sostenibilidad y contribuyen a la mitigación del riesgo climático.": [
         {
           "id": 14,
           "SbN": "Espacios verdes"
@@ -103,7 +103,7 @@
           "SbN": "Silvicultura de cuenca urbana"
         }
       ],
-      "A.3.1.5. [Jardines filtrantes en cuerpos de agua urbanos para reducir el riesgo de inundaciones.]": [
+      "A.3.1.5. Jardines filtrantes en cuerpos de agua urbanos para reducir el riesgo de inundaciones.": [
         {
           "id": 12,
           "SbN": "Jardines de lluvia"
@@ -111,9 +111,9 @@
       ]
     }
   },
-  "A.2. [Agricultura, uso de la tierra, actividad pecuaria, pesca, maricultura o acuicultura]": {
-    "A.2.1. [Medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental.]": {
-      "A.2.1.7. [Otras medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental. Economía azul sostenible: Clasifica cuando se trate de otras medidas que contribuyan a mantener o mejorar de manera sostenible la productividad de la pesca marina o maricultura sostenible.]": [
+  "A.2. Agricultura, uso de la tierra, actividad pecuaria, pesca, maricultura o acuicultura": {
+    "A.2.1. Medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental.": {
+      "A.2.1.7. Otras medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental. Economía azul sostenible: Clasifica cuando se trate de otras medidas que contribuyan a mantener o mejorar de manera sostenible la productividad de la pesca marina o maricultura sostenible.": [
         {
           "id": null,
           "SbN": "nan"
@@ -121,9 +121,9 @@
       ]
     }
   },
-  "M.4. [Agricultura, silvicultura y uso de la tierra y pesca.]": {
-    "M.4.1. [Agricultura: eficiencia energética, secuestro de carbono, reducción de emisiones de GEI]": {
-      "M.4.1.2. [Proyectos agrícolas que contribuyan a aumentar los stocks de carbono en el suelo o a evitar la pérdida de carbono del suelo a través de medidas de control de la erosión.]": [
+  "M.4. Agricultura, silvicultura y uso de la tierra y pesca.": {
+    "M.4.1. Agricultura: eficiencia energética, secuestro de carbono, reducción de emisiones de GEI": {
+      "M.4.1.2. Proyectos agrícolas que contribuyan a aumentar los stocks de carbono en el suelo o a evitar la pérdida de carbono del suelo a través de medidas de control de la erosión.": [
         {
           "id": null,
           "SbN": "nan"
@@ -131,9 +131,9 @@
       ]
     }
   },
-  "B.1. [Sostenibilidad y protección de los recursos hídricos]": {
-    "B.1.1. [Conservación del agua.]": {
-      "B.1.1.1. [Restauración y gestión integral de cuencas, subcuencas hidrográficas.]": [
+  "B.1. Sostenibilidad y protección de los recursos hídricos": {
+    "B.1.1. Conservación del agua.": {
+      "B.1.1.1. Restauración y gestión integral de cuencas, subcuencas hidrográficas.": [
         {
           "id": 5,
           "SbN": "Restauración de vegetación riparia"
@@ -143,15 +143,15 @@
           "SbN": "Renaturalización de cuerpos de agua"
         }
       ],
-      "B.1.1.2. [Inversión en remediación, recuperación y/o descontaminación de cuerpos de agua superficiales o subterráneos. Economía azul sostenible: Clasifica cuando la acción se realiza en el mar, lagunas costeras, ciénagas o estuarios.]": [
+      "B.1.1.2. Inversión en remediación, recuperación y/o descontaminación de cuerpos de agua superficiales o subterráneos. Economía azul sostenible: Clasifica cuando la acción se realiza en el mar, lagunas costeras, ciénagas o estuarios.": [
         {
           "id": null,
           "SbN": "nan"
         }
       ]
     },
-    "B.1.3. [Aguas residuales.]": {
-      "B.1.3.3. [Sistemas drenajes sostenibles, como jardines filtrantes en cuerpos de agua.]": [
+    "B.1.3. Aguas residuales.": {
+      "B.1.3.3. Sistemas drenajes sostenibles, como jardines filtrantes en cuerpos de agua.": [
         {
           "id": 8,
           "SbN": "Área de filtro verde"
@@ -185,13 +185,13 @@
           "SbN": "nan"
         }
       ],
-      "B.1.3.1. [Plantas de tratamiento de aguas residuales que garanticen la salud de ecosistemas del cuerpo de agua receptor. Economía azul sostenible: Clasifica si contribuye a prevenir o mitigar la contaminación marina.]": [
+      "B.1.3.1. Plantas de tratamiento de aguas residuales que garanticen la salud de ecosistemas del cuerpo de agua receptor. Economía azul sostenible: Clasifica si contribuye a prevenir o mitigar la contaminación marina.": [
         {
           "id": 11,
           "SbN": "Humedales artificiales"
         }
       ],
-      "B.1.3.4. [Innovación tecnológica en el ciclo de aguas residuales: reúso, recarga de acuíferos.]": [
+      "B.1.3.4. Innovación tecnológica en el ciclo de aguas residuales: reúso, recarga de acuíferos.": [
         {
           "id": null,
           "SbN": "nan"
@@ -199,9 +199,9 @@
       ]
     }
   },
-  "A.4. [Infraestructura resiliente para la adaptación de la población frente a eventos adversos del cambio climático]": {
-    "A.4.2. [Construcción, mantenimiento y rehabilitación de infraestructura para fortalecer la resiliencia de poblaciones continentales.]": {
-      "A.4.2.1. [Infraestructura verde o gris para fortalecer la resiliencia de poblaciones continentales.]": [
+  "A.4. Infraestructura resiliente para la adaptación de la población frente a eventos adversos del cambio climático": {
+    "A.4.2. Construcción, mantenimiento y rehabilitación de infraestructura para fortalecer la resiliencia de poblaciones continentales.": {
+      "A.4.2.1. Infraestructura verde o gris para fortalecer la resiliencia de poblaciones continentales.": [
         {
           "id": null,
           "SbN": "nan"
@@ -253,21 +253,21 @@
       ]
     }
   },
-  "A.1. [Gestión y Suministro de Agua y Saneamiento]": {
-    "A.1.1. [Medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.]": {
-      "A.1.1.2. [Instalación de equipos de captura y almacenamiento de aguas pluviales domésticas.]": [
+  "A.1. Gestión y Suministro de Agua y Saneamiento": {
+    "A.1.1. Medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.": {
+      "A.1.1.2. Instalación de equipos de captura y almacenamiento de aguas pluviales domésticas.": [
         {
           "id": 21,
           "SbN": "Cosecha de agua"
         }
       ],
-      "A.1.1.4. [Actividades de dotación de agua para riego de la producción agrícola y el fortalecimiento de la seguridad alimentaria y nutricional (SAN).]": [
+      "A.1.1.4. Actividades de dotación de agua para riego de la producción agrícola y el fortalecimiento de la seguridad alimentaria y nutricional (SAN).": [
         {
           "id": null,
           "SbN": "nan"
         }
       ],
-      "A.1.1.7. [Otras medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.]": [
+      "A.1.1.7. Otras medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.": [
         {
           "id": null,
           "SbN": "nan"
@@ -275,9 +275,9 @@
       ]
     }
   },
-  "M.8. [Eficiencia energética de uso final en edificaciones o equipos.]": {
-    "M.8.1. [Eficiencia energética, energías renovables, reducción de emisiones de CO2e y sumideros de carbono en edificios y espacios públicos.]": {
-      "M.8.1.1. [Medidas que reduzcan el consumo neto de energía, el consumo de recursos o las emisiones de CO2e, o que aumenten los sumideros de carbono de origen vegetal en edificios de zonas nuevas, existentes o terrenos asociados.]": [
+  "M.8. Eficiencia energética de uso final en edificaciones o equipos.": {
+    "M.8.1. Eficiencia energética, energías renovables, reducción de emisiones de CO2e y sumideros de carbono en edificios y espacios públicos.": {
+      "M.8.1.1. Medidas que reduzcan el consumo neto de energía, el consumo de recursos o las emisiones de CO2e, o que aumenten los sumideros de carbono de origen vegetal en edificios de zonas nuevas, existentes o terrenos asociados.": [
         {
           "id": null,
           "SbN": "nan"

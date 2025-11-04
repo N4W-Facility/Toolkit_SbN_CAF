@@ -276,11 +276,16 @@ class DashboardWindow(ctk.CTk):
         # Campos de información del proyecto
         self.info_labels = {}
         self.info_field_labels = {}  # Para guardar los labels de los nombres de campo
+        # info_fields = [
+        #     ("name", "dashboard.name"),
+        #     ("description", "dashboard.description"),
+        #     ("location", "dashboard.location"),
+        #     ("objective", "dashboard.objective")
+        # ]
         info_fields = [
             ("name", "dashboard.name"),
-            ("description", "dashboard.description"),
-            ("location", "dashboard.location"),
-            ("objective", "dashboard.objective")
+            ("country_name", "dashboard.country"),
+            ("location", "dashboard.location")
         ]
 
         for field_name, translation_key in info_fields:
@@ -292,7 +297,7 @@ class DashboardWindow(ctk.CTk):
                 text_color=ThemeManager.COLORS['accent_primary'],
                 anchor="w"
             )
-            field_label.pack(fill="x", pady=(10, 5))
+            field_label.pack(fill="x", pady=(5, 5))
             self.info_field_labels[field_name] = field_label  # Guardar referencia
 
             # Valor del campo
@@ -1117,18 +1122,8 @@ class DashboardWindow(ctk.CTk):
             )
             return
 
-        # Abrir ventana de selección de SbN
-        try:
-            SbNSelectionWindow(
-                self,
-                project_path=self.current_project_path,
-                callback=self._generate_report
-            )
-        except Exception as e:
-            messagebox.showerror(
-                get_text("messages.error"),
-                f"Error al abrir selección de SbN: {str(e)}"
-            )
+        # Generar reporte directamente (priorización ya establecida en sbn_prioritization_config_dialog)
+        self._generate_report()
 
     def _generate_report(self):
         """Generar el reporte PDF"""
@@ -1257,9 +1252,8 @@ class DashboardWindow(ctk.CTk):
             if hasattr(self, 'info_field_labels') and self.info_field_labels:
                 field_translations = {
                     'name': get_text("dashboard.name"),
-                    'description': get_text("dashboard.description"),
+                    'country_name': get_text("dashboard.country"),
                     'location': get_text("dashboard.location"),
-                    'objective': get_text("dashboard.objective")
                 }
                 # Actualizar las etiquetas de los campos
                 for field_name, label in self.info_field_labels.items():

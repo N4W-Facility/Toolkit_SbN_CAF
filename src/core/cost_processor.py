@@ -280,9 +280,9 @@ class CostProcessor:
             df_o_original = pd.read_excel(self.weight_matrix_path, sheet_name="Desafios_Otros")
             print(f"✓ Matriz cargada: {df_o_original.shape}")
 
-            df_o_adjusted = self._apply_cost_matrix(df_o_original, cost_cat_dict, df_matrix)
-            df_o_adjusted.to_csv(self.weight_cost_df_o_csv, index=False, encoding='utf-8-sig')
-            print(f"✓ Matriz ajustada guardada: {self.weight_cost_df_o_csv}")
+            # df_o_adjusted = self._apply_cost_matrix(df_o_original, cost_cat_dict, df_matrix)
+            df_o_original.to_csv(self.weight_cost_df_o_csv, index=False, encoding='utf-8-sig')
+            print(f"✓ Matriz original guardada (sin ajuste de costos): {self.weight_cost_df_o_csv}")
 
             return True
 

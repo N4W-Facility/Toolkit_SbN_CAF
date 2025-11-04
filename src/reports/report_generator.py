@@ -19,7 +19,7 @@ Estructura de datos esperada (como en tu proyecto original):
   - utilities/indicators/<lang>.json -> indicadores por SbN
   - locales/CAF_taxonomy_tree.json   -> taxonomía
   - project.json                     -> info de proyecto (name, objective, ...)
-  - SbN_Select.csv                   -> columnas: sbn_id, selected
+  - SbN_Prioritization.csv           -> columnas: ID, Prioridad, order (solo muestra order > 0)
   - DF_WS*.csv                       -> seguridad hídrica
   - *Barriers*.csv                   -> barreras
   - DF_OC* / Otros / DF_Otros*.csv   -> otros desafíos (nombres alternativos)
@@ -36,6 +36,7 @@ from typing import List, Sequence, Optional, Dict, Any, Tuple
 
 from fpdf import FPDF
 from src.utils.resource_path import get_resource_path
+from src.reports.sbn_sheets_generator import SbnSheetsGenerator
 
 print('##### Usa este codigo #####')
 # ============================================================
@@ -214,6 +215,7 @@ class ReportGenerator:
         self.language = language
         self.project_data: Dict[str, Any] = {}
         self.selected_sbn: List[int] = []
+        self.sbn_orders: Dict[int, int] = {}  # Mapeo de sbn_id -> order (prioridad)
         self.water_security_data: List[Dict[str, Any]] = []
         self.barriers_data: List[Dict[str, Any]] = []
         self.other_challenges_data: List[Dict[str, Any]] = []
@@ -223,6 +225,8 @@ class ReportGenerator:
         self.water_challenges_texts: Dict[str, str] = {}
         self.other_challenges_texts: Dict[str, str] = {}
         self.barrier_groups_texts: Dict[str, str] = {}
+        self.barriers_translations: Dict[str, Dict[str, str]] = {}
+        self.barrier_values_texts: Dict[str, str] = {}
         self.sbn_solutions: Dict[str, str] = {}
 
     # ------------------ Carga de datos ------------------
@@ -239,43 +243,83 @@ class ReportGenerator:
                 self.barrier_groups_texts = locale.get('barriers', {}).get('groups', {})
                 self.sbn_solutions = locale.get('sbn_solutions', {})
 
+                # Crear mapeo de códigos de valor de barreras a textos
+                barriers_info = locale.get('barriers', {})
+                value_labels = barriers_info.get('value_labels', {})
+                value_labels_code = barriers_info.get('value_labels_code', {})
+
+                # Invertir value_labels_code para obtener {código: clave}
+                for key, code in value_labels_code.items():
+                    if key in value_labels:
+                        self.barrier_values_texts[code] = value_labels[key]
+
         # project.json
         project_json = os.path.join(self.project_path, 'project.json')
         if os.path.exists(project_json):
             with open(project_json, 'r', encoding='utf-8') as f:
                 self.project_data = json.load(f)
 
-        # SbN seleccionadas
-        sbn_csv = os.path.join(self.project_path, 'SbN_Select.csv')
-        if os.path.exists(sbn_csv):
+        # SbN priorizadas (cargadas desde SbN_Prioritization.csv con columna 'order')
+        prioritization_csv = os.path.join(self.project_path, 'SbN_Prioritization.csv')
+        if os.path.exists(prioritization_csv):
             try:
-                with open(sbn_csv, 'r', encoding='utf-8') as f:
+                with open(prioritization_csv, 'r', encoding='utf-8-sig') as f:
                     reader = csv.DictReader(f)
-                    self.selected_sbn = [int(row['sbn_id']) for row in reader if str(row.get('selected', '')).lower() == 'true']
-            except Exception:
-                # si falla lectura, crea CSV por defecto
-                self._create_default_sbn_csv()
+                    # Cargar solo SbN con order > 0, mantener el orden
+                    sbn_data = [(int(row['ID']), int(row.get('order', 0)))
+                                for row in reader
+                                if int(row.get('order', 0)) > 0]
+                    # Ordenar por order ascendente (1, 2, 3...)
+                    sbn_data.sort(key=lambda x: x[1])
+                    self.selected_sbn = [sbn_id for sbn_id, _ in sbn_data]
+                    self.sbn_orders = {sbn_id: order for sbn_id, order in sbn_data}
+            except Exception as e:
+                print(f"Error loading prioritization: {e}")
+                self.selected_sbn = []
+                self.sbn_orders = {}
         else:
-            self._create_default_sbn_csv()
+            self.selected_sbn = []
+            self.sbn_orders = {}
 
         # Seguridad hídrica
         water_csv = self._find_csv('DF_WS')
         if water_csv and os.path.exists(water_csv):
-            with open(water_csv, 'r', encoding='utf-8') as f:
+            with open(water_csv, 'r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 self.water_security_data = list(reader)
 
         # Barreras
         barriers_csv = self._find_csv('Barriers')
         if barriers_csv and os.path.exists(barriers_csv):
-            with open(barriers_csv, 'r', encoding='utf-8') as f:
+            with open(barriers_csv, 'r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 self.barriers_data = list(reader)
+
+        # Nombres de columnas del CSV de barreras según idioma
+        self.barrier_col_code = self.texts.get('barriers', {}).get('csv_headers', {}).get('barrier_code', 'Codigo_Barrera')
+        self.barrier_col_value = self.texts.get('barriers', {}).get('csv_headers', {}).get('numeric_value', 'Valor_Numerico')
+        self.barrier_col_group_code = self.texts.get('barriers', {}).get('csv_headers', {}).get('group_code', 'Codigo_Grupo')
+        self.barrier_col_group_enabled = self.texts.get('barriers', {}).get('csv_headers', {}).get('group_enabled', 'Grupo_Habilitado')
+
+        # Traducciones de barreras
+        barriers_locale_path = get_resource_path(os.path.join('locales', f'Barries_{self.language}.csv'))
+        if os.path.exists(barriers_locale_path):
+            with open(barriers_locale_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    code = row.get('Codigo_Barrera', '')
+                    if code:
+                        self.barriers_translations[code] = {
+                            'descripcion': row.get('Descripcion', ''),
+                            'subcategoria': row.get('Subcategoria', ''),
+                            'grupo': row.get('Grupo', ''),
+                            'codigo_grupo': row.get('Codigo_Grupo', '')
+                        }
 
         # Otros desafíos (nombres alternativos para mayor robustez)
         other_csv = self._find_csv('D_O')
         if other_csv and os.path.exists(other_csv):
-            with open(other_csv, 'r', encoding='utf-8') as f:
+            with open(other_csv, 'r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 self.other_challenges_data = list(reader)
 
@@ -285,8 +329,15 @@ class ReportGenerator:
             with open(ind_path, 'r', encoding='utf-8') as f:
                 self.indicators_data = json.load(f)
 
-        # Taxonomía CAF
-        tax_path = get_resource_path(os.path.join('locales', 'CAF_taxonomy_tree.json'))
+        # Taxonomía CAF (según idioma)
+        tax_filename = f'CAF_taxonomy_tree_{self.language}.json'
+        tax_path = get_resource_path(os.path.join('locales', tax_filename))
+
+        # Si no existe el archivo del idioma, usar español como fallback
+        if not os.path.exists(tax_path):
+            tax_filename = 'CAF_taxonomy_tree_es.json'
+            tax_path = get_resource_path(os.path.join('locales', tax_filename))
+
         if os.path.exists(tax_path):
             with open(tax_path, 'r', encoding='utf-8') as f:
                 self.taxonomy_tree = json.load(f)
@@ -298,17 +349,6 @@ class ReportGenerator:
             if matches:
                 return matches[0]
         return None
-
-    def _create_default_sbn_csv(self):
-        csv_path = os.path.join(self.project_path, 'SbN_Select.csv')
-        try:
-            with open(csv_path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['sbn_id', 'selected'])
-                for i in range(1, 22):
-                    writer.writerow([i, False])
-        except Exception:
-            pass
 
     # ------------------ Render helpers ------------------
     def _auto_map_path(self) -> Optional[str]:
@@ -337,7 +377,17 @@ class ReportGenerator:
         return out
 
     # ------------------ Generación de PDF ------------------
-    def generate_pdf(self, output_path: str) -> bool:
+    def generate_pdf(self, output_path: str, generate_sbn_sheets: bool = True) -> bool:
+        """
+        Generar reporte PDF principal.
+
+        Args:
+            output_path: Ruta del PDF de salida
+            generate_sbn_sheets: Si es True, genera fichas técnicas de SbN en PDF
+
+        Returns:
+            bool: True si fue exitoso
+        """
         self.load_data()
         pdf = StyledPDF()
         pdf.add_page()
@@ -347,12 +397,13 @@ class ReportGenerator:
         project_info = self.project_data.get('project_info', {})
         name = project_info.get('name', '')
         if name:
-            title_text = f"{title_text} - {name}"
+            title_text = f"{title_text}"
 
         pdf.set_style("title")
         pdf.cell(0, 10, title_text, ln=True)
+        pdf.cell(0, 10, name, ln=True)
         pdf.set_style("subtitle")
-        pdf.cell(0, 5, datetime.now().strftime("%d/%m/%Y"), ln=True)
+        pdf.cell(0, 10, datetime.now().strftime("%d/%m/%Y"), ln=True)
         pdf.ln(2)
         pdf.hr()
 
@@ -363,37 +414,102 @@ class ReportGenerator:
         # ---------- 2. Descripción general ----------
         pdf.h1(self.texts.get('section2_title', '2 Descripción general'))
         total_w = pdf.w - pdf.l_margin - pdf.r_margin
-        col_widths = [60, total_w - 60]
+        col_widths = [total_w * 0.35, total_w * 0.65]  # 35% para campo, 65% para valor
+
+        # Construir localización completa (país + ubicación)
+        country_name = project_info.get('country_name', '')
+        location = project_info.get('location', '')
+        full_location = ''
+        if country_name and location:
+            full_location = f"{country_name} ({location})"
+        elif country_name:
+            full_location = country_name
+        elif location:
+            full_location = location
+        else:
+            full_location = self.texts.get('not_specified', 'No especificado')
 
         data_pairs = [
+            (self.texts.get('acronym', 'Acrónimo'), project_info.get('acronym', self.texts.get('not_specified', 'No especificado'))),
             (self.texts.get('project_title', 'Nombre del proyecto'), name or self.texts.get('not_specified', 'No especificado')),
-            (self.texts.get('description', 'Descripción'), (project_info.get('description', self.texts.get('not_specified')) or self.texts.get('not_specified'))[:60]),
-            (self.texts.get('location', 'Localización'), project_info.get('location', self.texts.get('not_specified', 'No especificado'))),
-            (self.texts.get('objectives', 'Objetivos'), project_info.get('objective', self.texts.get('not_specified', 'No especificado'))[:60]),
+            (self.texts.get('description', 'Descripción'), project_info.get('description', self.texts.get('not_specified', 'No especificado')) or self.texts.get('not_specified', 'No especificado')),
+            (self.texts.get('location', 'Localización'), full_location),
+            (self.texts.get('objectives', 'Objetivos'), project_info.get('objective', self.texts.get('not_specified', 'No especificado')) or self.texts.get('not_specified', 'No especificado')),
+            (self.texts.get('category_caf', 'Categoría CAF'), project_info.get('caf_category', self.texts.get('not_specified', 'No especificado'))),
+            (self.texts.get('subcategory_caf', 'Subcategoría CAF'), project_info.get('caf_subcategory', self.texts.get('not_specified', 'No especificado'))),
+            (self.texts.get('activity_caf', 'Actividad CAF'), project_info.get('caf_activity', self.texts.get('not_specified', 'No especificado'))),
         ]
         pdf.table([self.texts.get('field', 'Campo'), self.texts.get('value', 'Valor')],
                   self._pair_list_to_rows(data_pairs),
                   col_widths=col_widths, align=["L", "L"])
-        pdf.ln(2)
+        pdf.ln(4)
 
         # ---------- 3. Caracterización de la cuenca ----------
         pdf.h1(self.texts.get('section3_title', '3 Caracterización de la cuenca'))
 
-        # 3.1 Mapa
+        # 3.1 Mapa - Ajustar dinámicamente al espacio disponible en página 1
         pdf.h2(self.texts.get('section3_1', '3.1 Mapa de referencia'))
         map_path = self._auto_map_path()
         if map_path:
             pdf.caption(self.texts.get('figure1', 'Figura 1. Delimitación de la cuenca.'))
-            usable_w = pdf.w - pdf.l_margin - pdf.r_margin
-            pdf.image(map_path, x=pdf.l_margin, w=usable_w)
+
+            # Calcular espacio disponible en la página actual
+            current_y = pdf.get_y()
+            page_height = pdf.h
+            bottom_margin = pdf.b_margin
+            available_height = page_height - current_y - bottom_margin - 5  # 5mm de margen de seguridad
+            available_width = pdf.w - pdf.l_margin - pdf.r_margin
+
+            # Establecer límites razonables
+            min_height = 50  # mínimo 50mm
+            max_height = 120  # máximo 120mm
+
+            # Obtener dimensiones reales de la imagen para calcular aspect ratio
+            try:
+                from PIL import Image
+                img = Image.open(map_path)
+                img_width_px, img_height_px = img.size
+                aspect_ratio = img_width_px / img_height_px
+            except Exception:
+                # Si falla, asumir aspect ratio 4:3
+                aspect_ratio = 4 / 3
+
+            # Determinar espacio objetivo
+            if available_height >= max_height:
+                target_height = max_height
+            elif available_height >= min_height:
+                target_height = available_height
+            else:
+                # No hay suficiente espacio, ir a nueva página
+                pdf.add_page()
+                current_y = pdf.get_y()
+                available_height = page_height - current_y - bottom_margin - 5
+                target_height = min(max_height, available_height)
+
+            # Calcular dimensiones proporcionales
+            # Opción 1: ajustar por altura
+            img_height = target_height
+            img_width = img_height * aspect_ratio
+
+            # Si el ancho excede el disponible, ajustar por ancho
+            if img_width > available_width:
+                img_width = available_width
+                img_height = img_width / aspect_ratio
+
+            # Centrar imagen horizontalmente
+            x_offset = pdf.l_margin + (available_width - img_width) / 2
+
+            # Insertar imagen con dimensiones proporcionales
+            pdf.image(map_path, x=x_offset, w=img_width, h=img_height)
             pdf.ln(2)
         else:
             pdf.caption(self.texts.get('figure1_missing', 'No se encontró la imagen. Continúa el informe sin el mapa.'))
 
-        # 3.2 Métricas morfología/clima (si existen en project.json)
+        # 3.2 Métricas morfología/clima - Nueva página para la tabla
+        pdf.add_page()
         pdf.h2(self.texts.get('section3_2', '3.2 Caracterización'))
         watershed = self.project_data.get('watershed_data', {})
-        morph = watershed.get('morphometry', {})
+        morph   = watershed.get('morphometry', {})
         climate = watershed.get('climate', {})
 
         wdata_pairs = [
@@ -413,16 +529,16 @@ class ReportGenerator:
         # ---------- 4. Seguridad hídrica (DF_WS) ----------
         pdf.h1(self.texts.get('section4_title', '4 Seguridad hídrica (desafíos)'))
         headers = [self.texts.get('challenge', 'Desafío'), self.texts.get('qualification', 'Calificación')]
-        colw = [140, total_w - 140] if total_w > 160 else [110, total_w - 110]
+        colw = [total_w * 0.82, total_w * 0.18]  # 82% para desafío, 18% para calificación
 
         rows = []
         if self.water_security_data:
             # muestra hasta 4 filas
-            for row in self.water_security_data[:4]:
-                code = row.get('Codigo_Desafio', row.get('Challenge_Code', ''))
+            for row in self.water_security_data:
+                code = row.get('Codigo_Desafio', '')
                 name = self.water_challenges_texts.get(code, code)
-                val = row.get('Valor_Importancia', row.get('Importance_Value', 'N/A'))
-                rows.append([name, str(val)])
+                value = row.get('Valor_Importancia', self.texts.get('not_available', 'No disponible'))
+                rows.append([name, str(value)])
         else:
             rows.append([self.texts.get('not_available', 'No disponible'), ''])
 
@@ -431,110 +547,399 @@ class ReportGenerator:
 
         # ---------- 5. Barreras ----------
         pdf.h1(self.texts.get('section5_title', '5 Barreras'))
-        headers_b = [self.texts.get('barrier_group', 'Grupo de barrera'),
-                     self.texts.get('barrier_code', 'Código'),
-                     self.texts.get('value', 'Valor')]
-        colw_b = [60, 80, total_w - 140]
+        headers_b = [
+            self.texts.get('group', 'Grupo'),
+            self.texts.get('subcategory', 'Subcategoría'),
+            self.texts.get('description', 'Descripción'),
+            self.texts.get('qualification', 'Calificación')
+        ]
+        colw_b = [total_w * 0.19, total_w * 0.25, total_w * 0.36, total_w * 0.20]  # Proporción balanceada
 
-        if not self.barriers_data:
-            pdf.table(headers_b, [[self.texts.get('not_available', 'No disponible'), '', '']], col_widths=colw_b, align=["L", "L", "C"])
+        if not self.barriers_data or not self.barriers_translations:
+            pdf.table(headers_b, [[self.texts.get('not_available', 'No disponible'), '', '', '']], col_widths=colw_b,
+                      align=["L", "L", "L", "C"])
         else:
-            # Agrupar por grupo y imprimir 5 grupos x 3 ítems (para evitar desbordes)
-            groups: Dict[str, List[Dict[str, Any]]] = {}
-            for r in self.barriers_data:
-                grp_code = r.get('Codigo_Grupo', r.get('Group_Code', ''))
-                groups.setdefault(grp_code, []).append(r)
+            # Filtrar barreras habilitadas y hacer join con traducciones
+            barriers_full = []
+            for barrier in self.barriers_data:
+                grupo_habilitado = str(barrier.get(self.barrier_col_group_enabled, '0')).strip()
+                if grupo_habilitado == '1':
+                    codigo_barrera = barrier.get(self.barrier_col_code, '')
+                    valor = barrier.get(self.barrier_col_value, '')
+                    if codigo_barrera in self.barriers_translations:
+                        trans = self.barriers_translations[codigo_barrera]
+                        barriers_full.append({
+                            'grupo': trans.get('grupo', ''),
+                            'subcategoria': trans.get('subcategoria', ''),
+                            'descripcion': trans.get('descripcion', ''),
+                            'valor': str(valor)
+                        })
 
-            # orden estable por clave
-            printed_rows = []
-            for gidx, (grp, items) in enumerate(list(groups.items())[:5]):
-                group_name = self.barrier_groups_texts.get(grp, grp)
-                items = items[:3]
-                for i, it in enumerate(items):
-                    code = it.get('Codigo_Barreira', it.get('Barrier_Code', ''))
-                    val = it.get('Valor_Numerico', it.get('Numeric_Value', ''))
-                    if i == 0:
-                        printed_rows.append([group_name, code, str(val)])
-                    else:
-                        printed_rows.append(['', code, str(val)])
+            if not barriers_full:
+                pdf.table(headers_b, [[self.texts.get('not_available', 'No disponible'), '', '', '']],
+                          col_widths=colw_b, align=["L", "L", "L", "C"])
+            else:
+                # Ordenar por grupo y subcategoría
+                barriers_full.sort(key=lambda x: (x['grupo'], x['subcategoria']))
 
-            pdf.table(headers_b, printed_rows, col_widths=colw_b, align=["L", "L", "C"])
+                # Helper para dibujar encabezados
+                def draw_headers():
+                    pdf.set_style("table_header")
+                    pdf.set_fill_color(*pdf.colors["table_header_bg"])
+                    for i, h in enumerate(headers_b):
+                        pdf.cell(colw_b[i], 6, h, border=1, ln=0, align="C", fill=True)
+                    pdf.ln(6)
+                    pdf.set_style("table_cell")  # Restaurar estilo normal después de encabezados
+
+                # Dibujar encabezados iniciales
+                draw_headers()
+
+                prev_grupo = None
+                prev_subcat = None
+
+                for barrier in barriers_full:
+                    grupo = barrier['grupo']
+                    subcat = barrier['subcategoria']
+                    desc = barrier['descripcion']
+                    valor_num = barrier['valor']
+
+                    # Transformar valor numérico a texto según idioma
+                    valor = self.barrier_values_texts.get(valor_num, valor_num)
+
+                    # Calcular altura estimada de la fila
+                    pdf.set_style("table_cell")  # Asegurar estilo normal
+                    lines_desc = pdf._split_text(desc, colw_b[2])
+                    estimated_height = 4 * max(len(lines_desc), 1)
+
+                    # Verificar espacio disponible
+                    space_left = pdf.h - pdf.get_y() - pdf.b_margin
+                    if space_left < estimated_height + 10:  # +10 margen de seguridad
+                        pdf.add_page()
+                        draw_headers()
+                        prev_grupo = None
+                        prev_subcat = None
+
+                    # Determinar qué mostrar (agrupación visual)
+                    display_grupo = grupo if grupo != prev_grupo else ''
+                    display_subcat = subcat if (grupo != prev_grupo or subcat != prev_subcat) else ''
+
+                    # Asegurar estilo normal para las celdas
+                    pdf.set_style("table_cell")
+
+                    # Dibujar fila
+                    x0 = pdf.get_x()
+                    y0 = pdf.get_y()
+
+                    # Columna 1: Grupo
+                    pdf.rect(x0, y0, colw_b[0], estimated_height)
+                    pdf.set_xy(x0, y0)
+                    pdf.multi_cell(colw_b[0], 4, display_grupo, border=0, align="L")
+
+                    # Columna 2: Subcategoría
+                    x1 = x0 + colw_b[0]
+                    pdf.rect(x1, y0, colw_b[1], estimated_height)
+                    pdf.set_xy(x1, y0)
+                    pdf.multi_cell(colw_b[1], 4, display_subcat, border=0, align="L")
+
+                    # Columna 3: Descripción
+                    x2 = x1 + colw_b[1]
+                    pdf.rect(x2, y0, colw_b[2], estimated_height)
+                    pdf.set_xy(x2, y0)
+                    pdf.multi_cell(colw_b[2], 4, desc, border=0, align="L")
+
+                    # Columna 4: Calificación
+                    x3 = x2 + colw_b[2]
+                    pdf.rect(x3, y0, colw_b[3], estimated_height)
+                    pdf.set_xy(x3, y0)
+                    pdf.multi_cell(colw_b[3], 4, valor, border=0, align="C")
+
+                    # Mover a la siguiente fila
+                    pdf.set_xy(x0, y0 + estimated_height)
+
+                    # Actualizar valores previos
+                    prev_grupo = grupo
+                    prev_subcat = subcat
+
         pdf.ln(3)
 
         # ---------- 6. Otros desafíos ----------
         pdf.h1(self.texts.get('section6_title', '6 Otros desafíos'))
         headers_o = [self.texts.get('challenge', 'Desafío'), self.texts.get('qualification', 'Calificación')]
-        colw_o = [140, total_w - 140] if total_w > 160 else [110, total_w - 110]
+        colw_o = [total_w * 0.82, total_w * 0.18]  # 82% para desafío, 18% para calificación
 
-        rows_o = []
-        if self.other_challenges_data:
-            for row in self.other_challenges_data[:9]:
+        if not self.other_challenges_data:
+            pdf.table(headers_o, [[self.texts.get('not_available', 'No disponible'), '']], col_widths=colw_o, align=["L", "C"])
+        else:
+            # Helper para dibujar encabezados
+            def draw_headers_other():
+                pdf.set_style("table_header")
+                pdf.set_fill_color(*pdf.colors["table_header_bg"])
+                for i, h in enumerate(headers_o):
+                    pdf.cell(colw_o[i], 6, h, border=1, ln=0, align="C", fill=True)
+                pdf.ln(6)
+                pdf.set_style("table_cell")
+
+            # Dibujar encabezados iniciales
+            draw_headers_other()
+
+            # Renderizar filas con control de página
+            for row in self.other_challenges_data:
                 code = row.get('Codigo_Desafio', row.get('Challenge_Code', ''))
                 name = self.other_challenges_texts.get(code, code)
                 val = row.get('Valor_Importancia', row.get('Importance_Value', 'N/A'))
-                rows_o.append([name, str(val)])
-        else:
-            rows_o.append([self.texts.get('not_available', 'No disponible'), ''])
 
-        pdf.table(headers_o, rows_o, col_widths=colw_o, align=["L", "C"])
+                # Calcular altura estimada de la fila
+                pdf.set_style("table_cell")
+                lines_name = pdf._split_text(name, colw_o[0])
+                estimated_height = 4 * max(len(lines_name), 1)
+
+                # Verificar espacio disponible
+                space_left = pdf.h - pdf.get_y() - pdf.b_margin
+                if space_left < estimated_height + 10:
+                    pdf.add_page()
+                    draw_headers_other()
+
+                # Dibujar fila
+                x0 = pdf.get_x()
+                y0 = pdf.get_y()
+
+                # Columna 1: Desafío
+                pdf.rect(x0, y0, colw_o[0], estimated_height)
+                pdf.set_xy(x0, y0)
+                pdf.multi_cell(colw_o[0], 4, name, border=0, align="L")
+
+                # Columna 2: Calificación
+                x1 = x0 + colw_o[0]
+                pdf.rect(x1, y0, colw_o[1], estimated_height)
+                pdf.set_xy(x1, y0)
+                pdf.multi_cell(colw_o[1], 4, str(val), border=0, align="C")
+
+                # Mover a la siguiente fila
+                pdf.set_xy(x0, y0 + estimated_height)
+
         pdf.ln(3)
 
         # ---------- 7. SbN seleccionadas ----------
         pdf.h1(self.texts.get('section7_title', '7 SbN seleccionadas'))
-        headers_s = [self.texts.get('num', '#'), self.texts.get('sbn', 'SbN')]
-        colw_s = [30, total_w - 30]
-        rows_s = []
+        headers_s = [self.texts.get('num', 'Prioridad'), self.texts.get('sbn', 'SbN')]
+        colw_s = [total_w * 0.30, total_w * 0.70]  # 30% prioridad, 70% nombre
+
         if not self.selected_sbn:
-            rows_s.append(['', self.texts.get('no_selected_sbn', 'No hay SbN seleccionadas')])
+            # Caso sin SbN: usa la tabla simple como fallback
+            pdf.table(headers_s, [['', self.texts.get('no_selected_sbn', 'No hay SbN seleccionadas')]],
+                      col_widths=colw_s, align=["C", "L"])
         else:
-            for i, sbn_id in enumerate(self.selected_sbn[:10], 1):  # máximo 10 para no desbordar
-                rows_s.append([str(i), self.sbn_solutions.get(str(sbn_id), f'SbN {sbn_id}')])
-        pdf.table(headers_s, rows_s, col_widths=colw_s, align=["C", "L"])
+            # Helper para encabezados (idéntico patrón que sección 6)
+            def draw_headers_sbn():
+                pdf.set_style("table_header")
+                pdf.set_fill_color(*pdf.colors["table_header_bg"])
+                for i, h in enumerate(headers_s):
+                    pdf.cell(colw_s[i], 6, h, border=1, ln=0, align="C", fill=True)
+                pdf.ln(6)
+                pdf.set_style("table_cell")
+
+            # Dibujar encabezados iniciales
+            draw_headers_sbn()
+
+            # Render de filas con control de salto de página
+            for sbn_id in self.selected_sbn:
+                order = self.sbn_orders.get(sbn_id, 0)
+                priority_text = f"{self.texts.get('num', 'Prioridad')} {order}"
+                sbn_name = self.sbn_solutions.get(str(sbn_id), f"SbN {sbn_id}")
+
+                # Altura estimada por wrapping del nombre
+                pdf.set_style("table_cell")
+                lines_name = pdf._split_text(sbn_name, colw_s[1])
+                estimated_height = 4 * max(len(lines_name), 1)
+
+                # Verificar espacio disponible
+                space_left = pdf.h - pdf.get_y() - pdf.b_margin
+                if space_left < estimated_height + 10:
+                    pdf.add_page()
+                    draw_headers_sbn()
+
+                # Dibujar fila (dos columnas)
+                x0 = pdf.get_x()
+                y0 = pdf.get_y()
+
+                # Columna 1: Prioridad
+                pdf.rect(x0, y0, colw_s[0], estimated_height)
+                pdf.set_xy(x0, y0)
+                pdf.multi_cell(colw_s[0], 4, str(priority_text), border=0, align="C")
+
+                # Columna 2: SbN (wrapping)
+                x1 = x0 + colw_s[0]
+                pdf.rect(x1, y0, colw_s[1], estimated_height)
+                pdf.set_xy(x1, y0)
+                pdf.multi_cell(colw_s[1], 4, sbn_name, border=0, align="L")
+
+                # Avanzar a la siguiente fila
+                pdf.set_xy(x0, y0 + estimated_height)
+
         pdf.ln(3)
 
         # ---------- 8. Taxonomía CAF (relación con SbN seleccionadas) ----------
-        pdf.add_page()
         pdf.h1(self.texts.get('section8_title', '8 Taxonomía CAF'))
+
         if self.selected_sbn and self.taxonomy_tree:
-            # máximo 2 objetivos x 2 categorías x 2 subcategorías para mantener legibilidad
-            for obj_amb, categorias in list(self.taxonomy_tree.items())[:2]:
-                for cat, subcats in list(categorias.items())[:2]:
+            # Columnas: Objetivo, Categoría, Subcategoría, SbN/Acción
+            headers_t = [
+                self.texts.get('sbn', 'SbN'),
+                self.texts.get('taxonomy_obj', 'Objetivo'),
+                self.texts.get('taxonomy_cat', 'Categoría'),
+                self.texts.get('taxonomy_subcat', 'Subcategoría')
+            ]
+            colw_t = [total_w * 0.18, total_w * 0.22, total_w * 0.25, total_w * 0.35]
+
+            # Helper: encabezados de la tabla (igual patrón que secciones 6 y 7)
+            def draw_headers_tax():
+                pdf.set_style("table_header")
+                pdf.set_fill_color(*pdf.colors["table_header_bg"])
+                for i, h in enumerate(headers_t):
+                    pdf.cell(colw_t[i], 6, h, border=1, ln=0, align="C", fill=True)
+                pdf.ln(6)
+                pdf.set_style("table_cell")
+
+            # Dibujar encabezados iniciales
+            draw_headers_tax()
+
+            # Iterar jerarquía de Taxonomía (manteniendo límites de visibilidad actuales)
+            for obj_amb, categorias in list(self.taxonomy_tree.items()):  # máx. 2 objetivos
+                for cat, subcats in list(categorias.items()):  # máx. 2 categorías
+                    # Filtrar subcategorías con acciones vinculadas a SbN seleccionadas
                     relevant_subcats = []
-                    for subcat, acts in list(subcats.items())[:2]:
+                    for subcat, acts in list(subcats.items()):  # máx. 2 subcategorías
                         rel = [a for a in acts if a.get('id') in self.selected_sbn]
                         if rel:
                             relevant_subcats.append((subcat, rel))
-                    if relevant_subcats:
-                        pdf.set_style("table_header")
-                        pdf.cell(0, 6, obj_amb[:90], ln=True, border=1)
-                        pdf.set_style("table_cell")
-                        pdf.cell(10, 5, "", border=0)
-                        pdf.cell(0, 5, cat[:80], ln=True, border=1)
-                        for subcat, acts in relevant_subcats:
-                            for act in acts[:2]:
-                                pdf.cell(20, 4, "", border=0)
-                                pdf.cell(0, 4, f"{subcat[:40]}: {act.get('SbN','')[:60]}", ln=True, border=1)
+
+                    # Renderizar filas
+                    for subcat, acts in relevant_subcats:
+                        for act in acts:  # máx. 2 acciones
+                            c1 = str(obj_amb)
+                            c2 = str(cat)
+                            c3 = str(subcat)
+                            c0 = str(act.get('SbN', ''))
+
+                            # Estimar alto por wrapping
+                            lines0 = pdf._split_text(c0, colw_t[0])
+                            lines1 = pdf._split_text(c1, colw_t[1])
+                            lines2 = pdf._split_text(c2, colw_t[2])
+                            lines3 = pdf._split_text(c3, colw_t[3])
+                            n_lines = max(len(lines0), len(lines1), len(lines2), len(lines3), 1)
+                            row_h = 4 * n_lines
+
+                            # Control de salto de página
+                            space_left = pdf.h - pdf.get_y() - pdf.b_margin
+                            if space_left < row_h + 8:
+                                pdf.add_page()
+                                draw_headers_tax()
+
+                            # Dibujar fila con rectángulos y multi_cell por columna
+                            x0 = pdf.get_x()
+                            y0 = pdf.get_y()
+
+                            # Col 0
+                            pdf.rect(x0, y0, colw_t[0], row_h)
+                            pdf.set_xy(x0, y0)
+                            pdf.multi_cell(colw_t[0], 4, c0, border=0, align="L")
+
+                            # Col 1
+                            x1 = x0 + colw_t[0]
+                            pdf.rect(x1, y0, colw_t[1], row_h)
+                            pdf.set_xy(x1, y0)
+                            pdf.multi_cell(colw_t[1], 4, c1, border=0, align="L")
+
+                            # Col 2
+                            x2 = x1 + colw_t[1]
+                            pdf.rect(x2, y0, colw_t[2], row_h)
+                            pdf.set_xy(x2, y0)
+                            pdf.multi_cell(colw_t[2], 4, c2, border=0, align="L")
+
+                            # Col 3
+                            x3 = x2 + colw_t[2]
+                            pdf.rect(x3, y0, colw_t[3], row_h)
+                            pdf.set_xy(x3, y0)
+                            pdf.multi_cell(colw_t[3], 4, c3, border=0, align="L")
+
+                            # Avanzar a la siguiente fila
+                            pdf.set_xy(x0, y0 + row_h)
         else:
             pdf.p(self.texts.get('not_available', 'No disponible'))
         pdf.ln(3)
 
         # ---------- 9. Indicadores ----------
         pdf.h1(self.texts.get('section9_title', '9 Indicadores'))
-        headers_i = ['SbN', self.texts.get('indicator', 'Indicador'), self.texts.get('unit', 'Unidad')]
-        colw_i = [50, 100, total_w - 150]
-        rows_i = []
+        headers_i = [self.texts.get('sbn', 'SbN'), self.texts.get('indicator', 'Indicador'), self.texts.get('unit', 'Unidad')]
+        colw_i = [total_w * 0.20, total_w * 0.50, total_w * 0.30]  # 20%, 50%, 30%
         if not self.selected_sbn:
-            rows_i.append([self.texts.get('not_available', 'No disponible'), '', ''])
+            pdf.table(headers_i, [[self.texts.get('not_available', 'No disponible'), '', '']], col_widths=colw_i, align=["L", "L", "C"])
         else:
-            for sbn_id in self.selected_sbn[:5]:
+            # Helper para dibujar encabezados
+            def draw_headers_indicators():
+                pdf.set_style("table_header")
+                pdf.set_fill_color(*pdf.colors["table_header_bg"])
+                for i, h in enumerate(headers_i):
+                    pdf.cell(colw_i[i], 6, h, border=1, ln=0, align="C", fill=True)
+                pdf.ln(6)
+                pdf.set_style("table_cell")
+
+            # Dibujar encabezados iniciales
+            draw_headers_indicators()
+
+            # Renderizar filas con control de página y agrupación
+            for sbn_id in self.selected_sbn:
                 sbn_name = self.sbn_solutions.get(str(sbn_id), f'SbN {sbn_id}')
                 indicators = self.indicators_data.get(str(sbn_id), [])
-                for i, ind in enumerate(indicators[:2]):
-                    if i == 0:
-                        rows_i.append([sbn_name, ind.get('nombre', ''), ind.get('unidad', '')])
-                    else:
-                        rows_i.append(['', ind.get('nombre', ''), ind.get('unidad', '')])
-        pdf.table(headers_i, rows_i, col_widths=colw_i, align=["L", "L", "C"])
+
+                if not indicators:
+                    continue
+
+                for idx, ind in enumerate(indicators):
+                    ind_name = ind.get('nombre', '')
+                    ind_unit = ind.get('unidad', '')
+
+                    # Calcular altura estimada de la fila
+                    pdf.set_style("table_cell")
+                    lines_ind = pdf._split_text(ind_name, colw_i[1])
+                    estimated_height = 4 * max(len(lines_ind), 1)
+
+                    # Verificar espacio disponible
+                    space_left = pdf.h - pdf.get_y() - pdf.b_margin
+                    if space_left < estimated_height + 10:
+                        pdf.add_page()
+                        draw_headers_indicators()
+
+                    # Determinar qué mostrar (agrupación: SbN solo en primera fila)
+                    display_sbn = sbn_name if idx == 0 else ''
+
+                    # Asegurar estilo normal para las celdas
+                    pdf.set_style("table_cell")
+
+                    # Dibujar fila
+                    x0 = pdf.get_x()
+                    y0 = pdf.get_y()
+
+                    # Columna 1: SbN
+                    pdf.rect(x0, y0, colw_i[0], estimated_height)
+                    pdf.set_xy(x0, y0)
+                    pdf.multi_cell(colw_i[0], 4, display_sbn, border=0, align="L")
+
+                    # Columna 2: Indicador
+                    x1 = x0 + colw_i[0]
+                    pdf.rect(x1, y0, colw_i[1], estimated_height)
+                    pdf.set_xy(x1, y0)
+                    pdf.multi_cell(colw_i[1], 4, ind_name, border=0, align="L")
+
+                    # Columna 3: Unidad
+                    x2 = x1 + colw_i[1]
+                    pdf.rect(x2, y0, colw_i[2], estimated_height)
+                    pdf.set_xy(x2, y0)
+                    pdf.multi_cell(colw_i[2], 4, ind_unit, border=0, align="C")
+
+                    # Mover a la siguiente fila
+                    pdf.set_xy(x0, y0 + estimated_height)
+
         pdf.ln(3)
 
         # ---------- 10. Anexos digitales ----------
@@ -548,7 +953,41 @@ class ReportGenerator:
         os.makedirs(out_dir, exist_ok=True)
         try:
             pdf.output(output_path)
-            return True
+            print(f"✅ Reporte principal generado: {output_path}")
         except Exception as e:
             print(f"Error al escribir PDF: {e}")
             return False
+
+        # Generar fichas técnicas de SbN si está habilitado
+        if generate_sbn_sheets:
+            print("\n" + "="*60)
+            print("📋 Generando fichas técnicas de SbN...")
+            print("="*60)
+
+            try:
+                # Obtener opción financiera del proyecto (si existe)
+                financial_option = self.project_data.get('project_info', {}).get(
+                    'financial_option',
+                    'investment_and_maintenance'
+                )
+
+                # Crear generador de fichas
+                sheets_gen = SbnSheetsGenerator(
+                    project_folder=self.project_path,
+                    language=self.language,
+                    financial_option=financial_option
+                )
+
+                # Generar todas las fichas
+                sheets_success = sheets_gen.process_all()
+
+                if not sheets_success:
+                    print("⚠️ Hubo errores al generar las fichas técnicas")
+
+            except Exception as e:
+                print(f"❌ Error al generar fichas técnicas: {e}")
+                import traceback
+                traceback.print_exc()
+                # No fallar el reporte completo si las fichas fallan
+
+        return True

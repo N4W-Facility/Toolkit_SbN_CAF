@@ -233,7 +233,7 @@ def calculate_pixel_area_geographic(grid, method='utm'):
 
     return (pixel_size_lat_m * pixel_size_lon_m) / 1E6
 
-def C01_BasinDelineation(PathOut, Path_FlowDir, lat, lon, threshold=1.0):
+def C01_BasinDelineation(PathOut, Path_FlowDir, Path_FlowAccum, lat, lon, threshold=1.0):
     """
     Delinea una cuenca hidrográfica a partir de un raster de direcciones de flujo.
     Genera únicamente un shapefile de la cuenca en coordenadas geográficas EPSG:4326.
@@ -318,7 +318,8 @@ def C01_BasinDelineation(PathOut, Path_FlowDir, lat, lon, threshold=1.0):
 
     print("2. Calculando acumulación de flujo...")
     # Acumulaciones de Flujo
-    FlowAccum = grid.accumulation(FlowDir)
+    #FlowAccum = grid.accumulation(FlowDir)
+    FlowAccum = grid.read_raster(Path_FlowAccum)
     print(f"   ✓ Acumulación de flujo calculada")
     print(f"   - Valor máximo de acumulación: {np.max(FlowAccum)}")
     print()
@@ -554,6 +555,341 @@ def C01_BasinDelineation(PathOut, Path_FlowDir, lat, lon, threshold=1.0):
         'shapefile': output_shapefile,
         'accumarea_raster': output_accumarea
     }
+
+# ===============================================================
+# C01_BasinDelineation — salida idéntica a tu función original
+#   • Shapefile: 01-Watershed/Watershed.shp (EPSG:4326)
+#   • Shapefile: 03-SbN/Window_SbN.shp (EPSG:4326)
+#   • Raster   : 02-Rasters/AccumArea.tif (uint32, LZW, scale_factor=1000, units='km2_x100')
+# Optimizada en memoria (memmap + tiles) + Raster wrapper para pySheds
+# ===============================================================
+import os
+from pathlib import Path
+import numpy as np
+import rasterio
+from rasterio.windows import Window
+from rasterio.features import shapes
+from rasterio.transform import from_bounds
+import geopandas as gpd
+from shapely.geometry import shape
+from pysheds.grid import Grid
+from pysheds.view import Raster  # <-- CLAVE: wrapper para memmap
+
+# ---------- utilidades ----------
+def _meters_per_degree(lat_deg: float):
+    lat_rad = np.deg2rad(lat_deg)
+    m_per_deg_lat = 111132.92 - 559.82*np.cos(2*lat_rad) + 1.175*np.cos(4*lat_rad)
+    m_per_deg_lon = 111412.84*np.cos(lat_rad) - 93.5*np.cos(3*lat_rad)
+    return m_per_deg_lat, m_per_deg_lon
+
+def calculate_pixel_area_geographic(grid, method='utm'):
+    xmin, xmax, ymin, ymax = grid.extent
+    dx = grid.viewfinder.dy_dx[0]
+    dy = grid.viewfinder.dy_dx[1]
+    lat_c = 0.5*(ymin+ymax)
+    m_deg_lat, m_deg_lon = _meters_per_degree(lat_c)
+    ax = abs(dx) * m_deg_lon
+    ay = abs(dy) * m_deg_lat
+    return (ax*ay) / 1e6  # km²
+
+def _read_band_to_memmap(path, dtype_out, tmp_file, tile_size=1024, band=1):
+    with rasterio.open(path) as src:
+        h, w = src.height, src.width
+        mm = np.memmap(tmp_file, dtype=dtype_out, mode='w+', shape=(h, w))
+        for row in range(0, h, tile_size):
+            nrows = min(tile_size, h - row)
+            for col in range(0, w, tile_size):
+                ncols = min(tile_size, w - col)
+                block = src.read(band, window=Window(col, row, ncols, nrows))
+                mm[row:row+nrows, col:col+ncols] = block.astype(dtype_out, copy=False)
+        mm.flush()
+    return mm
+
+def _snap_to_mask_numpy(grid, mask_bool, xy, tile_size=1024):
+    """Fallback de snap por tiles (sin Raster)."""
+    x0, y0 = xy
+    xmin, xmax, ymin, ymax = grid.extent
+    dx = grid.viewfinder.dy_dx[0]
+    dy = grid.viewfinder.dy_dx[1]
+    h, w = mask_bool.shape
+    best_d2 = np.inf
+    best_xy = (x0, y0)
+    for row in range(0, h, tile_size):
+        nrows = min(tile_size, h - row)
+        for col in range(0, w, tile_size):
+            ncols = min(tile_size, w - col)
+            sub = mask_bool[row:row+nrows, col:col+ncols]
+            if not sub.any():
+                continue
+            rr, cc = np.where(sub)
+            cc_abs = col + cc
+            rr_abs = row + rr
+            xs = xmin + cc_abs * dx
+            ys = ymax - rr_abs * abs(dy)
+            d2 = (xs - x0)**2 + (ys - y0)**2
+            k = int(np.argmin(d2))
+            if d2[k] < best_d2:
+                best_d2 = d2[k]
+                best_xy = (float(xs[k]), float(ys[k]))
+    return best_xy
+
+def _as_raster(grid, arr, nodata=0):
+    """Envuelve un ndarray/memmap como Raster de pySheds (sin copiar)."""
+    return Raster(arr, viewfinder=grid.viewfinder, nodata=nodata)
+
+# ---------- función principal ----------
+def C01_BasinDelineation_oo(PathOut, Path_FlowDir, Path_FlowAccum, lat, lon, threshold=1.0,
+                         use_memmap=True, tmp_dir=None, tile_size=1024, keep_tmp=False,
+                         recursionlimit=500000):
+    """
+    Delinea una cuenca hidrográfica y genera SALIDAS IDÉNTICAS a tu función original:
+      - Shapefile EPSG:4326 con campos: area_km2, area_cells, lat_/lon_ (orig/snap),
+        threshold, accum_km2, n_polygons (01-Watershed/Watershed.shp y 03-SbN/Window_SbN.shp)
+      - Raster AccumArea.tif (uint32, LZW) escalado con 'scale_factor=1000' y 'units=km2_x100'
+    """
+    import sys
+    print("=" * 60)
+    print("INICIANDO DELIMITACIÓN DE CUENCA HIDROGRÁFICA (memoria optimizada)")
+    print("=" * 60)
+    print(f"Coordenadas del punto: Lat={lat}, Lon={lon}")
+    print(f"Umbral de red de drenaje: {threshold} km²")
+    print(f"Directorio de salida: {PathOut}\n")
+
+    PathOut = Path(PathOut); PathOut.mkdir(parents=True, exist_ok=True)
+    out_shp_dir = PathOut / "01-Watershed"; out_shp_dir.mkdir(parents=True, exist_ok=True)
+    out_sbn_dir = PathOut / "03-SbN";       out_sbn_dir.mkdir(parents=True, exist_ok=True)
+    out_ras_dir = PathOut / "02-Rasters";   out_ras_dir.mkdir(parents=True, exist_ok=True)
+
+    output_shapefile = os.path.join(PathOut, "01-Watershed", "Watershed.shp")
+    output_sbn       = os.path.join(PathOut, "03-SbN", "Window_SbN.shp")
+    output_accumarea = os.path.join(PathOut, "02-Rasters", "AccumArea.tif")
+
+    tmp_dir = Path(tmp_dir or (PathOut / "_tmp_memmap")); tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1) Grid (metadatos)
+    print("1. Cargando raster de direcciones de flujo...")
+    grid = Grid.from_raster(Path_FlowDir, data_name='flowdir_meta')
+    print(f"   ✓ Grid creado | dims={grid.viewfinder.shape} | extent={grid.extent}\n")
+
+    # 2) Memmaps
+    if use_memmap:
+        print("2. Preparando memmaps (lectura por tiles)...")
+        fd_mm_path = tmp_dir / "flowdir.mm"
+        FlowDir = _read_band_to_memmap(Path_FlowDir, np.uint8, fd_mm_path, tile_size=tile_size)
+        if Path_FlowAccum is None:
+            print("   - Path_FlowAccum no provisto. Calculando acumulación en RAM (datasets pequeños).")
+            FlowDir_ram = rasterio.open(Path_FlowDir).read(1).astype(np.uint8, copy=False)
+            FlowAccum_ram = grid.accumulation(FlowDir_ram, dtype=np.uint32)
+            fa_mm_path = tmp_dir / "flowaccum.mm"
+            FlowAccum = np.memmap(fa_mm_path, dtype=np.uint32, mode='w+', shape=FlowAccum_ram.shape)
+            FlowAccum[:] = FlowAccum_ram[:]
+            FlowAccum.flush()
+            del FlowDir_ram, FlowAccum_ram
+        else:
+            fa_mm_path = tmp_dir / "flowaccum.mm"
+            FlowAccum = _read_band_to_memmap(Path_FlowAccum, np.uint32, fa_mm_path, tile_size=tile_size)
+    else:
+        print("2. Leyendo arrays en RAM (cuidado con ráster grandes)...")
+        with rasterio.open(Path_FlowDir) as src:
+            FlowDir = src.read(1).astype(np.uint8, copy=False)
+        if Path_FlowAccum is None:
+            FlowAccum = grid.accumulation(FlowDir, dtype=np.uint32)
+        else:
+            with rasterio.open(Path_FlowAccum) as src:
+                FlowAccum = src.read(1).astype(np.uint32, copy=False)
+
+    print("   ✓ Datos de direcciones de flujo cargados\n")
+
+    # 3) Área por píxel
+    print("3. Calculando área acumulada por píxel...")
+    xmin, xmax, ymin, ymax = grid.extent
+    if abs(xmin) <= 180 and abs(xmax) <= 180 and abs(ymin) <= 90 and abs(ymax) <= 90:
+        print("   - Detectadas coordenadas geográficas (grados)")
+        PixelArea = calculate_pixel_area_geographic(grid, method='utm')
+        lat_center = 0.5*(ymin+ymax); lon_center = 0.5*(xmin+xmax)
+        print(f"   - Coordenadas centrales: {lon_center:.6f}°, {lat_center:.6f}°")
+        print(f"   - Área por píxel (corregida): {PixelArea:.6f} km²")
+    else:
+        print("   - Detectadas coordenadas proyectadas (metros)")
+        PixelArea = (grid.viewfinder.dy_dx[0] * grid.viewfinder.dy_dx[0]) / 1E6
+        print(f"   - Área por píxel: {PixelArea:.6f} km²")
+
+    # 4) Red de drenaje (por tiles)
+    print("\n4. Generando red de drenaje...")
+    h, w = FlowAccum.shape
+    net_mm_path = tmp_dir / "network_bool.mm"
+    Network = np.memmap(net_mm_path, dtype=np.bool_, mode='w+', shape=(h, w))
+    for row in range(0, h, tile_size):
+        nrows = min(tile_size, h - row)
+        for col in range(0, w, tile_size):
+            ncols = min(tile_size, w - col)
+            Ablk = FlowAccum[row:row+nrows, col:col+ncols]
+            Network[row:row+nrows, col:col+ncols] = (Ablk.astype(np.float64) * PixelArea) > threshold
+    Network.flush()
+    num_channels = int(Network.sum())
+    print(f"   ✓ Red de drenaje generada con umbral de {threshold} km²")
+    print(f"   - Número de celdas de canal: {num_channels}")
+    print(f"   - Porcentaje del área total: {(num_channels / Network.size) * 100:.2f}%\n")
+    if num_channels == 0:
+        raise ValueError(f"No se encontraron celdas de red con umbral {threshold} km². Prueba con un umbral menor.")
+
+    # 5) Snap del outlet (usar Raster; fallback si no)
+    print("5. Ajustando coordenadas del punto de salida a la red de drenaje...")
+    print(f"   - Coordenadas originales: ({lon}, {lat})")
+    try:
+        Network_R = _as_raster(grid, Network, nodata=0)
+        x_new, y_new = grid.snap_to_mask(Network_R, (lon, lat))
+    except Exception:
+        x_new, y_new = _snap_to_mask_numpy(grid, Network, (lon, lat), tile_size=tile_size)
+    col_snap, row_snap = grid.nearest_cell(x_new, y_new)
+    accum_at_snap = float(FlowAccum[row_snap, col_snap]) * PixelArea  # km²
+    print(f"   ✓ Punto ajustado a la red de drenaje: ({x_new:.6f}, {y_new:.6f})")
+    print(f"   - Área acumulada en el punto ajustado: {accum_at_snap:.2f} km²\n")
+
+    # 6) Delimitación de cuenca (pasando Raster en fdir)
+    print("6. Delimitando cuenca hidrográfica...")
+    old_limit = sys.getrecursionlimit()
+    sys.setrecursionlimit(recursionlimit)
+    try:
+        FlowDir_R = _as_raster(grid, FlowDir, nodata=0)  # <-- evita 'memmap no tiene nodata'
+        Watershed = grid.catchment(fdir=FlowDir_R, x=x_new, y=y_new, xytype='coordinate', nodata_out=0)
+        Watershed = np.asarray(Watershed).astype(np.uint8)
+    finally:
+        sys.setrecursionlimit(old_limit)
+
+    watershed_cells = int(np.sum(Watershed))
+    watershed_area_km2 = watershed_cells * PixelArea
+    print(f"   ✓ Cuenca delimitada exitosamente")
+    print(f"   - Número de celdas: {watershed_cells}")
+    print(f"   - Área de la cuenca: {watershed_area_km2:.2f} km²")
+    print(f"   - Punto de salida final: ({x_new:.6f}, {y_new:.6f})\n")
+
+    # 7) Guardados (idénticos a tu flujo)
+    print("7. Guardando resultados...")
+
+    # 7.1 bbox recorte
+    watershed_rows, watershed_cols = np.where(Watershed == 1)
+    buffer_cells = 5
+    row_min = max(0, watershed_rows.min() - buffer_cells)
+    row_max = min(Watershed.shape[0], watershed_rows.max() + buffer_cells + 1)
+    col_min = max(0, watershed_cols.min() - buffer_cells)
+    col_max = min(Watershed.shape[1], watershed_cols.max() + buffer_cells + 1)
+    print(f"   - Cuenca original: {Watershed.shape[1]}x{Watershed.shape[0]} píxeles")
+    print(f"   - Cuenca recortada: {col_max - col_min}x{row_max - row_min} píxeles")
+    print(f"   - Reducción: {((1 - ((col_max - col_min) * (row_max - row_min)) / (Watershed.shape[1] * Watershed.shape[0])) * 100):.1f}%")
+
+    # 7.2 recorte y máscara
+    AccumArea_clipped = FlowAccum[row_min:row_max, col_min:col_max].astype(np.float64, copy=True)
+    Watershed_clipped = Watershed[row_min:row_max, col_min:col_max]
+    AccumArea_clipped[Watershed_clipped == 0] = 0.0
+
+    # 7.3 transform recorte
+    x_min = grid.extent[0] + (col_min * grid.viewfinder.dy_dx[0])
+    x_max = grid.extent[0] + (col_max * grid.viewfinder.dy_dx[0])
+    y_max = grid.extent[3] - (row_min * abs(grid.viewfinder.dy_dx[1]))
+    y_min = grid.extent[3] - (row_max * abs(grid.viewfinder.dy_dx[1]))
+    transform_clipped = from_bounds(
+        x_min, y_min, x_max, y_max,
+        col_max - col_min, row_max - row_min
+    )
+
+    # 7.4 AccumArea.tif EXACTO (uint32 escalado, LZW, metadatos)
+    print("   - Guardando raster de área acumulada recortado y comprimido...")
+    scale_factor = 1000  # igual que tu versión
+    Accum_km2 = AccumArea_clipped * PixelArea
+    AccumArea_scaled = np.rint(Accum_km2 * scale_factor).astype(np.uint32)
+
+    with rasterio.open(
+        output_accumarea, 'w',
+        driver='GTiff',
+        height=AccumArea_scaled.shape[0],
+        width=AccumArea_scaled.shape[1],
+        count=1,
+        dtype=np.uint32,
+        crs=grid.crs,
+        transform=transform_clipped,
+        nodata=0,
+        compress='lzw',
+        tiled=True,
+        blockxsize=256,
+        blockysize=256
+    ) as dst:
+        dst.write(AccumArea_scaled, 1)
+        dst.update_tags(
+            scale_factor=scale_factor,
+            units='km2_x100',  # etiqueta como en tu código original
+            description=f'Accumulated area scaled by factor {scale_factor}. Divide by {scale_factor} to get km². Clipped to watershed extent.',
+            compression='LZW',
+            original_nodata='NaN converted to 0',
+            watershed_lat=lat,
+            watershed_lon=lon,
+            clipped_extent=f'{x_min:.6f},{y_min:.6f},{x_max:.6f},{y_max:.6f}'
+        )
+
+    # 7.5 vectorizar cuenca (grid completo)
+    print("   - Convirtiendo cuenca a shapefile...")
+    transform_full = from_bounds(
+        grid.extent[0], grid.extent[2], grid.extent[1], grid.extent[3],
+        grid.viewfinder.shape[1], grid.viewfinder.shape[0]
+    )
+    watershed_shapes = list(shapes(Watershed, mask=Watershed, transform=transform_full))
+    geometries = [shape(geom) for (geom, val) in watershed_shapes if val == 1]
+    if not geometries:
+        raise ValueError("No se pudo generar la geometría de la cuenca")
+    if len(geometries) > 1:
+        from shapely.ops import unary_union
+        unified_geometry = unary_union(geometries)
+        print("   - Múltiples polígonos unificados en una geometría")
+    else:
+        unified_geometry = geometries[0]
+    n_polygons = len(geometries)
+
+    # 7.6 shapefiles EXACTOS (EPSG:4326 y mismos campos)
+    gdf = gpd.GeoDataFrame({
+        'area_km2':   [float(watershed_area_km2)],
+        'area_cells': [int(watershed_cells)],
+        'lat_orig':   [float(lat)],
+        'lon_orig':   [float(lon)],
+        'lat_snap':   [float(y_new)],
+        'lon_snap':   [float(x_new)],
+        'threshold':  [float(threshold)],
+        'accum_km2':  [float(accum_at_snap)],
+        'n_polygons': [int(n_polygons)]
+    }, geometry=[unified_geometry], crs=grid.crs)
+
+    gdf_4326 = gdf.to_crs('EPSG:4326')
+    gdf_4326.to_file(output_shapefile)
+    gdf_4326.to_file(output_sbn)
+    print(f"   ✓ Shapefile guardado: {os.path.basename(output_shapefile)}\n")
+
+    # 8) Limpieza temporal
+    if not keep_tmp:
+        try:
+            for p in tmp_dir.glob("*.mm"):
+                p.unlink(missing_ok=True)
+            if not any(tmp_dir.iterdir()):
+                tmp_dir.rmdir()
+        except Exception:
+            pass
+
+    print("=" * 60)
+    print("DELIMITACIÓN DE CUENCA COMPLETADA")
+    print("=" * 60)
+    print("RESUMEN:")
+    print(f"  • Área de la cuenca: {watershed_area_km2:.2f} km²")
+    print(f"  • Número de celdas: {watershed_cells}")
+    print("ARCHIVOS GENERADOS:")
+    print(f"  • Shapefile cuenca: {os.path.basename(output_shapefile)}")
+    print(f"  • Raster área acum.: {os.path.basename(output_accumarea)} (LZW, x{scale_factor})")
+    print(f"  • Ubicación: {PathOut}")
+    print("NOTA: Para obtener km² reales del raster, divide por el factor y/o usa 'units'.")
+    print("=" * 60)
+
+    return {
+        'shapefile': output_shapefile,
+        'accumarea_raster': output_accumarea
+    }
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # CREAR MOSAICO - RECORTAR BASES DE DATOS PARA LA CUENCA DE ANÁLISIS

@@ -750,11 +750,11 @@ class BarrierItem(ctk.CTkFrame):
     def _get_options_data(self):
         """Obtiene las opciones traducidas"""
         return [
-            (get_text("barriers.value_labels.gran_facilitador"), -1, self.value_colors[get_text("barriers.value_labels.gran_facilitador")]),
-            (get_text("barriers.value_labels.facilitador"), 0, self.value_colors[get_text("barriers.value_labels.facilitador")]),
-            (get_text("barriers.value_labels.no_hay_barreras"), 1, self.value_colors[get_text("barriers.value_labels.no_hay_barreras")]),
-            (get_text("barriers.value_labels.barrera"), 2, self.value_colors[get_text("barriers.value_labels.barrera")]),
-            (get_text("barriers.value_labels.barrera_importante"), 3, self.value_colors[get_text("barriers.value_labels.barrera_importante")])
+            (get_text("barriers.value_labels.gran_facilitador"), int(get_text("barriers.value_labels_code.gran_facilitador")), self.value_colors[get_text("barriers.value_labels.gran_facilitador")]),
+            (get_text("barriers.value_labels.facilitador"), int(get_text("barriers.value_labels_code.facilitador")), self.value_colors[get_text("barriers.value_labels.facilitador")]),
+            (get_text("barriers.value_labels.no_hay_barreras"), int(get_text("barriers.value_labels_code.no_hay_barreras")), self.value_colors[get_text("barriers.value_labels.no_hay_barreras")]),
+            (get_text("barriers.value_labels.barrera"), int(get_text("barriers.value_labels_code.barrera")), self.value_colors[get_text("barriers.value_labels.barrera")]),
+            (get_text("barriers.value_labels.barrera_importante"), int(get_text("barriers.value_labels_code.barrera_importante")), self.value_colors[get_text("barriers.value_labels.barrera_importante")])
         ]
 
     def _get_default_label(self):

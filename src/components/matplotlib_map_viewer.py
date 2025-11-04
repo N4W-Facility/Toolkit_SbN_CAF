@@ -8,6 +8,7 @@ import numpy as np
 import os
 from tkinter import messagebox
 from ..core.theme_manager import ThemeManager
+from ..core.language_manager import get_text
 
 try:
     import geopandas as gpd
@@ -234,7 +235,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         # Título
         title_label = ctk.CTkLabel(
             toolbar_container,
-            text="🗺️ Mapa Interactivo",
+            text=get_text("map_viewer.title", "🗺️ Mapa Interactivo"),
             font=ThemeManager.FONTS['heading'],
             text_color=ThemeManager.COLORS['accent_primary']
         )
@@ -307,7 +308,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         # Status del mapa
         self.status_label = ctk.CTkLabel(
             bottom_controls,
-            text="🔄 Cargando...",
+            text=get_text("map_viewer.loading", "🔄 Cargando..."),
             font=ThemeManager.FONTS['caption'],
             text_color=ThemeManager.COLORS['warning']
         )
@@ -316,7 +317,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         # Información de coordenadas
         self.coords_label = ctk.CTkLabel(
             bottom_controls,
-            text="📍 Haga clic en el mapa para seleccionar",
+            text=get_text("map_viewer.click_to_select", "📍 Haga clic en el mapa para seleccionar"),
             font=ThemeManager.FONTS['body'],
             text_color=ThemeManager.COLORS['text_secondary']
         )
@@ -358,7 +359,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # Hacer que el canvas pueda recibir focus para eventos
             self.canvas.get_tk_widget().focus_set()
             
-            self.status_label.configure(text="✅ Visor creado", text_color=ThemeManager.COLORS['success'])
+            self.status_label.configure(text=get_text("map_viewer.viewer_created", "✅ Visor creado"), text_color=ThemeManager.COLORS['success'])
             
         except Exception as e:
             self._show_error(f"Error al crear visor: {str(e)}")
@@ -366,7 +367,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
     def _create_map(self):
         """Crear mapa inicial con vista por defecto sin bloquear la UI."""
         try:
-            self.status_label.configure(text="🌍 ...", text_color=ThemeManager.COLORS['warning'])
+            self.status_label.configure(text=get_text("map_viewer.loading", "🔄 Cargando..."), text_color=ThemeManager.COLORS['warning'])
 
             self.ax.clear()
 
@@ -419,13 +420,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                     error_msg = "❌ Axes no se inicializó después de varios reintentos"
                     print(error_msg)
                     self.status_label.configure(
-                        text="⚠️ Error al cargar mapa",
+                        text=get_text("map_viewer.map_error", "⚠️ Error al cargar mapa"),
                         text_color=ThemeManager.COLORS['error']
                     )
                     return
 
             self._draw_basemap(xlim=xlim, ylim=ylim, force=True)
-            self.status_label.configure(text="✅ Mapa cargado", text_color=ThemeManager.COLORS['success'])
+            self.status_label.configure(text=get_text("map_viewer.map_loaded", "✅ Mapa cargado"), text_color=ThemeManager.COLORS['success'])
         except Exception as e:
             if retry_count < 5:  # Aumentar a 5 reintentos
                 # Si falla, reintentar
@@ -435,7 +436,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 error_msg = f"Error en _draw_basemap_safe después de {retry_count} reintentos: {e}"
                 print(error_msg)
                 self.status_label.configure(
-                    text="⚠️ Error al cargar mapa",
+                    text=get_text("map_viewer.map_error", "⚠️ Error al cargar mapa"),
                     text_color=ThemeManager.COLORS['error']
                 )
 
@@ -648,7 +649,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # Restaurar status cuando sale del mapa
             if not self.is_panning:
                 self.status_label.configure(
-                    text="✅ Mapa cargado",
+                    text=get_text("map_viewer.map_loaded", "✅ Mapa cargado"),
                     text_color=ThemeManager.COLORS['success']
                 )
             return
@@ -835,7 +836,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
     
     def _change_map_type(self, map_type):
         """Cambiar tipo de mapa manteniendo la vista actual"""
-        self.status_label.configure(text=f"🔄 Cambiando a {map_type}...", text_color=ThemeManager.COLORS['warning'])
+        self.status_label.configure(text=f"🔄 {get_text('map_viewer.changing_to', 'Cambiando a')} {map_type}...", text_color=ThemeManager.COLORS['warning'])
 
         # Guardar los límites actuales de la vista
         current_xlim = self.ax.get_xlim()
@@ -885,7 +886,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         except Exception as e:
             print(f"❌ Error cambiando base map: {e}")
             self.status_label.configure(
-                text="❌ Error cambiando mapa",
+                text=get_text("map_viewer.error_changing_map", "❌ Error cambiando mapa"),
                 text_color=ThemeManager.COLORS['error']
             )
 
@@ -910,13 +911,13 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # Hay rasters cargados - hacer zoom a todos los rasters
             print("🌍 Reset: Haciendo zoom a rasters cargados")
             self.status_label.configure(
-                text="🔍 Zoom a rasters cargados...",
+                text=get_text("map_viewer.zoom_rasters", "🔍 Zoom a rasters cargados..."),
                 text_color=ThemeManager.COLORS['info']
             )
             success = self.zoom_to_all_rasters()
             if success:
                 self.status_label.configure(
-                    text=f"✅ Vista ajustada a {len(self.raster_layers)} rasters",
+                    text=f"✅ {get_text('map_viewer.view_adjusted', 'Vista ajustada a')} {len(self.raster_layers)} rasters",
                     text_color=ThemeManager.COLORS['success']
                 )
             else:
@@ -943,7 +944,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         self.zoom_level = 3
 
         self.status_label.configure(
-            text="🌍 Restableciendo vista a Latinoamérica...",
+            text=get_text("map_viewer.reset_view", "🌍 Restableciendo vista..."),
             text_color=ThemeManager.COLORS['info']
         )
 
@@ -1045,7 +1046,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
 
     def _show_error(self, message):
         """Mostrar mensaje de error"""
-        self.status_label.configure(text="❌ Error", text_color=ThemeManager.COLORS['error'])
+        self.status_label.configure(text=get_text("map_viewer.error", "❌ Error"), text_color=ThemeManager.COLORS['error'])
         print(f"MapViewer Error: {message}")
     
     def set_coordinate_callback(self, callback):

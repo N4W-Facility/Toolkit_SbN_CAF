@@ -60,33 +60,27 @@ class SbNPrioritization:
         Returns:
             dict: {sbn_id: score} for all 21 SbN options
         """
-        # Intentar leer archivo ajustado por costos primero
-        ws_file_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_WS.csv')
-        ws_file_original = os.path.join(project_path, 'DF_WS.csv')
+        # Leer evaluación del usuario (valores ingresados)
+        ws_evaluation_file = os.path.join(project_path, 'DF_WS.csv')
 
-        if os.path.exists(ws_file_adjusted):
-            print("✓ Usando matriz de pesos ajustada por costos")
-            ws_file = ws_file_adjusted
-        elif os.path.exists(ws_file_original):
-            print("⚠️ Usando desafíos de seguridad hídrica originales (sin ajuste de costos)")
-            ws_file = ws_file_original
-        else:
+        if not os.path.exists(ws_evaluation_file):
+            print("⚠️ Archivo DF_WS.csv no encontrado")
             return {}
 
-        df_ws = pd.read_csv(ws_file, encoding='utf-8-sig')
+        # Verificar que exista la matriz de pesos recategorizada
+        # Esta matriz SOLO se crea al lanzar la ventana de SbN
+        ws_weights_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_WS.csv')
 
-        # Si se usa el archivo ajustado, df_ws ya contiene los pesos recategorizados
-        # Si se usa el original, necesitamos leer los pesos de Weight_Matrix
-        if ws_file == ws_file_adjusted:
-            # Los pesos ya están en df_ws, no necesitamos leer Weight_Matrix
-            df_weights = df_ws
-        else:
-            # Leer matriz de pesos original
-            weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
-            df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Seguridad_Hidrica')
+        if not os.path.exists(ws_weights_adjusted):
+            print("⚠️ Matriz recategorizada Weight_Cost_DF_WS.csv no encontrada. Debe lanzar la ventana de SbN primero.")
+            return {}
 
-        # Calculate scores
-        return SbNPrioritization._calculate_scores(df_ws, df_weights)
+        df_evaluation = pd.read_csv(ws_evaluation_file, encoding='utf-8-sig')
+        df_weights = pd.read_csv(ws_weights_adjusted, encoding='utf-8-sig')
+        print(f"✓ Calculando scores de seguridad hídrica con matriz recategorizada")
+
+        # Calculate scores: user evaluation × weight matrix
+        return SbNPrioritization._calculate_scores(df_evaluation, df_weights)
 
     @staticmethod
     def calculate_other_challenges_scores(project_path):
@@ -99,33 +93,27 @@ class SbNPrioritization:
         Returns:
             dict: {sbn_id: score} for all 21 SbN options
         """
-        # Intentar leer archivo ajustado por costos primero
-        oc_file_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_O.csv')
-        oc_file_original = os.path.join(project_path, 'D_O.csv')
+        # Leer evaluación del usuario (valores ingresados)
+        oc_evaluation_file = os.path.join(project_path, 'D_O.csv')
 
-        if os.path.exists(oc_file_adjusted):
-            print("✓ Usando matriz de pesos ajustada por costos")
-            oc_file = oc_file_adjusted
-        elif os.path.exists(oc_file_original):
-            print("⚠️ Usando otros desafíos originales (sin ajuste de costos)")
-            oc_file = oc_file_original
-        else:
+        if not os.path.exists(oc_evaluation_file):
+            print("⚠️ Archivo D_O.csv no encontrado")
             return {}
 
-        df_oc = pd.read_csv(oc_file, encoding='utf-8-sig')
+        # Verificar que exista la matriz de pesos recategorizada
+        # Esta matriz SOLO se crea al lanzar la ventana de SbN
+        oc_weights_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_O.csv')
 
-        # Si se usa el archivo ajustado, df_oc ya contiene los pesos recategorizados
-        # Si se usa el original, necesitamos leer los pesos de Weight_Matrix
-        if oc_file == oc_file_adjusted:
-            # Los pesos ya están en df_oc, no necesitamos leer Weight_Matrix
-            df_weights = df_oc
-        else:
-            # Leer matriz de pesos original
-            weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
-            df_weights = pd.read_excel(weight_matrix_path, sheet_name='Desafios_Otros')
+        if not os.path.exists(oc_weights_adjusted):
+            print("⚠️ Matriz recategorizada Weight_Cost_DF_O.csv no encontrada. Debe lanzar la ventana de SbN primero.")
+            return {}
 
-        # Calculate scores
-        return SbNPrioritization._calculate_scores(df_oc, df_weights)
+        df_evaluation = pd.read_csv(oc_evaluation_file, encoding='utf-8-sig')
+        df_weights = pd.read_csv(oc_weights_adjusted, encoding='utf-8-sig')
+        print(f"✓ Calculando scores de otros desafíos con matriz recategorizada")
+
+        # Calculate scores: user evaluation × weight matrix
+        return SbNPrioritization._calculate_scores(df_evaluation, df_weights)
 
     @staticmethod
     def _calculate_scores(df_evaluation, df_weights):
@@ -261,19 +249,23 @@ class SbNPrioritization:
             # Read prioritization (to preserve structure and Prioridad column)
             df_prior = pd.read_csv(prioritization_file, encoding='utf-8-sig')
 
-            # Normalize each column: divide by max value (0-1 range)
+            # Normalize each column: min-max normalization (0-1 range)
             columns_to_normalize = ['Barriers', 'WS', 'Other']
 
             for col in columns_to_normalize:
                 if col in df_weights.columns:
+                    min_value = df_weights[col].min()
                     max_value = df_weights[col].max()
-                    if max_value > 0:
-                        # Normalize: divide by max
-                        normalized = df_weights[col] / max_value
+                    if max_value > min_value:
+                        # Min-max normalization: (value - min) / (max - min)
+                        normalized = (df_weights[col] - min_value) / (max_value - min_value)
                         df_prior[col] = normalized
                     else:
-                        # If all values are 0, keep them as 0
+                        # If all values are equal, set to 0
                         df_prior[col] = 0
+
+            # Las barreras entre mayor sea el score menor es la priordiad, por lo que se invierte el escalado
+            df_prior['Barriers'] = 1 - df_prior['Barriers']
 
             # Calculate final priority: (Barriers + WS + Other) × Idoneidad
             df_prior['Prioridad'] = (df_prior['Barriers'] + df_prior['WS'] + df_prior['Other']) * df_prior['Idoneidad']
@@ -460,6 +452,17 @@ class SbNPrioritization:
                     'priority_rank': None,
                     'is_enabled': False
                 }
+
+            # Actualizar CSV con columna 'order'
+            df['order'] = 0  # Inicializar todos en 0
+
+            # Asignar orden según el rank calculado para las habilitadas
+            for sbn_id, data in result_tmp.items():
+                if data['is_enabled'] and data['priority_rank'] is not None:
+                    df.loc[df['ID'] == sbn_id, 'order'] = data['priority_rank']
+
+            # Guardar CSV actualizado con todas las 21 SbN
+            df.to_csv(prioritization_file, index=False, encoding='utf-8-sig')
 
             # 👇 ordenar por priority_rank (None al final)
             ordered = OrderedDict(

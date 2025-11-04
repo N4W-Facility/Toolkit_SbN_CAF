@@ -11,6 +11,7 @@ class ProjectManager:
         return {
             "project_info": {
                 "name": "",
+                "acronym": "",
                 "description": "",
                 "location": "",
                 "objective": "",

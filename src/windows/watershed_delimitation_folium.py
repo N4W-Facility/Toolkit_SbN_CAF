@@ -9,7 +9,9 @@ from ..core.database_manager import DatabaseManager
 from ..components.matplotlib_map_viewer import MatplotlibMapViewer
 from .database_processing_dialog import DatabaseProcessingDialog
 from ..core import ProcessingPackage as PackCAF
-from ..core.normalize_raster_sbn import normalize_raster 
+from ..core import DelimitacionCuenca as PackCAF_DC
+from ..core.normalize_raster_sbn import normalize_raster
+
 
 class WatershedDelimitationFolium(ctk.CTkToplevel):
     
@@ -399,7 +401,8 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
 
             # Step 3 - Delimitación de la cuenca
             print("Step 3: Delimitando cuenca...")
-            Path_FlowDir = os.path.join(database_folder, "FlowDir", f"FlowDir_{NameRegion}.tif")
+            Path_FlowDir    = os.path.join(database_folder, "FlowDir", f"FlowDir_{NameRegion}.tif")
+            Path_FlowAccum  = os.path.join(database_folder, "FlowAccum", f"FlowAccum_{NameRegion}.tif")
 
             if not os.path.exists(Path_FlowDir):
                 raise FileNotFoundError(f"No se encontró el archivo FlowDir: {Path_FlowDir}")
@@ -408,6 +411,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             resultado = PackCAF.C01_BasinDelineation(
                 PathOut=project_folder,
                 Path_FlowDir=Path_FlowDir,
+                Path_FlowAccum=Path_FlowAccum,
                 lat=self.lat,
                 lon=self.lon,
                 threshold=threshold
@@ -1037,7 +1041,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             path_raster = os.path.join(project_folder, "02-Rasters", "Slope.tif")
             if os.path.exists(path_raster):
                 value_slope = PackCAF.polygon_pixel_stats(path_raster, path_basin, stat='mean')[0]
-                self.project_data['watershed_data']['morphometry']['avg_slope'] = round(value_slope, 2)
+                self.project_data['watershed_data']['morphometry']['avg_slope'] = round(value_slope, 2)/100
             else:
                 print(f"No se encontró: {path_raster}")
 
@@ -1080,32 +1084,32 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 print(f"No se encontró: {path_raster}")
                 v = None
 
-            # Sedimentos (kg/m3)
+            # Sedimentos (ton) -> (mg/l)
             print("Calculando sedimentos...")
             path_raster = os.path.join(project_folder, "02-Rasters", "SDR.tif")
             if os.path.exists(path_raster) and v is not None:
                 value_s_sum = PackCAF.polygon_pixel_stats(path_raster, path_basin, stat='sum')[0]
-                value_s = (value_s_sum*1000) / v
+                value_s = (value_s_sum*1000000) / v
                 self.project_data['watershed_data']['nutrients']['sediments'] = round(value_s, 4)
             else:
                 print(f"No se encontró: {path_raster} o falta valor de v")
 
-            # Nitrógeno (kg/m3)
+            # Nitrógeno (kg) -> (mg/l)
             print("Calculando nitrógeno...")
             path_raster = os.path.join(project_folder, "02-Rasters", "NDR_N.tif")
             if os.path.exists(path_raster) and v is not None:
                 value_n_sum = PackCAF.polygon_pixel_stats(path_raster, path_basin, stat='sum')[0]
-                value_n = value_n_sum / v
+                value_n = (value_n_sum*1000) / v
                 self.project_data['watershed_data']['nutrients']['nitrogen'] = round(value_n, 4)
             else:
                 print(f"No se encontró: {path_raster} o falta valor de v")
 
-            # Fósforo (kg/m3)
+            # Fósforo (kg) -> (mg/l)
             print("Calculando fósforo...")
             path_raster = os.path.join(project_folder, "02-Rasters", "NDR_P.tif")
             if os.path.exists(path_raster) and v is not None:
                 value_p_sum = PackCAF.polygon_pixel_stats(path_raster, path_basin, stat='sum')[0]
-                value_p_nutrient = value_p_sum / v
+                value_p_nutrient = (value_p_sum*1000) / v
                 self.project_data['watershed_data']['nutrients']['phosphorus'] = round(value_p_nutrient, 4)
             else:
                 print(f"No se encontró: {path_raster} o falta valor de v")
@@ -1385,14 +1389,14 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             # Calcular ValueDF
             value_df = dff.mul(values_cat["Value"], axis=0).sum().div(dff.sum())
 
-            # Mapeo de DF a OC (según tabla proporcionada)
+            # Mapeo de DF a OC
             df_to_oc_mapping = {
-                'DF5': ['OC01', 'OC02', 'OC03'],
-                'DF6': ['OC04', 'OC05'],
+                'DF5': ['OC01', 'OC02'],
+                'DF6': ['OC03', 'OC04', 'OC05'],
                 'DF7': ['OC06'],
-                'DF8': ['OC07', 'OC08'],
-                'DF9': ['OC09', 'OC10'],
-                'DF10': ['OC11', 'OC12', 'OC13', 'OC14', 'OC15', 'OC16'],
+                'DF8': ['OC07', 'OC08', 'OC09'],
+                'DF9': ['OC10', 'OC11', 'OC12'],
+                'DF10': ['OC13', 'OC14', 'OC15', 'OC16'],
                 'DF11': ['OC17', 'OC18', 'OC19'],
                 'DF12': ['OC20', 'OC21', 'OC22', 'OC23', 'OC24'],
                 'DF13': ['OC25']

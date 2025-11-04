@@ -175,8 +175,8 @@ class StartupWindow(ctk.CTk):
                 caf_image = Image.open(caf_path)
                 n4w_image = Image.open(n4w_path)
 
-                caf_Size = (180, 60)
-                n4w_Size = (230, 55)
+                caf_Size = (180, 50)
+                n4w_Size = (230, 50)
                 caf_image = caf_image.resize(caf_Size, Image.Resampling.LANCZOS)
                 n4w_image = n4w_image.resize(n4w_Size, Image.Resampling.LANCZOS)
                 
@@ -321,7 +321,7 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         title_key = "project_form.edit_title" if self.is_editing else "project_form.title"
         self.title(get_text(title_key))
-        self.geometry("600x700")
+        self.geometry("700x700")
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
@@ -332,16 +332,36 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         # Referencias a widgets para actualización de texto
         self.title_label = None
+        self.acronym_label = None
+        self.acronym_entry = None
         self.name_label = None
+        self.name_entry = None
         self.description_label = None
+        self.description_entry = None
         self.location_label = None
+        self.location_entry = None
+        self.country_label = None
+        self.country_combobox = None
         self.objective_label = None
+        self.objective_entry = None
+        self.taxonomy_section_label = None
+        self.category_label = None
+        self.category_combobox = None
+        self.subcategory_label = None
+        self.subcategory_combobox = None
+        self.activity_label = None
+        self.activity_combobox = None
+        self.observations_label = None
+        self.observations_entry = None
         self.cancel_btn = None
         self.create_btn = None
-        self.name_entry = None
-        self.description_entry = None
-        self.location_entry = None
-        self.objective_entry = None
+
+        # Datos de taxonomía
+        self.taxonomy_data = {}
+        self.countries_dict = {}
+        self.category_display_map = {}  # Mapeo: texto_truncado -> texto_completo
+        self.subcategory_display_map = {}
+        self.activity_display_map = {}
 
         # Suscribirse a cambios de idioma
         subscribe_to_language_changes(self._update_texts)
@@ -354,21 +374,38 @@ class NewProjectDialog(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self._cancel)
     
     def _setup_ui(self):
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=30, pady=30)
-        
+        # Frame principal con título
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=30, pady=(20, 10))
+
         self.title_label = ctk.CTkLabel(
-            main_frame,
+            header_frame,
             text=get_text("project_form.title"),
             **ThemeManager.get_label_style('heading')
         )
-        self.title_label.pack(pady=(0, 20))
-        
-        form_frame = ctk.CTkFrame(main_frame, **ThemeManager.get_frame_style())
+        self.title_label.pack()
+
+        # Frame scrollable para el formulario
+        scrollable_frame = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            scrollbar_button_color=ThemeManager.COLORS['accent_primary'],
+            scrollbar_button_hover_color=ThemeManager.COLORS['accent_secondary']
+        )
+        scrollable_frame.pack(fill="both", expand=True, padx=30, pady=(0, 10))
+
+        form_frame = ctk.CTkFrame(scrollable_frame, **ThemeManager.get_frame_style())
         form_frame.pack(fill="both", expand=True, pady=(0, 20))
-        
+
+        # Acrónimo
+        self.acronym_label = ctk.CTkLabel(form_frame, text=get_text("project_form.acronym_label"), **ThemeManager.get_label_style('body'))
+        self.acronym_label.pack(anchor="w", padx=20, pady=(20, 5))
+        self.acronym_entry = ctk.CTkEntry(form_frame, placeholder_text=get_text("project_form.acronym_placeholder"), **ThemeManager.get_entry_style())
+        self.acronym_entry.pack(fill="x", padx=20, pady=(0, 15))
+
+        # Nombre/Título del proyecto
         self.name_label = ctk.CTkLabel(form_frame, text=get_text("project_form.name_label"), **ThemeManager.get_label_style('body'))
-        self.name_label.pack(anchor="w", padx=20, pady=(20, 5))
+        self.name_label.pack(anchor="w", padx=20, pady=(0, 5))
         self.name_entry = ctk.CTkEntry(form_frame, placeholder_text=get_text("project_form.name_placeholder"), **ThemeManager.get_entry_style())
         self.name_entry.pack(fill="x", padx=20, pady=(0, 15))
         
@@ -410,17 +447,25 @@ class NewProjectDialog(ctk.CTkToplevel):
             dropdown_fg_color=ThemeManager.COLORS['bg_card'],
             dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
             text_color=ThemeManager.COLORS['text_primary'],
-            font=ThemeManager.FONTS['body']
+            font=ThemeManager.FONTS['body'],
+            dropdown_font=("Segoe UI", 9),
+            height=28
         )
         self.country_combobox.pack(fill="x", padx=20, pady=(0, 15))
         if country_names:
             self.country_combobox.set(country_names[0])  # Seleccionar primer país por defecto
 
+        # Configurar altura máxima del dropdown
+        try:
+            self.country_combobox._dropdown_menu.configure(height=200)
+        except:
+            pass
+
         self.objective_label = ctk.CTkLabel(form_frame, text=get_text("project_form.objective_label"), **ThemeManager.get_label_style('body'))
         self.objective_label.pack(anchor="w", padx=20, pady=(0, 5))
         self.objective_entry = ctk.CTkTextbox(
-            form_frame, 
-            height=100,
+            form_frame,
+            height=120,
             fg_color=ThemeManager.COLORS['bg_card'],
             border_color=ThemeManager.COLORS['border'],
             text_color=ThemeManager.COLORS['text_primary'],
@@ -428,10 +473,147 @@ class NewProjectDialog(ctk.CTkToplevel):
             corner_radius=ThemeManager.DIMENSIONS['corner_radius'],
             border_width=1
         )
-        self.objective_entry.pack(fill="x", padx=20, pady=(0, 25))
-        
-        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        button_frame.pack(fill="x", pady=(10, 0))
+        self.objective_entry.pack(fill="x", padx=20, pady=(0, 15))
+
+        # Sección Taxonomía CAF
+        self.taxonomy_section_label = ctk.CTkLabel(
+            form_frame,
+            text=get_text("project_form.taxonomy_section"),
+            font=ThemeManager.FONTS['heading'],
+            text_color=ThemeManager.COLORS['accent_primary']
+        )
+        self.taxonomy_section_label.pack(anchor="w", padx=20, pady=(15, 5))
+
+        # Info de taxonomía
+        taxonomy_info_label = ctk.CTkLabel(
+            form_frame,
+            text=get_text("project_form.taxonomy_info"),
+            font=ThemeManager.FONTS['caption'],
+            text_color=ThemeManager.COLORS['text_secondary'],
+            wraplength=600
+        )
+        taxonomy_info_label.pack(anchor="w", padx=20, pady=(0, 10))
+
+        # Cargar taxonomía
+        self.taxonomy_data = self._load_taxonomy()
+
+        # Categoría
+        self.category_label = ctk.CTkLabel(form_frame, text=get_text("project_form.category_label"), **ThemeManager.get_label_style('body'))
+        self.category_label.pack(anchor="w", padx=20, pady=(0, 5))
+
+        # Preparar categorías truncadas para display
+        select_text = get_text("project_form.select_category")
+        categories_display = [select_text]
+        self.category_display_map = {select_text: select_text}
+
+        for cat in self.taxonomy_data.keys():
+            truncated = self._truncate_text(cat, 60)
+            categories_display.append(truncated)
+            self.category_display_map[truncated] = cat
+
+        self.category_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=categories_display,
+            state="readonly",
+            command=self._on_category_selected,
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            button_color=ThemeManager.COLORS['accent_primary'],
+            button_hover_color=ThemeManager.COLORS['accent_secondary'],
+            dropdown_fg_color=ThemeManager.COLORS['bg_card'],
+            dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body'],
+            dropdown_font=("Segoe UI", 8),
+            height=28,
+            width=600
+        )
+        self.category_combobox.pack(fill="x", padx=20, pady=(0, 15))
+        self.category_combobox.set(select_text)
+
+        # Configurar altura máxima del dropdown
+        try:
+            self.category_combobox._dropdown_menu.configure(height=250)
+        except:
+            pass
+
+        # Subcategoría
+        self.subcategory_label = ctk.CTkLabel(form_frame, text=get_text("project_form.subcategory_label"), **ThemeManager.get_label_style('body'))
+        self.subcategory_label.pack(anchor="w", padx=20, pady=(0, 5))
+
+        self.subcategory_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=[get_text("project_form.select_subcategory")],
+            state="disabled",
+            command=self._on_subcategory_selected,
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            button_color=ThemeManager.COLORS['accent_primary'],
+            button_hover_color=ThemeManager.COLORS['accent_secondary'],
+            dropdown_fg_color=ThemeManager.COLORS['bg_card'],
+            dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body'],
+            dropdown_font=("Segoe UI", 8),
+            height=28,
+            width=600
+        )
+        self.subcategory_combobox.pack(fill="x", padx=20, pady=(0, 15))
+        self.subcategory_combobox.set(get_text("project_form.select_subcategory"))
+
+        # Configurar altura máxima del dropdown
+        try:
+            self.subcategory_combobox._dropdown_menu.configure(height=250)
+        except:
+            pass
+
+        # Actividad elegible
+        self.activity_label = ctk.CTkLabel(form_frame, text=get_text("project_form.activity_label"), **ThemeManager.get_label_style('body'))
+        self.activity_label.pack(anchor="w", padx=20, pady=(0, 5))
+
+        self.activity_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=[get_text("project_form.select_activity")],
+            state="disabled",
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            button_color=ThemeManager.COLORS['accent_primary'],
+            button_hover_color=ThemeManager.COLORS['accent_secondary'],
+            dropdown_fg_color=ThemeManager.COLORS['bg_card'],
+            dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body'],
+            dropdown_font=("Segoe UI", 8),
+            height=28,
+            width=600
+        )
+        self.activity_combobox.pack(fill="x", padx=20, pady=(0, 15))
+        self.activity_combobox.set(get_text("project_form.select_activity"))
+
+        # Configurar altura máxima del dropdown
+        try:
+            self.activity_combobox._dropdown_menu.configure(height=250)
+        except:
+            pass
+
+        # Observaciones
+        self.observations_label = ctk.CTkLabel(form_frame, text=get_text("project_form.observations_label"), **ThemeManager.get_label_style('body'))
+        self.observations_label.pack(anchor="w", padx=20, pady=(0, 5))
+        self.observations_entry = ctk.CTkTextbox(
+            form_frame,
+            height=80,
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body'],
+            corner_radius=ThemeManager.DIMENSIONS['corner_radius'],
+            border_width=1
+        )
+        self.observations_entry.pack(fill="x", padx=20, pady=(0, 25))
+
+        # Botones fuera del scrollable frame (fijos en la parte inferior)
+        button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        button_frame.pack(fill="x", padx=30, pady=(0, 20))
         
         self.cancel_btn = ctk.CTkButton(
             button_frame,
@@ -465,10 +647,12 @@ class NewProjectDialog(ctk.CTkToplevel):
         # Pre-llenar campos si estamos editando
         if self.is_editing and self.project_data:
             project_info = self.project_data.get('project_info', {})
+            self.acronym_entry.insert(0, project_info.get('acronym', ''))
             self.name_entry.insert(0, project_info.get('name', ''))
             self.description_entry.insert("1.0", project_info.get('description', ''))
             self.location_entry.insert(0, project_info.get('location', ''))
             self.objective_entry.insert("1.0", project_info.get('objective', ''))
+            self.observations_entry.insert("1.0", project_info.get('observations', ''))
 
             # Cargar país si existe
             if 'country_code' in project_info and hasattr(self, 'country_combobox'):
@@ -477,6 +661,111 @@ class NewProjectDialog(ctk.CTkToplevel):
                 # Buscar y seleccionar el país en el combobox
                 if country_name in self.countries_dict.keys():
                     self.country_combobox.set(country_name)
+
+            # Cargar taxonomía CAF si existe
+            caf_category = project_info.get('caf_category', '')
+            caf_subcategory = project_info.get('caf_subcategory', '')
+            caf_activity = project_info.get('caf_activity', '')
+
+            if caf_category and caf_category in self.taxonomy_data:
+                # Buscar el valor truncado correspondiente en el mapeo
+                cat_display = None
+                for display, real in self.category_display_map.items():
+                    if real == caf_category:
+                        cat_display = display
+                        break
+
+                if cat_display:
+                    self.category_combobox.set(cat_display)
+                    self._on_category_selected(cat_display)
+
+                    if caf_subcategory and caf_subcategory in self.taxonomy_data.get(caf_category, {}):
+                        # Buscar el valor truncado de subcategoría
+                        subcat_display = None
+                        for display, real in self.subcategory_display_map.items():
+                            if real == caf_subcategory:
+                                subcat_display = display
+                                break
+
+                        if subcat_display:
+                            self.subcategory_combobox.set(subcat_display)
+                            self._on_subcategory_selected(subcat_display)
+
+                            if caf_activity:
+                                # Buscar el valor truncado de actividad
+                                activity_display = None
+                                for display, real in self.activity_display_map.items():
+                                    if real == caf_activity:
+                                        activity_display = display
+                                        break
+
+                                if activity_display:
+                                    self.activity_combobox.set(activity_display)
+
+    def _truncate_text(self, text, max_length):
+        """Truncar texto largo para mostrar en dropdown"""
+        if len(text) <= max_length:
+            return text
+        return text[:max_length - 3] + "..."
+
+    def _load_taxonomy(self):
+        """
+        Cargar taxonomía CAF desde archivo según idioma actual.
+        Busca Taxonomia_CAF_{idioma}.csv según el idioma seleccionado (es, en, pt).
+        Si no existe, usa español como fallback.
+
+        Returns:
+            dict: {Categoria: {Subcategoria: [Actividades]}}
+        """
+        try:
+            import csv
+            base_path = os.path.dirname(os.path.dirname(__file__))
+
+            # Obtener idioma actual
+            current_lang = get_current_global_language()
+
+            # Construir nombre de archivo según idioma
+            taxonomy_filename = f"Taxonomia_CAF_{current_lang}.csv"
+            taxonomy_path = os.path.join(base_path, "locales", taxonomy_filename)
+
+            # Si no existe el archivo del idioma, usar español como fallback
+            if not os.path.exists(taxonomy_path):
+                print(f"⚠️ No se encontró {taxonomy_filename}, usando español como fallback")
+                taxonomy_filename = "Taxonomia_CAF_es.csv"
+                taxonomy_path = os.path.join(base_path, "locales", taxonomy_filename)
+
+                if not os.path.exists(taxonomy_path):
+                    print(f"⚠️ No se encontró archivo de taxonomía")
+                    return {}
+
+            taxonomy = {}
+            with open(taxonomy_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    categoria = row.get('Categoria', '').strip()
+                    subcategoria = row.get('Subcategoria', '').strip()
+                    actividad = row.get('Actividad', '').strip()
+
+                    if not categoria or not subcategoria or not actividad:
+                        continue
+
+                    if categoria not in taxonomy:
+                        taxonomy[categoria] = {}
+
+                    if subcategoria not in taxonomy[categoria]:
+                        taxonomy[categoria][subcategoria] = []
+
+                    if actividad not in taxonomy[categoria][subcategoria]:
+                        taxonomy[categoria][subcategoria].append(actividad)
+
+            print(f"✓ Cargadas {len(taxonomy)} categorías desde {taxonomy_filename}")
+            for cat in taxonomy.keys():
+                print(f"  - Categoría: {cat}")
+            return taxonomy
+
+        except Exception as e:
+            print(f"⚠️ Error cargando taxonomía: {e}")
+            return {}
 
     def _load_countries(self):
         """
@@ -519,11 +808,68 @@ class NewProjectDialog(ctk.CTkToplevel):
             print(f"⚠️ Error cargando países: {e}")
             return {}
 
+    def _on_category_selected(self, selected_category_display):
+        """Manejar selección de categoría y habilitar subcategorías"""
+        # Resetear subcategoría y actividad
+        self.subcategory_combobox.configure(state="disabled")
+        self.subcategory_combobox.set(get_text("project_form.select_subcategory"))
+        self.activity_combobox.configure(state="disabled")
+        self.activity_combobox.set(get_text("project_form.select_activity"))
+
+        # Obtener categoría real desde el mapeo
+        selected_category = self.category_display_map.get(selected_category_display, selected_category_display)
+
+        # Si la categoría seleccionada es válida, habilitar subcategorías
+        if selected_category and selected_category != get_text("project_form.select_category"):
+            if selected_category in self.taxonomy_data:
+                # Preparar subcategorías truncadas
+                select_text = get_text("project_form.select_subcategory")
+                subcategories_display = [select_text]
+                self.subcategory_display_map = {select_text: select_text}
+
+                for subcat in self.taxonomy_data[selected_category].keys():
+                    truncated = self._truncate_text(subcat, 80)
+                    subcategories_display.append(truncated)
+                    self.subcategory_display_map[truncated] = subcat
+
+                self.subcategory_combobox.configure(values=subcategories_display, state="readonly")
+
+    def _on_subcategory_selected(self, selected_subcategory_display):
+        """Manejar selección de subcategoría y habilitar actividades"""
+        # Resetear actividad
+        self.activity_combobox.configure(state="disabled")
+        self.activity_combobox.set(get_text("project_form.select_activity"))
+
+        # Obtener subcategoría real desde el mapeo
+        selected_subcategory = self.subcategory_display_map.get(selected_subcategory_display, selected_subcategory_display)
+
+        # Si la subcategoría seleccionada es válida, habilitar actividades
+        if selected_subcategory and selected_subcategory != get_text("project_form.select_subcategory"):
+            # Obtener categoría real desde el mapeo
+            selected_category_display = self.category_combobox.get()
+            selected_category = self.category_display_map.get(selected_category_display, selected_category_display)
+
+            if selected_category in self.taxonomy_data:
+                if selected_subcategory in self.taxonomy_data[selected_category]:
+                    # Preparar actividades truncadas
+                    select_text = get_text("project_form.select_activity")
+                    activities_display = [select_text]
+                    self.activity_display_map = {select_text: select_text}
+
+                    for activity in self.taxonomy_data[selected_category][selected_subcategory]:
+                        truncated = self._truncate_text(activity, 100)
+                        activities_display.append(truncated)
+                        self.activity_display_map[truncated] = activity
+
+                    self.activity_combobox.configure(values=activities_display, state="readonly")
+
     def _create_project(self):
+        acronym     = self.acronym_entry.get().strip()
         name        = self.name_entry.get().strip()
         description = self.description_entry.get("1.0", "end-1c").strip()
         location    = self.location_entry.get().strip()
         objective   = self.objective_entry.get("1.0", "end-1c").strip()
+        observations = self.observations_entry.get("1.0", "end-1c").strip()
 
         # Obtener país seleccionado
         country_name = None
@@ -535,21 +881,48 @@ class NewProjectDialog(ctk.CTkToplevel):
             if country_data:
                 country_code, country_factor = country_data
 
+        # Obtener taxonomía CAF seleccionada (valores de display)
+        caf_category_display = self.category_combobox.get()
+        caf_subcategory_display = self.subcategory_combobox.get()
+        caf_activity_display = self.activity_combobox.get()
+
+        # Obtener valores reales desde los mapeos
+        caf_category = self.category_display_map.get(caf_category_display, caf_category_display)
+        caf_subcategory = self.subcategory_display_map.get(caf_subcategory_display, caf_subcategory_display)
+        caf_activity = self.activity_display_map.get(caf_activity_display, caf_activity_display)
+
+        # Validaciones
         if not name:
             messagebox.showerror(get_text("messages.error"), get_text("project_form.name_required"))
+            return
+
+        # Validar taxonomía CAF (todos los campos deben estar seleccionados)
+        select_cat = get_text("project_form.select_category")
+        select_subcat = get_text("project_form.select_subcategory")
+        select_act = get_text("project_form.select_activity")
+
+        if (caf_category == select_cat or
+            caf_subcategory == select_subcat or
+            caf_activity == select_act):
+            messagebox.showerror(get_text("messages.error"), get_text("project_form.taxonomy_required"))
             return
 
         try:
             if self.is_editing:
                 # Modo edición: actualizar project_data existente
                 self.project_data['project_info'].update({
+                    'acronym': acronym,
                     'name': name,
                     'description': description,
                     'location': location,
                     'objective': objective,
                     'country_code': country_code,
                     'country_name': country_name,
-                    'country_factor': country_factor
+                    'country_factor': country_factor,
+                    'caf_category': caf_category,
+                    'caf_subcategory': caf_subcategory,
+                    'caf_activity': caf_activity,
+                    'observations': observations
                 })
                 self.result = self.project_data
                 self.destroy()
@@ -565,13 +938,18 @@ class NewProjectDialog(ctk.CTkToplevel):
                 # Crear template del proyecto
                 project_data = ProjectManager.create_project_template()
                 project_data['project_info'].update({
+                    'acronym': acronym,
                     'name': name,
                     'description': description,
                     'location': location,
                     'objective': objective,
                     'country_code': country_code,
                     'country_name': country_name,
-                    'country_factor': country_factor
+                    'country_factor': country_factor,
+                    'caf_category': caf_category,
+                    'caf_subcategory': caf_subcategory,
+                    'caf_activity': caf_activity,
+                    'observations': observations
                 })
 
                 # Establecer rutas de archivos
@@ -596,20 +974,48 @@ class NewProjectDialog(ctk.CTkToplevel):
         """Actualizar todos los textos cuando cambia el idioma"""
         if hasattr(self, 'title_label') and self.title_label:
             # Actualizar título de la ventana
-            self.title(get_text("project_form.title"))
+            title_key = "project_form.edit_title" if self.is_editing else "project_form.title"
+            self.title(get_text(title_key))
 
             # Actualizar widgets de texto
             self.title_label.configure(text=get_text("project_form.title"))
+
+            if hasattr(self, 'acronym_label') and self.acronym_label:
+                self.acronym_label.configure(text=get_text("project_form.acronym_label"))
+
             self.name_label.configure(text=get_text("project_form.name_label"))
             self.description_label.configure(text=get_text("project_form.description_label"))
             self.location_label.configure(text=get_text("project_form.location_label"))
-            if hasattr(self, 'country_label'):
+
+            if hasattr(self, 'country_label') and self.country_label:
                 self.country_label.configure(text=get_text("project_form.country_label"))
+
             self.objective_label.configure(text=get_text("project_form.objective_label"))
+
+            if hasattr(self, 'taxonomy_section_label') and self.taxonomy_section_label:
+                self.taxonomy_section_label.configure(text=get_text("project_form.taxonomy_section"))
+
+            if hasattr(self, 'category_label') and self.category_label:
+                self.category_label.configure(text=get_text("project_form.category_label"))
+
+            if hasattr(self, 'subcategory_label') and self.subcategory_label:
+                self.subcategory_label.configure(text=get_text("project_form.subcategory_label"))
+
+            if hasattr(self, 'activity_label') and self.activity_label:
+                self.activity_label.configure(text=get_text("project_form.activity_label"))
+
+            if hasattr(self, 'observations_label') and self.observations_label:
+                self.observations_label.configure(text=get_text("project_form.observations_label"))
+
             self.cancel_btn.configure(text=get_text("project_form.cancel"))
-            self.create_btn.configure(text=get_text("project_form.create"))
+
+            button_text_key = "project_form.save" if self.is_editing else "project_form.create"
+            self.create_btn.configure(text=get_text(button_text_key))
 
             # Actualizar placeholders
+            if hasattr(self, 'acronym_entry') and self.acronym_entry:
+                self.acronym_entry.configure(placeholder_text=get_text("project_form.acronym_placeholder"))
+
             self.name_entry.configure(placeholder_text=get_text("project_form.name_placeholder"))
             self.location_entry.configure(placeholder_text=get_text("project_form.location_placeholder"))
 

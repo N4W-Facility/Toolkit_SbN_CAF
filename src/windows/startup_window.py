@@ -7,6 +7,7 @@ from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes, set_language, get_available_languages, get_current_global_language, set_current_global_language
 from ..utils.project_manager import ProjectManager
 from ..utils.resource_path import get_resource_path
+from src.utils.resource_path import get_resource_path
 
 class StartupWindow(ctk.CTk):
     
@@ -719,20 +720,19 @@ class NewProjectDialog(ctk.CTkToplevel):
         """
         try:
             import csv
-            base_path = os.path.dirname(os.path.dirname(__file__))
 
             # Obtener idioma actual
             current_lang = get_current_global_language()
 
             # Construir nombre de archivo según idioma
             taxonomy_filename = f"Taxonomia_CAF_{current_lang}.csv"
-            taxonomy_path = os.path.join(base_path, "locales", taxonomy_filename)
+            taxonomy_path = get_resource_path(os.path.join("locales", taxonomy_filename))
 
             # Si no existe el archivo del idioma, usar español como fallback
             if not os.path.exists(taxonomy_path):
                 print(f"⚠️ No se encontró {taxonomy_filename}, usando español como fallback")
                 taxonomy_filename = "Taxonomia_CAF_es.csv"
-                taxonomy_path = os.path.join(base_path, "locales", taxonomy_filename)
+                taxonomy_path = get_resource_path(os.path.join("locales", taxonomy_filename))
 
                 if not os.path.exists(taxonomy_path):
                     print(f"⚠️ No se encontró archivo de taxonomía")
@@ -776,8 +776,11 @@ class NewProjectDialog(ctk.CTkToplevel):
         """
         try:
             import pandas as pd
-            base_path = os.path.dirname(os.path.dirname(__file__))
-            weight_matrix_path = os.path.join(base_path, "locales", "Weight_Matrix.xlsx")
+            weight_matrix_path = get_resource_path(os.path.join("locales", "Weight_Matrix.xlsx"))
+
+            # Si no existe y contiene src\, intentar sin src\
+            if not os.path.exists(weight_matrix_path) and 'src' + os.sep in weight_matrix_path:
+                weight_matrix_path = weight_matrix_path.replace('src' + os.sep, '')
 
             if not os.path.exists(weight_matrix_path):
                 print(f"⚠️ No se encontró Weight_Matrix.xlsx")

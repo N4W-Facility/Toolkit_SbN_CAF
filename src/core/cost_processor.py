@@ -11,6 +11,7 @@ import os
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from src.utils.resource_path import get_resource_path
 
 
 class CostProcessor:
@@ -46,8 +47,11 @@ class CostProcessor:
     def _get_weight_matrix_path(self):
         """Obtener ruta al archivo Weight_Matrix.xlsx"""
         # Buscar en locales
-        base_path = os.path.dirname(os.path.dirname(__file__))
-        weight_matrix_path = os.path.join(base_path, "locales", "Weight_Matrix.xlsx")
+        weight_matrix_path = get_resource_path(os.path.join("locales", "Weight_Matrix.xlsx"))
+
+        # Si no existe y contiene src\, intentar sin src\
+        if not os.path.exists(weight_matrix_path) and 'src' + os.sep in weight_matrix_path:
+            weight_matrix_path = weight_matrix_path.replace('src' + os.sep, '')
 
         if not os.path.exists(weight_matrix_path):
             raise FileNotFoundError(f"No se encontró Weight_Matrix.xlsx en {weight_matrix_path}")
@@ -128,11 +132,20 @@ class CostProcessor:
         """
         try:
             print(f"📊 Categorizando costos según opción: {financial_option}")
+            print(f"📁 Ruta Cost.csv: {self.cost_csv}")
 
             # Leer costos ajustados
             if not os.path.exists(self.cost_csv):
                 print("⚠️ No existe Cost.csv, ejecutando calculate_adjusted_costs primero")
-                self.calculate_adjusted_costs()
+                success = self.calculate_adjusted_costs()
+                if not success:
+                    print("❌ No se pudo crear Cost.csv")
+                    return False
+
+            # Verificar que la ruta sea válida antes de leer
+            if not os.path.isfile(self.cost_csv):
+                print(f"❌ La ruta no es un archivo válido: {self.cost_csv}")
+                return False
 
             df_cost = pd.read_csv(self.cost_csv, encoding='utf-8-sig')
 

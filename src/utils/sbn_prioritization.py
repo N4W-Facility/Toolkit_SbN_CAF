@@ -12,17 +12,38 @@ Uses weighted matrices from Weight_Matrix.xlsx to compute scores for 21 SbN opti
 import pandas as pd
 import numpy as np
 import os
+from src.utils.resource_path import get_resource_path
 
 
 class SbNPrioritization:
     """Handles SbN prioritization calculations using weighted matrix multiplication"""
 
-    # Path to weight matrix file
-    WEIGHT_MATRIX_PATH = os.path.join('src', 'locales', 'Weight_Matrix.xlsx')
+    @staticmethod
+    def _get_weight_matrix_path():
+        """Retorna la ruta al archivo Weight_Matrix.xlsx"""
+        path = get_resource_path(os.path.join('locales', 'Weight_Matrix.xlsx'))
+        # Si la ruta no existe y contiene src\, intentar sin src\
+        if not os.path.exists(path) and 'src' + os.sep in path:
+            path = path.replace('src' + os.sep, '')
+        return path
 
-    # Template files to copy to new projects
-    WEIGHTS_TEMPLATE_PATH = os.path.join('src', 'locales', 'SbN_Weights.csv')
-    PRIORITIZATION_TEMPLATE_PATH = os.path.join('src', 'locales', 'SbN_Prioritization.csv')
+    @staticmethod
+    def _get_weights_template_path():
+        """Retorna la ruta al template SbN_Weights.csv"""
+        path = get_resource_path(os.path.join('locales', 'SbN_Weights.csv'))
+        # Si la ruta no existe y contiene src\, intentar sin src\
+        if not os.path.exists(path) and 'src' + os.sep in path:
+            path = path.replace('src' + os.sep, '')
+        return path
+
+    @staticmethod
+    def _get_prioritization_template_path():
+        """Retorna la ruta al template SbN_Prioritization.csv"""
+        path = get_resource_path(os.path.join('locales', 'SbN_Prioritization.csv'))
+        # Si la ruta no existe y contiene src\, intentar sin src\
+        if not os.path.exists(path) and 'src' + os.sep in path:
+            path = path.replace('src' + os.sep, '')
+        return path
 
     @staticmethod
     def calculate_barrier_scores(project_path):
@@ -43,7 +64,8 @@ class SbNPrioritization:
         df_barriers = pd.read_csv(barriers_file, encoding='utf-8-sig')
 
         # Read weight matrix
-        weight_matrix_path = SbNPrioritization.WEIGHT_MATRIX_PATH
+        weight_matrix_path = SbNPrioritization._get_weight_matrix_path()
+
         df_weights = pd.read_excel(weight_matrix_path, sheet_name='Barreras')
 
         # Calculate scores
@@ -287,7 +309,7 @@ class SbNPrioritization:
         """
         try:
             # Copy SbN_Weights.csv
-            weights_template = SbNPrioritization.WEIGHTS_TEMPLATE_PATH
+            weights_template = SbNPrioritization._get_weights_template_path()
             weights_dest = os.path.join(project_path, 'SbN_Weights.csv')
 
             if os.path.exists(weights_template):
@@ -298,7 +320,7 @@ class SbNPrioritization:
                 print(f"Warning: Template {weights_template} not found")
 
             # Copy SbN_Prioritization.csv
-            prior_template = SbNPrioritization.PRIORITIZATION_TEMPLATE_PATH
+            prior_template = SbNPrioritization._get_prioritization_template_path()
             prior_dest = os.path.join(project_path, 'SbN_Prioritization.csv')
 
             if os.path.exists(prior_template):

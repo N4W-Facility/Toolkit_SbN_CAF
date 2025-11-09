@@ -77,10 +77,23 @@ class ProjectManager:
         try:
             if not os.path.exists(file_path):
                 return None
-            
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 project_data = json.load(f)
-            
+
+            # Actualizar la ruta del proyecto a la ubicación real del JSON
+            actual_project_folder = os.path.dirname(file_path)
+            # Normalizar para formato Windows
+            actual_project_folder = os.path.normpath(actual_project_folder)
+
+            if 'files' not in project_data:
+                project_data['files'] = {}
+
+            project_data['files']['project_folder'] = actual_project_folder
+
+            # Guardar inmediatamente el JSON con la ruta actualizada
+            ProjectManager.save_project(project_data, file_path)
+
             return project_data
         except Exception as e:
             return None

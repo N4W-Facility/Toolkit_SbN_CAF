@@ -1,47 +1,47 @@
 {
-  "B.2. Protección y restauración de la biodiversidad y los ecosistemas": {
-    "B.2.1. Conservación y restauración de ecosistemas estratégicos terrestres.": {
-      "B.2.1.6. Restauración de suelos degradados y regeneración de la fertilidad del suelo.": [
+  "B.2. Protection and restoration of biodiversity and ecosystems": {
+    "B.2.1. Conservation and restoration of strategic terrestrial ecosystems.": {
+      "B.2.1.6. Restoration of degraded soils and regeneration of soil fertility.": [
         {
           "id": 2,
-          "SbN": "Restauración pasiva"
+          "SbN": "Passive restoration"
         }
       ],
-      "B.2.1.1. Conservación de bosques y otros ecosistemas estratégicos terrestres.": [
+      "B.2.1.1. Conservation of forests and other strategic terrestrial ecosystems.": [
         {
           "id": 1,
-          "SbN": "Conservación del bosque"
+          "SbN": "Forest conservation"
         }
       ],
-      "B.2.1.2. Recuperación de ecosistemas terrestres degradados por actividades productivas.": [
+      "B.2.1.2. Recovery of terrestrial ecosystems degraded by productive activities.": [
         {
           "id": 4,
-          "SbN": "Restauración activa - Nucleación"
+          "SbN": "Active restoration - Nucleation"
         },
         {
           "id": null,
-          "SbN": "Restauración activa - enriquecimiento"
+          "SbN": "Active restoration - enrichment"
         }
       ],
-      "B.2.1.4. Reforestación o arborización urbana para mejorar calidad del aire y regular temperatura.": [
+      "B.2.1.4. Urban reforestation or tree planting to improve air quality and regulate temperature.": [
         {
           "id": null,
           "SbN": "nan"
         }
       ]
     },
-    "B.2.2. Agricultura, forestal y otros usos sostenibles del suelo.": {
-      "B.2.2.3. Usos mixtos agroforestales y producción pecuaria sostenible.": [
+    "B.2.2. Agriculture, forestry and other sustainable land uses.": {
+      "B.2.2.3. Mixed agroforestry uses and sustainable livestock production.": [
         {
           "id": 20,
-          "SbN": "Agroforestería"
+          "SbN": "Agroforestry"
         }
       ]
     }
   },
-  "A.3. Adaptación basada en ecosistemas": {
-    "A.3.1. Uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático.": {
-      "A.3.1.9. Otras actividades con uso de la biodiversidad y los servicios ecosistémicos para reducir la vulnerabilidad y el riesgo físico climático. Economía azul sostenible: Clasifica si trata de biodiversidad o servicios ecosistémicos marino costeros.": [
+  "A.3. Ecosystem-based adaptation": {
+    "A.3.1. Use of biodiversity and ecosystem services to reduce vulnerability and physical climate risk.": {
+      "A.3.1.9. Other activities using biodiversity and ecosystem services to reduce vulnerability and physical climate risk. Sustainable blue economy: Classify if it deals with marine-coastal biodiversity or ecosystem services.": [
         {
           "id": null,
           "SbN": "nan"
@@ -68,7 +68,7 @@
         },
         {
           "id": 6,
-          "SbN": "Llanuras de inundación"
+          "SbN": "Floodplains"
         },
         {
           "id": null,
@@ -83,7 +83,7 @@
           "SbN": "nan"
         }
       ],
-      "A.3.1.3. Restauración y gestión integral de cuencas y subcuencas hidrográficas. Economía azul sostenible: Clasifica cuando genere un impacto positivo sobre la zona marino-costera.": [
+      "A.3.1.3. Restoration and integrated management of basins and sub-basins. Sustainable blue economy: Classify when it generates a positive impact on the marine-coastal zone.": [
         {
           "id": null,
           "SbN": "nan"
@@ -93,27 +93,27 @@
           "SbN": "nan"
         }
       ],
-      "A.3.1.4. Recuperación y/o reforestación de bosques urbanos que cumplen funciones vitales para la sostenibilidad y contribuyen a la mitigación del riesgo climático.": [
+      "A.3.1.4. Recovery and/or reforestation of urban forests that perform vital functions for sustainability and contribute to mitigating climate risk.": [
         {
           "id": 14,
-          "SbN": "Espacios verdes"
+          "SbN": "Green spaces"
         },
         {
           "id": 17,
-          "SbN": "Silvicultura de cuenca urbana"
+          "SbN": "Urban watershed forestry"
         }
       ],
-      "A.3.1.5. Jardines filtrantes en cuerpos de agua urbanos para reducir el riesgo de inundaciones.": [
+      "A.3.1.5. Filter gardens in urban water bodies to reduce flood risk.": [
         {
           "id": 12,
-          "SbN": "Jardines de lluvia"
+          "SbN": "Rain gardens"
         }
       ]
     }
   },
-  "A.2. Agricultura, uso de la tierra, actividad pecuaria, pesca, maricultura o acuicultura": {
-    "A.2.1. Medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental.": {
-      "A.2.1.7. Otras medidas que contribuyen al mantenimiento o mejora de la productividad de los sistemas agrícolas, pecuarios, pesqueros, de la maricultura o en la acuicultura marina o continental. Economía azul sostenible: Clasifica cuando se trate de otras medidas que contribuyan a mantener o mejorar de manera sostenible la productividad de la pesca marina o maricultura sostenible.": [
+  "A.2. Agriculture, land use, livestock activity, fishing, mariculture or aquaculture": {
+    "A.2.1. Measures that contribute to maintaining or improving the productivity of agricultural, livestock, fishing, mariculture or marine/continental aquaculture systems.": {
+      "A.2.1.7. Other measures that contribute to maintaining or improving the productivity of agricultural, livestock, fishing, mariculture or marine/continental aquaculture systems. Sustainable blue economy: Classify when these are other measures that contribute to sustainably maintaining or improving marine fishery productivity or sustainable mariculture.": [
         {
           "id": null,
           "SbN": "nan"
@@ -121,9 +121,9 @@
       ]
     }
   },
-  "M.4. Agricultura, silvicultura y uso de la tierra y pesca.": {
-    "M.4.1. Agricultura: eficiencia energética, secuestro de carbono, reducción de emisiones de GEI": {
-      "M.4.1.2. Proyectos agrícolas que contribuyan a aumentar los stocks de carbono en el suelo o a evitar la pérdida de carbono del suelo a través de medidas de control de la erosión.": [
+  "M.4. Agriculture, forestry, land use and fisheries.": {
+    "M.4.1. Agriculture: energy efficiency, carbon sequestration, GHG emissions reduction": {
+      "M.4.1.2. Agricultural projects that contribute to increasing soil carbon stocks or preventing loss of soil carbon through erosion control measures.": [
         {
           "id": null,
           "SbN": "nan"
@@ -131,38 +131,38 @@
       ]
     }
   },
-  "B.1. Sostenibilidad y protección de los recursos hídricos": {
-    "B.1.1. Conservación del agua.": {
-      "B.1.1.1. Restauración y gestión integral de cuencas, subcuencas hidrográficas.": [
+  "B.1. Water resources sustainability and protection": {
+    "B.1.1. Water conservation.": {
+      "B.1.1.1. Restoration and integrated management of basins and sub-basins.": [
         {
           "id": 5,
-          "SbN": "Restauración de vegetación riparia"
+          "SbN": "Riparian vegetation restoration"
         },
         {
           "id": 7,
-          "SbN": "Renaturalización de cuerpos de agua"
+          "SbN": "Renaturalization of water bodies"
         }
       ],
-      "B.1.1.2. Inversión en remediación, recuperación y/o descontaminación de cuerpos de agua superficiales o subterráneos. Economía azul sostenible: Clasifica cuando la acción se realiza en el mar, lagunas costeras, ciénagas o estuarios.": [
+      "B.1.1.2. Investment in remediation, recovery and/or decontamination of surface or groundwater bodies. Sustainable blue economy: Classify when the action takes place in the sea, coastal lagoons, marshes or estuaries.": [
         {
           "id": null,
           "SbN": "nan"
         }
       ]
     },
-    "B.1.3. Aguas residuales.": {
-      "B.1.3.3. Sistemas drenajes sostenibles, como jardines filtrantes en cuerpos de agua.": [
+    "B.1.3. Wastewater.": {
+      "B.1.3.3. Sustainable drainage systems, such as filter gardens in water bodies.": [
         {
           "id": 8,
-          "SbN": "Área de filtro verde"
+          "SbN": "Green filter area"
         },
         {
           "id": 10,
-          "SbN": "Estanques de biorretención"
+          "SbN": "Bioretention ponds"
         },
         {
           "id": 9,
-          "SbN": "Canales vegetados"
+          "SbN": "Vegetated channels"
         },
         {
           "id": null,
@@ -170,7 +170,7 @@
         },
         {
           "id": 13,
-          "SbN": "Zanjas de infiltración"
+          "SbN": "Infiltration trenches"
         },
         {
           "id": null,
@@ -185,13 +185,13 @@
           "SbN": "nan"
         }
       ],
-      "B.1.3.1. Plantas de tratamiento de aguas residuales que garanticen la salud de ecosistemas del cuerpo de agua receptor. Economía azul sostenible: Clasifica si contribuye a prevenir o mitigar la contaminación marina.": [
+      "B.1.3.1. Wastewater treatment plants that ensure the health of the receiving water body ecosystems. Sustainable blue economy: Classify if it contributes to preventing or mitigating marine pollution.": [
         {
           "id": 11,
-          "SbN": "Humedales artificiales"
+          "SbN": "Constructed wetlands"
         }
       ],
-      "B.1.3.4. Innovación tecnológica en el ciclo de aguas residuales: reúso, recarga de acuíferos.": [
+      "B.1.3.4. Technological innovation in the wastewater cycle: reuse, aquifer recharge.": [
         {
           "id": null,
           "SbN": "nan"
@@ -199,9 +199,9 @@
       ]
     }
   },
-  "A.4. Infraestructura resiliente para la adaptación de la población frente a eventos adversos del cambio climático": {
-    "A.4.2. Construcción, mantenimiento y rehabilitación de infraestructura para fortalecer la resiliencia de poblaciones continentales.": {
-      "A.4.2.1. Infraestructura verde o gris para fortalecer la resiliencia de poblaciones continentales.": [
+  "A.4. Resilient infrastructure for population adaptation to adverse climate change events": {
+    "A.4.2. Construction, maintenance and rehabilitation of infrastructure to strengthen the resilience of continental populations.": {
+      "A.4.2.1. Green or grey infrastructure to strengthen the resilience of continental populations.": [
         {
           "id": null,
           "SbN": "nan"
@@ -228,11 +228,11 @@
         },
         {
           "id": 16,
-          "SbN": "Pavimentos verdes adaptados"
+          "SbN": "Adapted green pavements"
         },
         {
           "id": 15,
-          "SbN": "Parques inundables"
+          "SbN": "Floodable parks"
         },
         {
           "id": null,
@@ -240,11 +240,11 @@
         },
         {
           "id": 19,
-          "SbN": "Vías ciclo-pedestres con pavimento verde"
+          "SbN": "Cycle-pedestrian routes with green pavement"
         },
         {
           "id": 18,
-          "SbN": "Techos verdes"
+          "SbN": "Green roofs"
         },
         {
           "id": null,
@@ -253,21 +253,21 @@
       ]
     }
   },
-  "A.1. Gestión y Suministro de Agua y Saneamiento": {
-    "A.1.1. Medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.": {
-      "A.1.1.2. Instalación de equipos de captura y almacenamiento de aguas pluviales domésticas.": [
+  "A.1. Water Management and Supply and Sanitation": {
+    "A.1.1. Measures that contribute to improving access to and/or the efficient use of water.": {
+      "A.1.1.2. Installation of equipment for harvesting and storing domestic rainwater.": [
         {
           "id": 21,
-          "SbN": "Cosecha de agua"
+          "SbN": "Rainwater harvesting"
         }
       ],
-      "A.1.1.4. Actividades de dotación de agua para riego de la producción agrícola y el fortalecimiento de la seguridad alimentaria y nutricional (SAN).": [
+      "A.1.1.4. Water supply activities for irrigation of agricultural production and strengthening food and nutritional security (FNS).": [
         {
           "id": null,
           "SbN": "nan"
         }
       ],
-      "A.1.1.7. Otras medidas que contribuyen a mejorar el acceso y/o el uso eficiente del agua.": [
+      "A.1.1.7. Other measures that contribute to improving access to and/or the efficient use of water.": [
         {
           "id": null,
           "SbN": "nan"
@@ -275,9 +275,9 @@
       ]
     }
   },
-  "M.8. Eficiencia energética de uso final en edificaciones o equipos.": {
-    "M.8.1. Eficiencia energética, energías renovables, reducción de emisiones de CO2e y sumideros de carbono en edificios y espacios públicos.": {
-      "M.8.1.1. Medidas que reduzcan el consumo neto de energía, el consumo de recursos o las emisiones de CO2e, o que aumenten los sumideros de carbono de origen vegetal en edificios de zonas nuevas, existentes o terrenos asociados.": [
+  "M.8. Final energy efficiency in buildings or equipment.": {
+    "M.8.1. Energy efficiency, renewable energies, reduction of CO2e emissions and carbon sinks in buildings and public spaces.": {
+      "M.8.1.1. Measures that reduce net energy consumption, resource consumption or CO2e emissions, or that increase plant-based carbon sinks in buildings in new, existing areas or associated grounds.": [
         {
           "id": null,
           "SbN": "nan"

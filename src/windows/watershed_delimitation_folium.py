@@ -384,19 +384,26 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             from pathlib import Path
             import sys
 
-
             # Step 1 - Crear carpetas de trabajo
             print("Step 1: Creando carpetas de trabajo...")
             PackCAF.CreateFolders(project_folder)
 
             # Step 2 - Identificar Macro-Cuenca
             print("Step 2: Identificando macro-cuenca...")
-            PathRegion = os.path.join(database_folder, "Basin", "LATAM.shp")
+            PathRegion  = os.path.join(database_folder, "Basin", "LATAM.shp")
+            PathRegion2 = os.path.join(database_folder, "Basin", "LATAM_1_SPLIT.shp")
+            PathRegion3 = os.path.join(database_folder, "Basin", "LATAM_16_25_SPLIT.shp")
 
             if not os.path.exists(PathRegion):
                 raise FileNotFoundError(f"No se encontró el archivo de regiones: {PathRegion}")
 
             NameRegion = PackCAF.C00_EncontrarMacrocuenca(self.lat, self.lon, PathRegion)
+
+            if NameRegion == 'LATAM_1':
+                NameRegion = PackCAF.C00_EncontrarMacrocuenca(self.lat, self.lon, PathRegion2)
+
+            if NameRegion == 'LATAM_16' or NameRegion == 'LATAM_25':
+                NameRegion = PackCAF.C00_EncontrarMacrocuenca(self.lat, self.lon, PathRegion3)
             print(f"Macro-cuenca identificada: {NameRegion}")
 
             # Step 3 - Delimitación de la cuenca
@@ -1243,7 +1250,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                         dfn = PackCAF.classify_continuous_raster(
                             path_basin,
                             path_raster_n,
-                            method='jenks',
+                            method=bins_tn,#'jenks',
                             NameCol=f"DF{i}"
                         )
                     else:
@@ -1262,7 +1269,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                         dfp = PackCAF.classify_continuous_raster(
                             path_basin,
                             path_raster_p,
-                            method='jenks',
+                            method=bins_tp,#'jenks',
                             NameCol=f"DF{i}"
                         )
                     else:

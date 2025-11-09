@@ -12,6 +12,7 @@ import time
 import pandas as pd
 import win32com.client
 from pathlib import Path
+from src.utils.resource_path import get_resource_path
 
 
 class SbnSheetsGenerator:
@@ -41,15 +42,19 @@ class SbnSheetsGenerator:
 
         # Rutas
         self.base_path = os.path.dirname(os.path.dirname(__file__))
-        self.weight_matrix_path = os.path.normpath(
-            os.path.join(self.base_path, 'locales', 'Weight_Matrix.xlsx')
-        )
-        self.fichas_excel_path = os.path.normpath(
-            os.path.join(self.base_path, 'locales', f'Fichas_SbN_{language}.xlsx')
-        )
-        self.output_folder = os.path.normpath(
-            os.path.join(self.project_folder, '03-SbN')
-        )
+
+        # Obtener ruta de Weight_Matrix.xlsx con fallback
+        weight_matrix_path = get_resource_path(os.path.join('locales', 'Weight_Matrix.xlsx'))
+        if not os.path.exists(weight_matrix_path) and 'src' + os.sep in weight_matrix_path:
+            weight_matrix_path = weight_matrix_path.replace('src' + os.sep, '')
+        self.weight_matrix_path = weight_matrix_path
+
+        # Obtener ruta de fichas con fallback
+        fichas_excel_path = get_resource_path(os.path.join('locales', f'Fichas_SbN_{language}.xlsx'))
+        if not os.path.exists(fichas_excel_path) and 'src' + os.sep in fichas_excel_path:
+            fichas_excel_path = fichas_excel_path.replace('src' + os.sep, '')
+        self.fichas_excel_path = fichas_excel_path
+        self.output_folder = os.path.normpath(os.path.join(self.project_folder, '03-SbN'))
 
         # Crear carpeta de salida si no existe
         os.makedirs(self.output_folder, exist_ok=True)

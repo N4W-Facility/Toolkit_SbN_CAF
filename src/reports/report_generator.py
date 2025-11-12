@@ -33,10 +33,12 @@ import csv
 import json
 from datetime import datetime
 from typing import List, Sequence, Optional, Dict, Any, Tuple
+from tkinter import messagebox
 
 from fpdf import FPDF
 from src.utils.resource_path import get_resource_path
 from src.reports.sbn_sheets_generator import SbnSheetsGenerator
+from src.core.language_manager import get_text
 
 print('##### Usa este codigo #####')
 # ============================================================
@@ -59,8 +61,24 @@ class StyledPDF(FPDF):
             "table_header_bg": (238, 238, 238),
         }
 
-        # Tipografía base (core, no requiere TTF)
-        self.base_family = "helvetica"
+        # Tipografía base (Arial con soporte Unicode completo para español/portugués)
+        # Registrar familia Arial desde Windows Fonts
+        import platform
+
+        # Rutas de fuentes según sistema operativo
+        if platform.system() == "Windows":
+            fonts_dir = "C:\\Windows\\Fonts\\"
+        else:
+            # Para otros sistemas, fpdf2 intentará encontrar Arial
+            fonts_dir = ""
+
+        # Registrar variantes de Arial
+        self.add_font("Arial", "", f"{fonts_dir}arial.ttf" if fonts_dir else "arial.ttf")
+        self.add_font("Arial", "B", f"{fonts_dir}arialbd.ttf" if fonts_dir else "arialbd.ttf")
+        self.add_font("Arial", "I", f"{fonts_dir}ariali.ttf" if fonts_dir else "ariali.ttf")
+        self.add_font("Arial", "BI", f"{fonts_dir}arialbi.ttf" if fonts_dir else "arialbi.ttf")
+
+        self.base_family = "Arial"
         self._build_default_styles()
 
         # Encabezado/pie
@@ -307,13 +325,13 @@ class ReportGenerator:
             with open(barriers_locale_path, 'r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    code = row.get('Codigo_Barrera', '')
+                    code = row.get(self.barrier_col_code,'')
                     if code:
                         self.barriers_translations[code] = {
                             'descripcion': row.get('Descripcion', ''),
                             'subcategoria': row.get('Subcategoria', ''),
                             'grupo': row.get('Grupo', ''),
-                            'codigo_grupo': row.get('Codigo_Grupo', '')
+                            'codigo_grupo': row.get(self.barrier_col_group_code, '')
                         }
 
         # Otros desafíos (nombres alternativos para mayor robustez)
@@ -444,6 +462,7 @@ class ReportGenerator:
                   col_widths=col_widths, align=["L", "L"])
         pdf.ln(4)
 
+        pdf.add_page()
         # ---------- 3. Caracterización de la cuenca ----------
         pdf.h1(self.texts.get('section3_title', '3 Caracterización de la cuenca'))
 
@@ -506,7 +525,6 @@ class ReportGenerator:
             pdf.caption(self.texts.get('figure1_missing', 'No se encontró la imagen. Continúa el informe sin el mapa.'))
 
         # 3.2 Métricas morfología/clima - Nueva página para la tabla
-        pdf.add_page()
         pdf.h2(self.texts.get('section3_2', '3.2 Caracterización'))
         watershed = self.project_data.get('watershed_data', {})
         morph   = watershed.get('morphometry', {})
@@ -562,10 +580,10 @@ class ReportGenerator:
             # Filtrar barreras habilitadas y hacer join con traducciones
             barriers_full = []
             for barrier in self.barriers_data:
-                grupo_habilitado = str(barrier.get(self.barrier_col_group_enabled, '0')).strip()
+                grupo_habilitado = str(barrier.get('Status', '0')).strip()
                 if grupo_habilitado == '1':
-                    codigo_barrera = barrier.get(self.barrier_col_code, '')
-                    valor = barrier.get(self.barrier_col_value, '')
+                    codigo_barrera = barrier.get('Code', '')
+                    valor = barrier.get('Value', '')
                     if codigo_barrera in self.barriers_translations:
                         trans = self.barriers_translations[codigo_barrera]
                         barriers_full.append({
@@ -960,34 +978,43 @@ class ReportGenerator:
 
         # Generar fichas técnicas de SbN si está habilitado
         if generate_sbn_sheets:
-            print("\n" + "="*60)
-            print("📋 Generando fichas técnicas de SbN...")
-            print("="*60)
+            # Preguntar al usuario si desea generar las fichas
+            title = get_text('messages.sbn_sheets_confirm_title')
+            message = get_text('messages.sbn_sheets_confirm_message')
 
-            try:
-                # Obtener opción financiera del proyecto (si existe)
-                financial_option = self.project_data.get('project_info', {}).get(
-                    'financial_option',
-                    'investment_and_maintenance'
-                )
+            user_wants_sheets = messagebox.askyesno(title, message)
 
-                # Crear generador de fichas
-                sheets_gen = SbnSheetsGenerator(
-                    project_folder=self.project_path,
-                    language=self.language,
-                    financial_option=financial_option
-                )
+            if user_wants_sheets:
+                print("\n" + "="*60)
+                print("📋 Generando fichas técnicas de SbN...")
+                print("="*60)
 
-                # Generar todas las fichas
-                sheets_success = sheets_gen.process_all()
+                try:
+                    # Obtener opción financiera del proyecto (si existe)
+                    financial_option = self.project_data.get('project_info', {}).get(
+                        'financial_option',
+                        'investment_and_maintenance'
+                    )
 
-                if not sheets_success:
-                    print("⚠️ Hubo errores al generar las fichas técnicas")
+                    # Crear generador de fichas
+                    sheets_gen = SbnSheetsGenerator(
+                        project_folder=self.project_path,
+                        language=self.language,
+                        financial_option=financial_option
+                    )
 
-            except Exception as e:
-                print(f"❌ Error al generar fichas técnicas: {e}")
-                import traceback
-                traceback.print_exc()
-                # No fallar el reporte completo si las fichas fallan
+                    # Generar todas las fichas
+                    sheets_success = sheets_gen.process_all()
+
+                    if not sheets_success:
+                        print("⚠️ Hubo errores al generar las fichas técnicas")
+
+                except Exception as e:
+                    print(f"❌ Error al generar fichas técnicas: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # No fallar el reporte completo si las fichas fallan
+            else:
+                print("\n⏭️ Usuario optó por omitir la generación de fichas técnicas de SbN")
 
         return True

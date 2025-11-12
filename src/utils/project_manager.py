@@ -55,6 +55,14 @@ class ProjectManager:
                 "selected_solutions": [],
                 "scenarios": [],
                 "results": {}
+            },
+            "workflow_progress": {
+                "cuenca": {"completed": False, "data": None, "order": 1, "enabled": True},
+                "barreras": {"completed": False, "data": None, "order": 2, "enabled": False},
+                "water_security": {"completed": False, "data": None, "order": 3, "enabled": False},
+                "other_challenges": {"completed": False, "data": None, "order": 4, "enabled": False},
+                "sbn": {"completed": False, "data": None, "order": 5, "enabled": False},
+                "reporte": {"completed": False, "data": None, "order": 6, "enabled": False}
             }
         }
     

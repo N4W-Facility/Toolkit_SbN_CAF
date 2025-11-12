@@ -137,6 +137,10 @@ def _normalize_single_raster(raster_path):
             print(f"  Cambiando dtype de {original_dtype} a float32 para normalización")
             profile['dtype'] = 'float32'
 
+        # Establecer valor NoData estándar a -9999 (siempre, independiente del original)
+        profile['nodata'] = -9999
+        print(f"  Configurando NoData = -9999")
+
         # Configurar compresión según dtype (usar el nuevo dtype si cambió)
         compression_config = _get_compression_config(profile['dtype'])
         profile.update(compression_config)
@@ -167,15 +171,8 @@ def _normalize_single_raster(raster_path):
                     # Esto mapea min_global → 0 y max_global → 1
                     normalized = (block - min_global) / (max_global - min_global)
 
-                    # Escribir preservando máscara de nodata
-                    # Si hay nodata definido, usar ese valor para las celdas enmascaradas
-                    # Si no hay nodata, mantener la máscara como está
-                    if nodata is not None:
-                        dst.write(normalized.filled(nodata), 1, window=window)
-                    else:
-                        # Si no hay nodata definido, escribir directamente los datos
-                        # Los NaN se mantendrán como NaN
-                        dst.write(np.ma.filled(normalized, np.nan), 1, window=window)
+                    # Escribir preservando máscara de nodata con valor estándar -9999
+                    dst.write(normalized.filled(-9999), 1, window=window)
 
     # Sobrescribir original con temporal
     shutil.move(temp_path, raster_path)
@@ -209,6 +206,10 @@ def _write_zeros_preserve_nan(src_dataset, raster_path, profile, blocksize, noda
         print(f"  Cambiando dtype de {original_dtype} a float32")
         profile['dtype'] = 'float32'
 
+    # Establecer valor NoData estándar a -9999
+    profile['nodata'] = -9999
+    print(f"  Configurando NoData = -9999")
+
     compression_config = _get_compression_config(profile['dtype'])
     profile.update(compression_config)
     profile.update({
@@ -240,11 +241,8 @@ def _write_zeros_preserve_nan(src_dataset, raster_path, profile, blocksize, noda
                 # y mantener la máscara donde había NaN
                 zeros_masked = np.ma.array(zeros, mask=block.mask)
 
-                # Escribir preservando la máscara de nodata
-                if nodata is not None:
-                    dst.write(zeros_masked.filled(nodata), 1, window=window)
-                else:
-                    dst.write(np.ma.filled(zeros_masked, np.nan), 1, window=window)
+                # Escribir preservando la máscara de nodata con valor estándar -9999
+                dst.write(zeros_masked.filled(-9999), 1, window=window)
 
     shutil.move(temp_path, raster_path)
 
@@ -275,6 +273,10 @@ def _write_constant_preserve_nan(src_dataset, raster_path, profile, blocksize, n
     if np.issubdtype(original_dtype, np.integer):
         print(f"  Cambiando dtype de {original_dtype} a float32")
         profile['dtype'] = 'float32'
+
+    # Establecer valor NoData estándar a -9999
+    profile['nodata'] = -9999
+    print(f"  Configurando NoData = -9999")
 
     compression_config = _get_compression_config(profile['dtype'])
     profile.update(compression_config)
@@ -307,11 +309,8 @@ def _write_constant_preserve_nan(src_dataset, raster_path, profile, blocksize, n
                 # y mantener la máscara donde había NaN
                 constant_masked = np.ma.array(constant_block, mask=block.mask)
 
-                # Escribir preservando la máscara de nodata
-                if nodata is not None:
-                    dst.write(constant_masked.filled(nodata), 1, window=window)
-                else:
-                    dst.write(np.ma.filled(constant_masked, np.nan), 1, window=window)
+                # Escribir preservando la máscara de nodata con valor estándar -9999
+                dst.write(constant_masked.filled(-9999), 1, window=window)
 
     shutil.move(temp_path, raster_path)
 

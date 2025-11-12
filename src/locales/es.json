@@ -166,12 +166,12 @@
       "barrera_importante": "5"
     },
     "csv_headers": {
-      "barrier_code": "Codigo_Barrera",
-      "numeric_value": "Valor_Numerico",
-      "group_code": "Codigo_Grupo",
-      "group_enabled": "Grupo_Habilitado"
+      "barrier_code": "Code",
+      "numeric_value": "Value",
+      "group_code": "Group",
+      "group_enabled": "Status"
     },
-    "csv_filename": "Barreras.csv",
+    "csv_filename": "Barriers.csv",
     "instructions": "Habilite o deshabilite grupos completos y ajuste la valoración de cada barrera individual usando los controles deslizantes.",
     "group_enabled": "Grupo habilitado",
     "group_disabled": "Grupo deshabilitado",
@@ -344,7 +344,8 @@
     "no_sbn_loaded": "No hay SbN cargadas para mostrar. Seleccione al menos una SbN primero.",
     "zoom_error": "No se pudo hacer zoom a las SbN cargadas",
     "selection_saved": "Selección guardada: {0} SbN seleccionadas",
-    "priority_label": "(Prioridad {0})"
+    "priority_label": "(Prioridad {0})",
+    "priority_level": "Nivel de prioridad"
   },
   "sbn_selection": {
     "title": "Selección de SbN para Reporte",
@@ -510,7 +511,12 @@
     "no_active_project": "No hay un proyecto activo",
     "no_project_path": "No se ha encontrado la ruta del proyecto.",
     "config_loaded": "📄 Configuración previa cargada",
-    "open_project_dialog": "Abrir Proyecto Existente"
+    "open_project_dialog": "Abrir Proyecto Existente",
+    "report_generated_success": "Reporte generado exitosamente:\n{0}",
+    "report_generation_error": "Error al generar el reporte PDF",
+    "report_generation_error_detail": "Error al generar el reporte: {0}",
+    "sbn_sheets_confirm_title": "Generar Fichas de SbN",
+    "sbn_sheets_confirm_message": "¿Desea generar las fichas técnicas individuales de las SbN identificadas en su área de estudio?\n\nEstas fichas contienen información detallada de cada solución basada en la naturaleza."
   },
   "status": {
     "config_loaded": "📄 Configuración previa cargada"

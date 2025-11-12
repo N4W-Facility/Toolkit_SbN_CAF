@@ -180,12 +180,12 @@
     "cancel_title": "Confirmar Cancelamento",
     "cancel_message": "Tem certeza de que deseja cancelar? Todas as alterações não salvas serão perdidas.",
     "csv_headers": {
-      "barrier_code": "Codigo_Barreira",
-      "numeric_value": "Valor_Numerico",
-      "group_code": "Codigo_Grupo",
-      "group_enabled": "Grupo_Habilitado"
+      "barrier_code": "Code",
+      "numeric_value": "Value",
+      "group_code": "Group",
+      "group_enabled": "Status"
     },
-    "csv_filename": "Barreiras.csv"
+    "csv_filename": "Barriers.csv"
   },
   "water_security": {
     "title": "SbN Portfolio Generator - Desafios de Segurança Hídrica",
@@ -344,7 +344,8 @@
     "no_sbn_loaded": "Nenhuma SbN carregada para exibir. Selecione pelo menos uma SbN primeiro.",
     "zoom_error": "Não foi possível fazer zoom nas SbN carregadas",
     "selection_saved": "Seleção salva: {0} SbN selecionadas",
-    "priority_label": "(Prioridade {0})"
+    "priority_label": "(Prioridade {0})",
+    "priority_level": "Nível de prioridade"
   },
   "sbn_selection": {
     "title": "Seleção de SbN para Relatório",
@@ -510,7 +511,12 @@
     "no_active_project": "Nenhum projeto ativo",
     "no_project_path": "Caminho do projeto não encontrado.",
     "config_loaded": "📄 Configuração anterior carregada",
-    "open_project_dialog": "Abrir Projeto Existente"
+    "open_project_dialog": "Abrir Projeto Existente",
+    "report_generated_success": "Relatório gerado com sucesso:\n{0}",
+    "report_generation_error": "Erro ao gerar o relatório PDF",
+    "report_generation_error_detail": "Erro ao gerar o relatório: {0}",
+    "sbn_sheets_confirm_title": "Gerar Fichas de SbN",
+    "sbn_sheets_confirm_message": "Deseja gerar as fichas técnicas individuais das SbN identificadas na sua área de estudo?\n\nEstas fichas contêm informações detalhadas de cada solução baseada na natureza."
   },
   "status": {
     "config_loaded": "📄 Configuração anterior carregada"

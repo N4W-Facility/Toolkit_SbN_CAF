@@ -72,7 +72,7 @@ class SbnSheetsGenerator:
 
         try:
             # Leer hoja de costos
-            self.df_cost = pd.read_excel(self.weight_matrix_path, sheet_name='Cost')
+            self.df_cost = pd.read_excel(self.weight_matrix_path, sheet_name='Cost_Fichas')
             print(f"✓ Costos cargados: {len(self.df_cost)} SbN")
 
             # Leer tabla de categorías
@@ -234,9 +234,17 @@ class SbnSheetsGenerator:
             traceback.print_exc()
             return False
 
-        # Iniciar COM de Excel
+        # Iniciar COM de Excel con try/finally para garantizar cierre
         print("📂 Iniciando Microsoft Excel (oculto)...")
+
+        # Inicializar variables COM como None
+        excel = None
+        wb = None
+        ws_fichas = None
+        successful = 0
+
         try:
+            # Crear instancia de Excel
             excel = win32com.client.Dispatch('Excel.Application')
             excel.Visible = False  # No mostrar Excel
             excel.DisplayAlerts = False  # No mostrar alertas
@@ -249,71 +257,89 @@ class SbnSheetsGenerator:
 
             print("✓ Archivo Excel abierto en modo oculto")
 
+            # Procesar cada SbN
+            for sbn_id, sbn_name in sbn_list:
+                try:
+                    print(f"\n  → SbN ID {sbn_id} - {sbn_name}:")
+
+                    # Buscar la celda del selector (primera vez, detectar automáticamente)
+                    # El selector usa el NOMBRE de la SbN, no el ID
+                    selector_cell = self._find_selector_cell(wb)
+
+                    if selector_cell:
+                        # Actualizar selector con el NOMBRE de la SbN (columna B)
+                        ws_fichas.Range(selector_cell).Value = sbn_name
+                        print(f"    ✓ Selector actualizado: {selector_cell} = '{sbn_name}'")
+
+                    # Obtener categorías de costos
+                    cost_data = self.cost_categories_map.get(sbn_id)
+                    if cost_data:
+                        # Escribir en columnas L y M (fila específica, asumir fila 2 o detectar)
+                        # Necesito encontrar la fila correcta en la ficha
+                        cost_row = self._find_cost_row(ws_fichas)
+
+                        ws_fichas.Range(f'L{cost_row}').Value = cost_data['min_cat']
+                        ws_fichas.Range(f'M{cost_row}').Value = cost_data['max_cat']
+                        print(f"    ✓ Categorías escritas: L{cost_row}={cost_data['min_cat']}, M{cost_row}={cost_data['max_cat']}")
+                    else:
+                        print(f"    ⚠️  No hay datos de costos para SbN {sbn_id}")
+
+                    # Guardar cambios antes de exportar
+                    wb.Save()
+
+                    # Exportar a PDF
+                    pdf_path = os.path.normpath(
+                        os.path.join(self.output_folder, f'SbN_{sbn_id}.pdf')
+                    )
+                    pdf_path_abs = os.path.abspath(pdf_path)
+
+                    ws_fichas.ExportAsFixedFormat(0, pdf_path_abs)  # 0 = xlTypePDF
+                    print(f"    ✓ PDF generado: SbN_{sbn_id}.pdf")
+
+                    successful += 1
+
+                    # Esperar 0.1 segundos para evitar errores de COM
+                    time.sleep(0.1)
+
+                except Exception as e:
+                    print(f"    ❌ Error procesando SbN {sbn_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    continue
+
         except Exception as e:
-            print(f"❌ Error abriendo Excel: {e}")
+            print(f"❌ Error fatal en procesamiento de Excel: {e}")
             import traceback
             traceback.print_exc()
-            return False
 
-        # Procesar cada SbN
-        successful = 0
-        for sbn_id, sbn_name in sbn_list:
+        finally:
+            # Cerrar Excel SIEMPRE, incluso si hubo errores
+            print("\n🔒 Cerrando Excel y liberando recursos...")
+
             try:
-                print(f"\n  → SbN ID {sbn_id} - {sbn_name}:")
-
-                # Buscar la celda del selector (primera vez, detectar automáticamente)
-                # El selector usa el NOMBRE de la SbN, no el ID
-                selector_cell = self._find_selector_cell(wb)
-
-                if selector_cell:
-                    # Actualizar selector con el NOMBRE de la SbN (columna B)
-                    ws_fichas.Range(selector_cell).Value = sbn_name
-                    print(f"    ✓ Selector actualizado: {selector_cell} = '{sbn_name}'")
-
-                # Obtener categorías de costos
-                cost_data = self.cost_categories_map.get(sbn_id)
-                if cost_data:
-                    # Escribir en columnas L y M (fila específica, asumir fila 2 o detectar)
-                    # Necesito encontrar la fila correcta en la ficha
-                    cost_row = self._find_cost_row(ws_fichas)
-
-                    ws_fichas.Range(f'L{cost_row}').Value = cost_data['min_cat']
-                    ws_fichas.Range(f'M{cost_row}').Value = cost_data['max_cat']
-                    print(f"    ✓ Categorías escritas: L{cost_row}={cost_data['min_cat']}, M{cost_row}={cost_data['max_cat']}")
-                else:
-                    print(f"    ⚠️  No hay datos de costos para SbN {sbn_id}")
-
-                # Guardar cambios antes de exportar
-                wb.Save()
-
-                # Exportar a PDF
-                pdf_path = os.path.normpath(
-                    os.path.join(self.output_folder, f'SbN_{sbn_id}.pdf')
-                )
-                pdf_path_abs = os.path.abspath(pdf_path)
-
-                ws_fichas.ExportAsFixedFormat(0, pdf_path_abs)  # 0 = xlTypePDF
-                print(f"    ✓ PDF generado: SbN_{sbn_id}.pdf")
-
-                successful += 1
-
-                # Esperar 0.1 segundos para evitar errores de COM
-                time.sleep(0.1)
-
+                if wb is not None:
+                    wb.Close(SaveChanges=False)
+                    print("  ✓ Workbook cerrado")
             except Exception as e:
-                print(f"    ❌ Error procesando SbN {sbn_id}: {e}")
-                import traceback
-                traceback.print_exc()
-                continue
+                print(f"  ⚠️ Error cerrando workbook: {e}")
 
-        # Cerrar Excel
-        try:
-            wb.Close(SaveChanges=False)
-            excel.ScreenUpdating = True  # Restaurar
-            excel.Quit()
-            print(f"\n✅ Excel cerrado")
-        except:
-            pass
+            try:
+                if excel is not None:
+                    excel.ScreenUpdating = True
+                    excel.Quit()
+                    print("  ✓ Excel cerrado")
+            except Exception as e:
+                print(f"  ⚠️ Error cerrando Excel: {e}")
+
+            # Liberar referencias COM explícitamente
+            if ws_fichas is not None:
+                del ws_fichas
+            if wb is not None:
+                del wb
+            if excel is not None:
+                del excel
+
+            print("  ✓ Referencias COM liberadas")
 
         print(f"\n{'='*60}")
         print(f"✅ Generación completada: {successful}/{len(sbn_list)} fichas generadas")

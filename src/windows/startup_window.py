@@ -359,6 +359,7 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         # Datos de taxonomía
         self.taxonomy_data = {}
+        self.taxonomy_id_map = {}  # Mapeo: ID -> (categoria, subcategoria, actividad)
         self.countries_dict = {}
         self.category_display_map = {}  # Mapeo: texto_truncado -> texto_completo
         self.subcategory_display_map = {}
@@ -664,11 +665,45 @@ class NewProjectDialog(ctk.CTkToplevel):
                     self.country_combobox.set(country_name)
 
             # Cargar taxonomía CAF si existe
-            caf_category = project_info.get('caf_category', '')
-            caf_subcategory = project_info.get('caf_subcategory', '')
-            caf_activity = project_info.get('caf_activity', '')
+            caf_taxonomy_id = project_info.get('caf_taxonomy_id', '')
+            caf_category = None
+            caf_subcategory = None
+            caf_activity = None
 
+            print(f"\n=== DEBUG PRE-LLENADO TAXONOMÍA ===")
+            print(f"ID guardado: {caf_taxonomy_id} (tipo: {type(caf_taxonomy_id).__name__})")
+            print(f"IDs disponibles en mapa: {len(self.taxonomy_id_map)}")
+
+            # Normalizar ID a string para búsqueda (JSON puede deserializar como int)
+            if caf_taxonomy_id:
+                caf_taxonomy_id = str(caf_taxonomy_id)
+                print(f"ID normalizado: '{caf_taxonomy_id}'")
+                # Debug: mostrar algunos IDs del mapa
+                sample_ids = list(self.taxonomy_id_map.keys())[:5]
+                print(f"IDs de ejemplo en mapa: {sample_ids}")
+                print(f"¿ID '{caf_taxonomy_id}' en mapa?: {caf_taxonomy_id in self.taxonomy_id_map}")
+
+            # Prioridad 1: Buscar por ID (multiidioma, proyectos nuevos)
+            if caf_taxonomy_id and caf_taxonomy_id in self.taxonomy_id_map:
+                caf_category, caf_subcategory, caf_activity = self.taxonomy_id_map[caf_taxonomy_id]
+                print(f"✓ Taxonomía cargada por ID: {caf_taxonomy_id}")
+                print(f"  Categoría: {caf_category[:50] if len(caf_category) > 50 else caf_category}")
+                print(f"  Subcategoría: {caf_subcategory[:50] if len(caf_subcategory) > 50 else caf_subcategory}")
+                print(f"  Actividad: {caf_activity[:50] if len(caf_activity) > 50 else caf_activity}")
+            else:
+                # Prioridad 2: Fallback a búsqueda por texto (retrocompatibilidad, proyectos viejos)
+                caf_category = project_info.get('caf_category', '')
+                caf_subcategory = project_info.get('caf_subcategory', '')
+                caf_activity = project_info.get('caf_activity', '')
+                if caf_category:
+                    print(f"⚠️ Taxonomía cargada por texto (proyecto antiguo)")
+                else:
+                    print(f"✗ No se encontró ID ni datos de texto")
+
+            # Si tenemos datos de taxonomía válidos, configurar los comboboxes
+            print(f"Verificando categoría en taxonomy_data...")
             if caf_category and caf_category in self.taxonomy_data:
+                print(f"✓ Categoría encontrada en taxonomy_data")
                 # Buscar el valor truncado correspondiente en el mapeo
                 cat_display = None
                 for display, real in self.category_display_map.items():
@@ -676,11 +711,18 @@ class NewProjectDialog(ctk.CTkToplevel):
                         cat_display = display
                         break
 
+                print(f"Display categoría: {cat_display[:50] if cat_display and len(cat_display) > 50 else cat_display}")
+
                 if cat_display:
                     self.category_combobox.set(cat_display)
                     self._on_category_selected(cat_display)
+                    print(f"✓ Categoría establecida en combobox")
 
+                    print(f"Verificando subcategoría...")
                     if caf_subcategory and caf_subcategory in self.taxonomy_data.get(caf_category, {}):
+                        print(f"✓ Subcategoría encontrada en taxonomy_data")
+                        print(f"Mapeos de subcategoría disponibles: {len(self.subcategory_display_map)}")
+
                         # Buscar el valor truncado de subcategoría
                         subcat_display = None
                         for display, real in self.subcategory_display_map.items():
@@ -688,11 +730,17 @@ class NewProjectDialog(ctk.CTkToplevel):
                                 subcat_display = display
                                 break
 
+                        print(f"Display subcategoría: {subcat_display[:50] if subcat_display and len(subcat_display) > 50 else subcat_display}")
+
                         if subcat_display:
                             self.subcategory_combobox.set(subcat_display)
                             self._on_subcategory_selected(subcat_display)
+                            print(f"✓ Subcategoría establecida en combobox")
 
+                            print(f"Verificando actividad...")
                             if caf_activity:
+                                print(f"Mapeos de actividad disponibles: {len(self.activity_display_map)}")
+
                                 # Buscar el valor truncado de actividad
                                 activity_display = None
                                 for display, real in self.activity_display_map.items():
@@ -700,14 +748,47 @@ class NewProjectDialog(ctk.CTkToplevel):
                                         activity_display = display
                                         break
 
+                                print(f"Display actividad: {activity_display[:50] if activity_display and len(activity_display) > 50 else activity_display}")
+
                                 if activity_display:
                                     self.activity_combobox.set(activity_display)
+                                    print(f"✓ Actividad establecida en combobox")
+                                else:
+                                    print(f"✗ No se encontró display para actividad")
+                        else:
+                            print(f"✗ No se encontró display para subcategoría")
+                    else:
+                        print(f"✗ Subcategoría '{caf_subcategory[:50] if caf_subcategory else 'N/A'}' no encontrada")
+                else:
+                    print(f"✗ No se encontró display para categoría")
+            else:
+                print(f"✗ Categoría no válida o no encontrada")
+
+            print(f"=== FIN DEBUG ===\n")
 
     def _truncate_text(self, text, max_length):
         """Truncar texto largo para mostrar en dropdown"""
         if len(text) <= max_length:
             return text
         return text[:max_length - 3] + "..."
+
+    def _get_taxonomy_id(self, categoria, subcategoria, actividad):
+        """
+        Obtener ID de taxonomía para una combinación específica.
+        Busca en el mapeo inverso de taxonomy_id_map.
+
+        Args:
+            categoria (str): Categoría completa
+            subcategoria (str): Subcategoría completa
+            actividad (str): Actividad completa
+
+        Returns:
+            str: ID de la taxonomía o None si no se encuentra
+        """
+        for tax_id, (cat, subcat, act) in self.taxonomy_id_map.items():
+            if cat == categoria and subcat == subcategoria and act == actividad:
+                return tax_id
+        return None
 
     def _load_taxonomy(self):
         """
@@ -739,16 +820,62 @@ class NewProjectDialog(ctk.CTkToplevel):
                     return {}
 
             taxonomy = {}
-            with open(taxonomy_path, 'r', encoding='utf-8-sig') as f:
-                reader = csv.DictReader(f)
+            # Limpiar mapeo de IDs anterior
+            self.taxonomy_id_map = {}
+
+            # Intentar múltiples codificaciones (Windows puede guardar con diferentes encodings)
+            encodings_to_try = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            file_content = None
+            encoding_used = None
+
+            for encoding in encodings_to_try:
+                try:
+                    with open(taxonomy_path, 'r', encoding=encoding) as f:
+                        file_content = f.read()
+                        encoding_used = encoding
+                        break
+                except UnicodeDecodeError:
+                    continue
+
+            if file_content is None:
+                print(f"⚠️ No se pudo leer {taxonomy_filename} con ninguna codificación")
+                return {}
+
+            print(f"✓ Archivo {taxonomy_filename} leído con codificación: {encoding_used}")
+
+            # Procesar CSV desde el contenido leído
+            import io
+            reader = csv.DictReader(io.StringIO(file_content))
+
+            # Mapeo de nombres de columnas en diferentes idiomas
+            column_mappings = {
+                'id': ['ID'],
+                'categoria': ['Categoria', 'Category'],
+                'subcategoria': ['Subcategoria', 'Subcategory'],
+                'actividad': ['Actividad', 'Activity', 'Atividade']
+            }
+
+            # Detectar nombres de columnas reales del CSV
+            if reader.fieldnames:
+                col_names = {}
+                for key, possible_names in column_mappings.items():
+                    for name in possible_names:
+                        if name in reader.fieldnames:
+                            col_names[key] = name
+                            break
+
+                print(f"  Columnas detectadas: {col_names}")
+
                 for row in reader:
-                    categoria = row.get('Categoria', '').strip()
-                    subcategoria = row.get('Subcategoria', '').strip()
-                    actividad = row.get('Actividad', '').strip()
+                    tax_id = row.get(col_names.get('id', 'ID'), '').strip()
+                    categoria = row.get(col_names.get('categoria', 'Categoria'), '').strip()
+                    subcategoria = row.get(col_names.get('subcategoria', 'Subcategoria'), '').strip()
+                    actividad = row.get(col_names.get('actividad', 'Actividad'), '').strip()
 
                     if not categoria or not subcategoria or not actividad:
                         continue
 
+                    # Construir estructura jerárquica para navegación
                     if categoria not in taxonomy:
                         taxonomy[categoria] = {}
 
@@ -757,6 +884,10 @@ class NewProjectDialog(ctk.CTkToplevel):
 
                     if actividad not in taxonomy[categoria][subcategoria]:
                         taxonomy[categoria][subcategoria].append(actividad)
+
+                    # Construir mapeo de ID para búsqueda multiidioma
+                    if tax_id:
+                        self.taxonomy_id_map[tax_id] = (categoria, subcategoria, actividad)
 
             print(f"✓ Cargadas {len(taxonomy)} categorías desde {taxonomy_filename}")
             for cat in taxonomy.keys():
@@ -894,6 +1025,9 @@ class NewProjectDialog(ctk.CTkToplevel):
         caf_subcategory = self.subcategory_display_map.get(caf_subcategory_display, caf_subcategory_display)
         caf_activity = self.activity_display_map.get(caf_activity_display, caf_activity_display)
 
+        # Obtener ID de taxonomía para persistencia multiidioma
+        caf_taxonomy_id = self._get_taxonomy_id(caf_category, caf_subcategory, caf_activity)
+
         # Validaciones
         if not name:
             messagebox.showerror(get_text("messages.error"), get_text("project_form.name_required"))
@@ -925,6 +1059,7 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'caf_category': caf_category,
                     'caf_subcategory': caf_subcategory,
                     'caf_activity': caf_activity,
+                    'caf_taxonomy_id': caf_taxonomy_id,
                     'observations': observations
                 })
                 self.result = self.project_data
@@ -952,6 +1087,7 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'caf_category': caf_category,
                     'caf_subcategory': caf_subcategory,
                     'caf_activity': caf_activity,
+                    'caf_taxonomy_id': caf_taxonomy_id,
                     'observations': observations
                 })
 

@@ -627,69 +627,17 @@ class DashboardWindow(ctk.CTk):
         # La secuencia de botones se actualiza en _update_workflow_status()
 
     def _update_workflow_status(self):
-        """Actualizar el estado visual del flujo de trabajo"""
+        """Actualizar el estado visual del flujo de trabajo basado ÚNICAMENTE en el estado guardado"""
         if not self.project_data:
             return
 
-        from pathlib import Path
+        # Actualizar UI basándose únicamente en self.workflow_steps (que viene de workflow_progress en JSON)
+        # NO validar archivos - el workflow se controla 100% por clics del usuario en los botones
 
-        # Obtener carpeta del proyecto
-        project_folder = self.project_data.get('files', {}).get('project_folder')
-        if not project_folder:
-            return
-
-        project_folder = Path(project_folder)
-
-        # Paso 1: Cuenca - verificar si existe Watershed.shp
-        watershed_shp = project_folder / "01-Watershed" / "Watershed.shp"
-        if watershed_shp.exists():
-            self.workflow_steps['cuenca']['completed'] = True
-            self._update_step_status('cuenca', True, get_text("workflow.completed"))
-        else:
-            self.workflow_steps['cuenca']['completed'] = False
-            self._update_step_status('cuenca', False, get_text("workflow.pending"))
-
-        # Paso 2: Barreras - verificar si existe Barriers.csv
-        barriers_csv = project_folder / "Barriers.csv"
-        if barriers_csv.exists():
-            self.workflow_steps['barreras']['completed'] = True
-            self._update_step_status('barreras', True, get_text("workflow.completed"))
-        else:
-            self.workflow_steps['barreras']['completed'] = False
-            self._update_step_status('barreras', False, get_text("workflow.pending"))
-
-        # Paso 3: Water Security - verificar si existe DF_WS.csv
-        water_security_csv = project_folder / "DF_WS.csv"
-        if water_security_csv.exists():
-            self.workflow_steps['water_security']['completed'] = True
-            self._update_step_status('water_security', True, get_text("workflow.completed"))
-        else:
-            self.workflow_steps['water_security']['completed'] = False
-            self._update_step_status('water_security', False, get_text("workflow.pending"))
-
-        # Paso 4: Other Challenges - verificar si existe D_O.csv
-        other_challenges_csv = project_folder / "D_O.csv"
-        if other_challenges_csv.exists():
-            self.workflow_steps['other_challenges']['completed'] = True
-            self._update_step_status('other_challenges', True, get_text("workflow.completed"))
-        else:
-            self.workflow_steps['other_challenges']['completed'] = False
-            self._update_step_status('other_challenges', False, get_text("workflow.pending"))
-
-        # Paso 5: SbN - verificar si existe SbN_Prioritization.csv
-        sbn_csv = project_folder / "SbN_Prioritization.csv"
-        if sbn_csv.exists():
-            # Si el archivo existe, marcar como completado
-            if not self.workflow_steps['sbn']['completed']:
-                self.workflow_steps['sbn']['completed'] = True
-                self._update_step_status('sbn', True, get_text("workflow.completed"))
-        else:
-            # Si no existe el archivo pero el paso está marcado como completado (en workflow_progress),
-            # mantener ese estado (puede ser que aún no se ha guardado el archivo pero ya se abrió la ventana)
-            if self.workflow_steps['sbn']['completed']:
-                self._update_step_status('sbn', True, get_text("workflow.completed"))
-            else:
-                self._update_step_status('sbn', False, get_text("workflow.pending"))
+        for step_id, step_data in self.workflow_steps.items():
+            completed = step_data.get('completed', False)
+            status_text = get_text("workflow.completed") if completed else get_text("workflow.pending")
+            self._update_step_status(step_id, completed, status_text)
 
         # Actualizar UI del workflow
         self._update_workflow_ui()
@@ -699,6 +647,13 @@ class DashboardWindow(ctk.CTk):
 
     def _update_buttons_sequence(self):
         """Actualizar qué botones están habilitados según secuencia de workflow"""
+        # Verificar que la ventana no esté destruida
+        try:
+            if not self.winfo_exists():
+                return
+        except:
+            return
+
         # Ordenar pasos por orden
         sorted_steps = sorted(self.workflow_steps.items(), key=lambda x: x[1]['order'])
 
@@ -720,23 +675,43 @@ class DashboardWindow(ctk.CTk):
         for step_id, step_data in self.workflow_steps.items():
             if step_id in self.workflow_buttons:
                 button = self.workflow_buttons[step_id]['button']
-                if step_data['enabled']:
-                    button.configure(state="normal")
-                else:
-                    button.configure(state="disabled")
+                try:
+                    # Verificar que el botón todavía existe
+                    if button.winfo_exists():
+                        if step_data['enabled']:
+                            button.configure(state="normal")
+                        else:
+                            button.configure(state="disabled")
+                except:
+                    # El widget fue destruido, ignorar
+                    pass
 
     def _update_step_status(self, step_id, completed, status_text):
         """Actualizar el estado visual de un paso específico"""
+        # Verificar que la ventana no esté destruida
+        try:
+            if not self.winfo_exists():
+                return
+        except:
+            return
+
         if step_id in self.workflow_buttons:
             button_info = self.workflow_buttons[step_id]
-            button_info['status'].configure(text=status_text)
+            try:
+                # Verificar que los widgets existen antes de configurar
+                if button_info['status'].winfo_exists():
+                    button_info['status'].configure(text=status_text)
 
-            if completed:
-                button_info['status'].configure(text_color=ThemeManager.COLORS['success'])
-                # Opcional: cambiar color del botón para indicar completado
-                button_info['button'].configure(fg_color=ThemeManager.COLORS['success'])
-            else:
-                button_info['status'].configure(text_color=ThemeManager.COLORS['text_light'])
+                    if completed:
+                        button_info['status'].configure(text_color=ThemeManager.COLORS['success'])
+                        # Opcional: cambiar color del botón para indicar completado
+                        if button_info['button'].winfo_exists():
+                            button_info['button'].configure(fg_color=ThemeManager.COLORS['success'])
+                    else:
+                        button_info['status'].configure(text_color=ThemeManager.COLORS['text_light'])
+            except:
+                # Los widgets fueron destruidos, ignorar
+                pass
 
     def _load_watershed_image(self):
         """Cargar y mostrar imagen de la cuenca si existe"""
@@ -962,7 +937,7 @@ class DashboardWindow(ctk.CTk):
 
         if hasattr(delimitation_window, 'result') and delimitation_window.result:
             self.project_data = delimitation_window.result
-            self._update_workflow_status()  # Actualiza estado y secuencia de botones
+            self.update_workflow_step('cuenca', True)  # Marcar cuenca como completado
             self._load_watershed_image()  # Recargar imagen
             self._update_technical_info()  # Actualizar información técnica
             self._save_project()  # Guardar automáticamente
@@ -975,8 +950,9 @@ class DashboardWindow(ctk.CTk):
                 project_path=self.current_project_path
             )
             self.wait_window(barriers_window)
-            # Actualizar workflow después de cerrar
-            self._update_workflow_status()
+            # Marcar barreras como completado después de cerrar
+            self.update_workflow_step('barreras', True)
+            self._save_project()
         except Exception as e:
             messagebox.showerror(
                 get_text("errors.generic_title"),
@@ -987,12 +963,14 @@ class DashboardWindow(ctk.CTk):
         """Abrir módulo de desafíos de seguridad hídrica"""
         try:
             water_security_window = WaterSecurityWindow(
+                parent=self,
                 window_manager=self,
                 project_path=self.current_project_path
             )
             self.wait_window(water_security_window)
-            # Actualizar workflow después de cerrar
-            self._update_workflow_status()
+            # Marcar water security como completado después de cerrar
+            self.update_workflow_step('water_security', True)
+            self._save_project()
         except Exception as e:
             messagebox.showerror(
                 get_text("errors.generic_title"),
@@ -1005,10 +983,11 @@ class DashboardWindow(ctk.CTk):
             messagebox.showwarning(get_text("messages.warning"), get_text("messages.no_active_project"))
             return
 
-        window = OtherChallengesWindow(window_manager=self, project_path=self.current_project_path)
+        window = OtherChallengesWindow(parent=self, window_manager=self, project_path=self.current_project_path)
         self.wait_window(window)
-        # Actualizar workflow después de cerrar
-        self._update_workflow_status()
+        # Marcar other challenges como completado después de cerrar
+        self.update_workflow_step('other_challenges', True)
+        self._save_project()
 
     def _open_sbn(self):
         """Abrir módulo de SbN"""
@@ -1146,19 +1125,22 @@ class DashboardWindow(ctk.CTk):
             success = generator.generate_pdf(output_file)
 
             if success:
+                # Marcar reporte como completado después de generar exitosamente el PDF
+                self.update_workflow_step('reporte', True)
+                self._save_project()
                 messagebox.showinfo(
                     get_text("messages.success"),
-                    f"Reporte generado exitosamente:\n{output_file}"
+                    get_text("messages.report_generated_success").format(output_file)
                 )
             else:
                 messagebox.showerror(
                     get_text("messages.error"),
-                    "Error al generar el reporte PDF"
+                    get_text("messages.report_generation_error")
                 )
         except Exception as e:
             messagebox.showerror(
                 get_text("messages.error"),
-                f"Error al generar el reporte: {str(e)}"
+                get_text("messages.report_generation_error_detail").format(str(e))
             )
 
     def _save_project(self):
@@ -1324,6 +1306,13 @@ class DashboardWindow(ctk.CTk):
 
     def update_workflow_step(self, step_id, completed, data=None):
         """Actualizar el estado de un paso del workflow"""
+        # Verificar que la ventana no esté destruida
+        try:
+            if not self.winfo_exists():
+                return
+        except:
+            return
+
         if step_id in self.workflow_steps:
             self.workflow_steps[step_id]['completed'] = completed
             self.workflow_steps[step_id]['data'] = data

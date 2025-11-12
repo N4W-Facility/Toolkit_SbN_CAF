@@ -180,10 +180,10 @@
     "cancel_title": "Confirm Cancellation",
     "cancel_message": "Are you sure you want to cancel? All unsaved changes will be lost.",
     "csv_headers": {
-      "barrier_code": "Barrier_Code",
-      "numeric_value": "Numeric_Value",
-      "group_code": "Group_Code",
-      "group_enabled": "Group_Enabled"
+      "barrier_code": "Code",
+      "numeric_value": "Value",
+      "group_code": "Group",
+      "group_enabled": "Status"
     },
     "csv_filename": "Barriers.csv"
   },
@@ -344,7 +344,8 @@
     "no_sbn_loaded": "No NbS loaded to display. Please select at least one NbS first.",
     "zoom_error": "Could not zoom to loaded NbS",
     "selection_saved": "Selection saved: {0} NbS selected",
-    "priority_label": "(Priority {0})"
+    "priority_label": "(Priority {0})",
+    "priority_level": "Priority Level"
   },
   "sbn_selection": {
     "title": "NbS Selection for Report",
@@ -510,7 +511,12 @@
     "no_active_project": "No active project",
     "no_project_path": "Project path not found.",
     "config_loaded": "📄 Previous configuration loaded",
-    "open_project_dialog": "Open Existing Project"
+    "open_project_dialog": "Open Existing Project",
+    "report_generated_success": "Report generated successfully:\n{0}",
+    "report_generation_error": "Error generating PDF report",
+    "report_generation_error_detail": "Error generating report: {0}",
+    "sbn_sheets_confirm_title": "Generate NbS Sheets",
+    "sbn_sheets_confirm_message": "Do you want to generate individual technical sheets for the NbS identified in your study area?\n\nThese sheets contain detailed information about each nature-based solution."
   },
   "status": {
     "config_loaded": "📄 Previous configuration loaded"

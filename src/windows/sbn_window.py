@@ -156,7 +156,8 @@ class SbNWindow(ctk.CTkToplevel):
                 container,
                 width=800,
                 height=600,
-                corner_radius=8
+                corner_radius=8,
+                reset_callback=self._zoom_to_all_rasters
             )
             self.map_viewer.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 

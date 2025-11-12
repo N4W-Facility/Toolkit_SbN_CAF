@@ -8,10 +8,10 @@ from ..core.language_manager import get_text, subscribe_to_language_changes
 from ..utils.sbn_prioritization import SbNPrioritization
 
 
-class WaterSecurityWindow(ctk.CTk):
+class WaterSecurityWindow(ctk.CTkToplevel):
 
-    def __init__(self, window_manager=None, project_path=None):
-        super().__init__()
+    def __init__(self, parent=None, window_manager=None, project_path=None):
+        super().__init__(parent)
 
         self.window_manager = window_manager
         self.project_path = project_path
@@ -21,8 +21,12 @@ class WaterSecurityWindow(ctk.CTk):
         self.geometry("800x600")
         self.resizable(True, True)
 
+        # Hacer la ventana modal
+        if parent:
+            self.transient(parent)
+            self.grab_set()
+
         # Aplicar tema
-        ThemeManager.configure_ctk()
         self.configure(fg_color=ThemeManager.COLORS['bg_primary'])
 
         # Desafíos de seguridad hídrica

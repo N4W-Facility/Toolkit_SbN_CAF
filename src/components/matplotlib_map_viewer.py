@@ -253,7 +253,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         self.map_type_var = ctk.StringVar(value="OpenStreetMap")
         map_type_menu = ctk.CTkOptionMenu(
             top_controls,
-            values=["OpenStreetMap", "CartoDB Positron", "CartoDB Voyager", "ESRI World Imagery", "Stamen Terrain"],
+            values=["OpenStreetMap", "CartoDB Positron", "CartoDB Voyager", "ESRI World Imagery"], #Stamen terrain
             variable=self.map_type_var,
             command=self._change_map_type,
             width=160  # Aumentar ancho para acomodar nombres más largos
@@ -497,6 +497,15 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # Aplicar el nuevo colormap a todos los rasters cargados
             for layer_name, raster_plot in self.raster_layers.items():
                 raster_plot.set_cmap(new_cmap)
+
+            # Actualizar colorbar si existe
+            if hasattr(self, 'raster_colorbar') and self.raster_colorbar is not None:
+                # Obtener el último raster cargado (el que está visible)
+                if self.raster_layers:
+                    last_raster = list(self.raster_layers.values())[-1]
+                    self.raster_colorbar.mappable = last_raster
+                    self.raster_colorbar.update_normal(last_raster)
+                    print(f"✓ Colorbar actualizado con nuevo colormap")
 
             # Actualizar canvas
             self.canvas.draw()
@@ -1117,14 +1126,17 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 if isinstance(raster_data, np.ma.MaskedArray):
                     raster_data = np.ma.filled(raster_data, np.nan)
 
-                # Calcular rango de valores válidos (sin NaN)
+                # Usar rango fijo 0-1 para todos los rasters (para comparabilidad)
+                vmin, vmax = 0, 1
+
+                # Calcular y mostrar el rango real de valores para información
                 valid_data = raster_data[~np.isnan(raster_data)]
                 if len(valid_data) > 0:
-                    vmin = np.nanmin(raster_data)
-                    vmax = np.nanmax(raster_data)
-                    print(f"✓ Rango de valores válidos: [{vmin:.4f}, {vmax:.4f}]")
+                    actual_min = np.nanmin(raster_data)
+                    actual_max = np.nanmax(raster_data)
+                    print(f"✓ Rango real de valores: [{actual_min:.4f}, {actual_max:.4f}]")
+                    print(f"  Rango visualización (fijo): [{vmin}, {vmax}]")
                 else:
-                    vmin, vmax = 0, 1
                     print("⚠️ No hay valores válidos en el raster")
 
                 # Obtener las coordenadas de las esquinas
@@ -1176,12 +1188,14 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                             orientation='vertical',
                             pad=0.02,
                             shrink=0.7,
-                            label='Valores'
+                            label=get_text('sbn.priority_level')
                         )
                         print(f"✓ Colorbar creado")
                     else:
-                        # Colorbar ya existe, se mostrará el rango del último raster cargado
-                        print(f"✓ Colorbar existente (mostrando rango del último raster)")
+                        # Colorbar ya existe, actualizar para vincularlo al nuevo raster
+                        self.raster_colorbar.mappable = raster_plot
+                        self.raster_colorbar.update_normal(raster_plot)
+                        print(f"✓ Colorbar actualizado al nuevo raster con colormap: {cmap.name}")
                 except Exception as e:
                     print(f"⚠️ Error con colorbar: {e}")
 
@@ -1204,15 +1218,10 @@ class MatplotlibMapViewer(ctk.CTkFrame):
                 self.raster_layers[layer_name].remove()
                 del self.raster_layers[layer_name]
 
-                # Si no quedan rasters, remover el colorbar
+                # Mantener colorbar visible siempre (no remover aunque no haya rasters)
+                # El colorbar permanece para indicar el último rango de valores
                 if len(self.raster_layers) == 0:
-                    if hasattr(self, 'raster_colorbar') and self.raster_colorbar is not None:
-                        try:
-                            self.raster_colorbar.remove()
-                            self.raster_colorbar = None
-                            print(f"✓ Colorbar removido (no quedan rasters)")
-                        except Exception as e:
-                            print(f"⚠️ Error removiendo colorbar: {e}")
+                    print(f"ℹ️ No quedan rasters, pero colorbar permanece visible")
 
                 # Actualizar el canvas
                 self.canvas.draw()

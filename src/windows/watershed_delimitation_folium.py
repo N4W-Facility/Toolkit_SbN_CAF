@@ -351,6 +351,12 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             )
             return
 
+        # IMPORTANTE: Resetear workflow cuando se delimita nueva cuenca
+        # Esto previene usar datos antiguos si el usuario no guarda
+        if hasattr(self.parent, 'reset_workflow_on_new_delineation'):
+            self.parent.reset_workflow_on_new_delineation()
+            print("🔄 Workflow reseteado - esperando nueva delimitación")
+
         # Obtener database_folder desde DatabaseManager (BD global)
         from ..core.database_manager import DatabaseManager
         db_manager = DatabaseManager()
@@ -1250,7 +1256,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                         dfn = PackCAF.classify_continuous_raster(
                             path_basin,
                             path_raster_n,
-                            method=bins_tn,#'jenks',
+                            method='jenks',
                             NameCol=f"DF{i}"
                         )
                     else:
@@ -1269,7 +1275,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                         dfp = PackCAF.classify_continuous_raster(
                             path_basin,
                             path_raster_p,
-                            method=bins_tp,#'jenks',
+                            method='jenks',
                             NameCol=f"DF{i}"
                         )
                     else:

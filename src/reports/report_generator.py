@@ -963,8 +963,19 @@ class ReportGenerator:
         # ---------- 10. Anexos digitales ----------
         pdf.h1(self.texts.get('section10_title', '10 Anexos digitales'))
         pdf.set_style("h2")
-        pdf.cell(0, 6, self.texts.get('section10_1', ''), ln=True)
-        pdf.cell(0, 6, self.texts.get('section10_2', ''), ln=True)
+
+        # Construir ruta a carpeta 03-SbN compatible con Windows
+        sbn_folder_path = os.path.join(self.project_path, "03-SbN")
+        # Convertir a formato file:/// para Windows (con barras normales)
+        sbn_folder_url = "file:///" + sbn_folder_path.replace("\\", "/")
+
+        # Anexo 10.1 con hipervínculo
+        pdf.set_text_color(0, 0, 255)  # Azul para el enlace
+        pdf.cell(0, 6, self.texts.get('section10_1', ''), ln=True, link=sbn_folder_url)
+
+        # Anexo 10.2 con hipervínculo
+        pdf.cell(0, 6, self.texts.get('section10_2', ''), ln=True, link=sbn_folder_url)
+        pdf.set_text_color(0, 0, 0)  # Volver a negro
 
         # Exporta
         out_dir = os.path.dirname(os.path.abspath(output_path)) or "."

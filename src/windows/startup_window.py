@@ -16,7 +16,7 @@ class StartupWindow(ctk.CTk):
 
         self.window_manager = window_manager
         self.title(get_text("startup.title"))
-        self.geometry("550x500")  # Ancho, Alto  Aumentado para el selector de idioma
+        self.geometry("550x520")  # Ancho, Alto  Aumentado para selector de idioma y disclaimer
         self.resizable(False, False)
 
         ThemeManager.configure_ctk()
@@ -35,6 +35,7 @@ class StartupWindow(ctk.CTk):
         self.recent_label = None
         self.no_recent_label = None
         self.language_combo = None
+        self.disclaimer_label = None
 
         self._setup_ui()
 
@@ -116,7 +117,7 @@ class StartupWindow(ctk.CTk):
         self.options_title.pack(pady=(10, 5))
 
         buttons_container = ctk.CTkFrame(options_frame, fg_color="transparent")
-        buttons_container.pack(pady=(0, 25))
+        buttons_container.pack(pady=(0, 2))
 
         self.new_project_btn = ctk.CTkButton(
             buttons_container,
@@ -144,7 +145,21 @@ class StartupWindow(ctk.CTk):
             font=ThemeManager.FONTS['heading'],
             corner_radius=ThemeManager.DIMENSIONS['corner_radius']
         )
-        self.open_project_btn.pack(pady=5)
+        self.open_project_btn.pack(pady=(5,1))
+
+        # Disclaimer
+        disclaimer_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        disclaimer_frame.pack(fill="x", pady=(1, 0))
+
+        self.disclaimer_label = ctk.CTkLabel(
+            disclaimer_frame,
+            text=get_text("startup.disclaimer"),
+            font=ThemeManager.FONTS['caption'],
+            text_color=ThemeManager.COLORS['text_secondary'],
+            wraplength=470,
+            justify="center"
+        )
+        self.disclaimer_label.pack(pady=(0, 0))
 
         '''
         recent_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -295,6 +310,9 @@ class StartupWindow(ctk.CTk):
             self.open_project_btn.configure(text=get_text("startup.open_project"))
             #self.recent_label.configure(text=get_text("startup.recent_projects"))
             #self.no_recent_label.configure(text=get_text("startup.no_recent"))
+
+            if hasattr(self, 'disclaimer_label') and self.disclaimer_label:
+                self.disclaimer_label.configure(text=get_text("startup.disclaimer"))
 
             # Actualizar textos de botones de idioma
             if hasattr(self, 'language_buttons'):

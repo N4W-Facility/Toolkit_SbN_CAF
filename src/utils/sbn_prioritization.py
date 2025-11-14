@@ -94,7 +94,8 @@ class SbNPrioritization:
         ws_weights_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_WS.csv')
 
         if not os.path.exists(ws_weights_adjusted):
-            print("⚠️ Matriz recategorizada Weight_Cost_DF_WS.csv no encontrada. Debe lanzar la ventana de SbN primero.")
+            # Esto es normal si aún no se ha abierto la ventana de SbN
+            # No mostrar advertencia, simplemente retornar vacío
             return {}
 
         df_evaluation = pd.read_csv(ws_evaluation_file, encoding='utf-8-sig')
@@ -127,7 +128,8 @@ class SbNPrioritization:
         oc_weights_adjusted = os.path.join(project_path, 'Tmp', 'Weight_Cost_DF_O.csv')
 
         if not os.path.exists(oc_weights_adjusted):
-            print("⚠️ Matriz recategorizada Weight_Cost_DF_O.csv no encontrada. Debe lanzar la ventana de SbN primero.")
+            # Esto es normal si aún no se ha abierto la ventana de SbN
+            # No mostrar advertencia, simplemente retornar vacío
             return {}
 
         df_evaluation = pd.read_csv(oc_evaluation_file, encoding='utf-8-sig')
@@ -271,7 +273,8 @@ class SbNPrioritization:
             # Read prioritization (to preserve structure and Prioridad column)
             df_prior = pd.read_csv(prioritization_file, encoding='utf-8-sig')
 
-            # Normalize each column: min-max normalization (0-1 range)
+            # Normalize each column: min-max normalization (0.01-1 range)
+            # Usar 0.01 como mínimo para evitar que SbN válidas queden en 0 (interpretado como deshabilitadas)
             columns_to_normalize = ['Barriers', 'WS', 'Other']
 
             for col in columns_to_normalize:
@@ -279,12 +282,12 @@ class SbNPrioritization:
                     min_value = df_weights[col].min()
                     max_value = df_weights[col].max()
                     if max_value > min_value:
-                        # Min-max normalization: (value - min) / (max - min)
-                        normalized = (df_weights[col] - min_value) / (max_value - min_value)
+                        # Min-max normalization escalada a [0.01, 1]: 0.01 + (value - min) * 0.99 / (max - min)
+                        normalized = 0.01 + (df_weights[col] - min_value) * 0.99 / (max_value - min_value)
                         df_prior[col] = normalized
                     else:
-                        # If all values are equal, set to 0
-                        df_prior[col] = 0
+                        # If all values are equal, set to 0.01 (no 0, para evitar interpretación como deshabilitado)
+                        df_prior[col] = 0.01
 
             # Las barreras entre mayor sea el score menor es la priordiad, por lo que se invierte el escalado
             df_prior['Barriers'] = 1 - df_prior['Barriers']

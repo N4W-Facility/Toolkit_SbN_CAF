@@ -145,11 +145,9 @@ def _normalize_single_raster(raster_path):
         compression_config = _get_compression_config(profile['dtype'])
         profile.update(compression_config)
 
-        # Configurar bloques tiled
+        # Desactivar tiling para evitar restricciones de múltiplos de 16
         profile.update({
-            'tiled': True,
-            'blockxsize': blocksize,
-            'blockysize': blocksize,
+            'tiled': False,
             'BIGTIFF': 'IF_NEEDED'
         })
         
@@ -213,9 +211,7 @@ def _write_zeros_preserve_nan(src_dataset, raster_path, profile, blocksize, noda
     compression_config = _get_compression_config(profile['dtype'])
     profile.update(compression_config)
     profile.update({
-        'tiled': True,
-        'blockxsize': blocksize,
-        'blockysize': blocksize
+        'tiled': False
     })
 
     temp_fd, temp_path = tempfile.mkstemp(suffix='.tif', dir=raster_path.parent)
@@ -281,9 +277,7 @@ def _write_constant_preserve_nan(src_dataset, raster_path, profile, blocksize, n
     compression_config = _get_compression_config(profile['dtype'])
     profile.update(compression_config)
     profile.update({
-        'tiled': True,
-        'blockxsize': blocksize,
-        'blockysize': blocksize
+        'tiled': False
     })
 
     temp_fd, temp_path = tempfile.mkstemp(suffix='.tif', dir=raster_path.parent)
@@ -321,9 +315,7 @@ def _write_zeros(raster_path, profile, blocksize):
     compression_config = _get_compression_config(profile['dtype'])
     profile.update(compression_config)
     profile.update({
-        'tiled': True,
-        'blockxsize': blocksize,
-        'blockysize': blocksize
+        'tiled': False
     })
 
     temp_fd, temp_path = tempfile.mkstemp(suffix='.tif', dir=raster_path.parent)

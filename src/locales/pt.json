@@ -7,7 +7,8 @@
     "create_project": "📝 Criar Novo Projeto",
     "open_project": "📁 Abrir Projeto Existente",
     "recent_projects": "Projetos Recentes:",
-    "no_recent": "Não há projetos recentes"
+    "no_recent": "Não há projetos recentes",
+    "disclaimer": "Ferramenta de análise de pré-viabilidade para Soluções Baseadas na Natureza em projetos de segurança hídrica. Os resultados são recomendações geradas a partir de bases de dados globais e informações do usuário, que devem ser verificadas e detalhadas em fases posteriores do projeto e não substituem os projetos detalhados das soluções a serem implementadas"
   },
   "project_form": {
     "title": "Criar Novo Projeto",
@@ -58,7 +59,12 @@
     "location": "Localização:",
     "country": "País:",
     "not_specified": "Não especificado",
-    "not_available": "Não disponível"
+    "not_available": "Não disponível",
+    "tooltips": {
+      "edit_project": "Editar informações do projeto",
+      "load_project": "Carregar outro projeto",
+      "change_database": "Alterar localização da base de dados"
+    }
   },
   "workflow": {
     "watershed": "🌊 Bacia",

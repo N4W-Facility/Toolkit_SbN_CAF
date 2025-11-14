@@ -7,7 +7,8 @@
     "create_project": "📝 Create New Project",
     "open_project": "📁 Open Existing Project",
     "recent_projects": "Recent Projects:",
-    "no_recent": "No recent projects"
+    "no_recent": "No recent projects",
+    "disclaimer": "Pre-feasibility analysis tool for Nature-based Solutions in water security projects. Results are recommendations generated from global databases and user information, which must be verified and detailed in later project phases and do not replace detailed designs of solutions to be implemented"
   },
   "project_form": {
     "title": "Create New Project",
@@ -58,7 +59,12 @@
     "location": "Location:",
     "country": "Country:",
     "not_specified": "Not specified",
-    "not_available": "Not available"
+    "not_available": "Not available",
+    "tooltips": {
+      "edit_project": "Edit project information",
+      "load_project": "Load another project",
+      "change_database": "Change database location"
+    }
   },
   "workflow": {
     "watershed": "🌊 Watershed",

@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import messagebox, filedialog
 import os
 from PIL import Image
+from CTkToolTip import CTkToolTip
 from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes, get_current_global_language, set_current_global_language
 from ..utils.project_manager import ProjectManager
@@ -44,6 +45,12 @@ class DashboardWindow(ctk.CTk):
         self.info_labels = {}
         self.workflow_buttons = {}
         self.widget_refs = {}
+
+        # Referencias a botones y tooltips
+        self.edit_btn = None
+        self.new_project_btn = None
+        self.db_update_btn = None
+        self.tooltips = {}
 
         # Suscribirse a cambios de idioma
         subscribe_to_language_changes(self._update_texts)
@@ -228,7 +235,7 @@ class DashboardWindow(ctk.CTk):
         self.widget_refs['project_info_title'].pack(side="left")
 
         # Botón editar (pequeño)
-        edit_btn = ctk.CTkButton(
+        self.edit_btn = ctk.CTkButton(
             title_frame,
             text="✏️",
             width=30,
@@ -239,10 +246,10 @@ class DashboardWindow(ctk.CTk):
             font=ThemeManager.FONTS['body'],
             corner_radius=15
         )
-        edit_btn.pack(side="left", padx=5)
+        self.edit_btn.pack(side="left", padx=5)
 
         # Botón nuevo proyecto (pequeño)
-        new_project_btn = ctk.CTkButton(
+        self.new_project_btn = ctk.CTkButton(
             title_frame,
             text="📂",
             width=30,
@@ -253,10 +260,10 @@ class DashboardWindow(ctk.CTk):
             font=ThemeManager.FONTS['body'],
             corner_radius=15
         )
-        new_project_btn.pack(side="left", padx=5)
+        self.new_project_btn.pack(side="left", padx=5)
 
         # Botón actualizar base de datos (pequeño)
-        db_update_btn = ctk.CTkButton(
+        self.db_update_btn = ctk.CTkButton(
             title_frame,
             text="🗄️",
             width=30,
@@ -267,7 +274,33 @@ class DashboardWindow(ctk.CTk):
             font=ThemeManager.FONTS['body'],
             corner_radius=15
         )
-        db_update_btn.pack(side="left", padx=5)
+        self.db_update_btn.pack(side="left", padx=5)
+
+        # Crear tooltips para los botones
+        self.tooltips['edit_project'] = CTkToolTip(
+            self.edit_btn,
+            message=get_text("dashboard.tooltips.edit_project"),
+            delay=0.5,
+            bg_color=ThemeManager.COLORS['bg_card'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            corner_radius=5
+        )
+        self.tooltips['load_project'] = CTkToolTip(
+            self.new_project_btn,
+            message=get_text("dashboard.tooltips.load_project"),
+            delay=0.5,
+            bg_color=ThemeManager.COLORS['bg_card'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            corner_radius=5
+        )
+        self.tooltips['change_database'] = CTkToolTip(
+            self.db_update_btn,
+            message=get_text("dashboard.tooltips.change_database"),
+            delay=0.5,
+            bg_color=ThemeManager.COLORS['bg_card'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            corner_radius=5
+        )
 
         # Scroll frame para la información
         scroll_frame = ctk.CTkScrollableFrame(parent, fg_color="transparent")
@@ -950,8 +983,6 @@ class DashboardWindow(ctk.CTk):
                 project_path=self.current_project_path
             )
             self.wait_window(barriers_window)
-            # Marcar barreras como completado después de cerrar
-            self.update_workflow_step('barreras', True)
             self._save_project()
         except Exception as e:
             messagebox.showerror(
@@ -968,8 +999,6 @@ class DashboardWindow(ctk.CTk):
                 project_path=self.current_project_path
             )
             self.wait_window(water_security_window)
-            # Marcar water security como completado después de cerrar
-            self.update_workflow_step('water_security', True)
             self._save_project()
         except Exception as e:
             messagebox.showerror(
@@ -985,8 +1014,6 @@ class DashboardWindow(ctk.CTk):
 
         window = OtherChallengesWindow(parent=self, window_manager=self, project_path=self.current_project_path)
         self.wait_window(window)
-        # Marcar other challenges como completado después de cerrar
-        self.update_workflow_step('other_challenges', True)
         self._save_project()
 
     def _open_sbn(self):
@@ -1041,6 +1068,19 @@ class DashboardWindow(ctk.CTk):
                         get_text("messages.warning"),
                         "El ajuste de costos por país tuvo errores. Se continuará con los datos disponibles."
                     )
+
+                # Paso 2.5: Actualizar priorización con las matrices recategorizadas
+                # Esto asegura que SbN_Prioritization.csv tenga scores correctos ANTES de abrir la ventana
+                print("🔄 Actualizando priorización de SbN con matrices recategorizadas...")
+                from ..utils.sbn_prioritization import SbNPrioritization
+
+                # Actualizar scores de Water Security si existe DF_WS.csv
+                SbNPrioritization.update_water_security(project_folder)
+
+                # Actualizar scores de Other Challenges si existe D_O.csv
+                SbNPrioritization.update_other_challenges(project_folder)
+
+                print("✓ Priorización actualizada correctamente")
 
             # Paso 3: Abrir ventana de SbN con la configuración
             window = SbNWindow(
@@ -1270,6 +1310,15 @@ class DashboardWindow(ctk.CTk):
             if hasattr(self, '_update_technical_info'):
                 self._update_technical_info()
 
+            # Actualizar tooltips
+            if hasattr(self, 'tooltips') and self.tooltips:
+                if 'edit_project' in self.tooltips:
+                    self.tooltips['edit_project'].configure(message=get_text("dashboard.tooltips.edit_project"))
+                if 'load_project' in self.tooltips:
+                    self.tooltips['load_project'].configure(message=get_text("dashboard.tooltips.load_project"))
+                if 'change_database' in self.tooltips:
+                    self.tooltips['change_database'].configure(message=get_text("dashboard.tooltips.change_database"))
+
         except Exception as e:
             print(f"Error updating Dashboard texts: {e}")
 
@@ -1318,6 +1367,51 @@ class DashboardWindow(ctk.CTk):
             self.workflow_steps[step_id]['data'] = data
             self._update_workflow_ui()
             self._update_buttons_sequence()  # Actualizar habilitación secuencial de botones
+
+    def reset_workflow_on_new_delineation(self):
+        """
+        Resetear el workflow cuando se delimita una nueva cuenca.
+        Esto pone TODOS los pasos (incluyendo cuenca) como pendientes y deshabilitados.
+        Solo cuenca quedará habilitado para poder guardar la delimitación.
+        """
+        # Verificar que la ventana no esté destruida
+        try:
+            if not self.winfo_exists():
+                return
+        except:
+            return
+
+        # Resetear TODOS los pasos incluyendo 'cuenca'
+        # Cuenca se marcará como no completado hasta que el usuario haga "Guardar y Cerrar"
+        for step_id in self.workflow_steps.keys():
+            self.workflow_steps[step_id]['completed'] = False
+            self.workflow_steps[step_id]['data'] = None
+            if step_id == 'cuenca':
+                # Cuenca queda habilitado para poder acceder y guardar
+                self.workflow_steps[step_id]['enabled'] = True
+            else:
+                # Todos los demás deshabilitados
+                self.workflow_steps[step_id]['enabled'] = False
+
+        # Guardar en project_data si existe
+        if self.project_data:
+            self.project_data['workflow_progress'] = {
+                step_id: {
+                    'completed': step_data['completed'],
+                    'data': step_data['data']
+                }
+                for step_id, step_data in self.workflow_steps.items()
+            }
+
+            # Guardar proyecto
+            if self.current_project_path:
+                from ..utils.project_manager import ProjectManager
+                import os
+                project_json_path = os.path.join(self.current_project_path, 'project.json')
+                ProjectManager.save_project(self.project_data, project_json_path)
+
+        # Actualizar UI
+        self._update_workflow_status()
 
     def _on_closing(self):
         """Manejar cierre de ventana"""

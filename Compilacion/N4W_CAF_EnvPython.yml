@@ -1,0 +1,16 @@
+name: N4W_CAF
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - numba
+  - scipy
+  - pysheds
+  - python=3.8
+  - matplotlib
+  - rasterio
+  - conda-forge::geopandas
+  - anaconda::psutil
+  - conda-forge::contextily
+  - openpyxl
+prefix: C:\Users\jonathan.nogales\miniconda3\envs\N4W_CAF

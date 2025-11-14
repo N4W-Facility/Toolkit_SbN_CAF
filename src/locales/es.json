@@ -7,7 +7,8 @@
     "create_project": "📝 Crear Nuevo Proyecto",
     "open_project": "📁 Abrir Proyecto Existente",
     "recent_projects": "Proyectos Recientes:",
-    "no_recent": "No hay proyectos recientes"
+    "no_recent": "No hay proyectos recientes",
+    "disclaimer": "Herramienta de análisis a nivel de prefactibilidad para Soluciones Basadas en la Naturaleza en proyectos de seguridad hídrica. Los resultados son recomendaciones generadas a partir de bases de datos globales e información del usuario, que deben ser verificadas y detalladas en fases posteriores del proyecto y no sustituyen los diseños detallados de las soluciones a implementar"
   },
   "project_form": {
     "title": "Información del Proyecto",
@@ -58,7 +59,12 @@
     "location": "Localización:",
     "country": "País:",
     "not_specified": "No especificado",
-    "not_available": "No disponible"
+    "not_available": "No disponible",
+    "tooltips": {
+      "edit_project": "Editar información del proyecto",
+      "load_project": "Cargar otro proyecto",
+      "change_database": "Cambiar ubicación de base de datos"
+    }
   },
   "workflow": {
     "watershed": "🌊 Cuenca",

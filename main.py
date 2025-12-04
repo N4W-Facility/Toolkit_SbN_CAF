@@ -8,6 +8,7 @@ from src.core.window_manager import WindowManager
 from src.windows.startup_window import StartupWindow
 from src.windows.database_selection_dialog import check_and_configure_database
 from src.utils.precache import precache_region_latlon
+from src.utils.screen_adapter import get_screen_adapter
 import contextily as ctx
 
 # IMPORTANTE: Configurar caché DESPUÉS de importar contextily
@@ -66,6 +67,11 @@ def background_tile_preload():
 
 
 def main():
+    # Inicializar detección de pantalla
+    screen_adapter = get_screen_adapter()
+    screen_info = screen_adapter.get_info()
+    print(f"✓ Adaptación de pantalla: {screen_info['width']}x{screen_info['height']} ({screen_info['category']})")
+
     # Verificar y configurar base de datos antes de continuar
     if not check_and_configure_database():
         print("Aplicación cerrada: No se configuró la base de datos")

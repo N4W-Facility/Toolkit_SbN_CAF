@@ -19,12 +19,25 @@ class BarriersWindow(ctk.CTkToplevel):
 
         # Configuración de la ventana
         self.title(get_text("barriers.title"))
-        self.geometry("1000x700")
-        self.resizable(True, True)
 
-        # Configurar ventana modal al frente
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=1000,
+            desired_height=700,
+            width_percent=0.75,
+            height_percent=0.80,
+            min_width=800,
+            min_height=600,
+            max_width=1400,
+            max_height=900
+        )
+        self.geometry(f"{width}x{height}")
+        self.resizable(True, True)
+        self.minsize(800, 600)
+
+        # Comentar transient para permitir maximizar/minimizar
         if window_manager:
-            self.transient(window_manager)  # Vincular al dashboard
+            # self.transient(window_manager)  # Vincular al dashboard
             self.grab_set()  # Hacer modal
         self.lift()  # Traer al frente
         self.focus_force()  # Forzar foco
@@ -300,12 +313,23 @@ class BarriersWindow(ctk.CTkToplevel):
         # Título
         title_label = ctk.CTkLabel(
             main_frame,
-            text="",
+            text=get_text("barriers.main_title"),
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=ThemeManager.COLORS['text_primary']
         )
-        title_label.pack(pady=(0, 20))
+        title_label.pack(pady=(0, 10))
         self.widget_refs['title'] = title_label
+
+        # Descripción
+        description_label = ctk.CTkLabel(
+            main_frame,
+            text=get_text("barriers.description"),
+            font=ThemeManager.FONTS['body'],
+            text_color=ThemeManager.COLORS['text_secondary'],
+            wraplength=900
+        )
+        description_label.pack(pady=(0, 20))
+        self.widget_refs['description'] = description_label
 
         # Frame con scroll para el contenido
         self.scroll_frame = ctk.CTkScrollableFrame(
@@ -502,6 +526,8 @@ class BarriersWindow(ctk.CTkToplevel):
             # if self.has_previous_data:
             #     title_text += "\n" + get_text("status.config_loaded")
             self.widget_refs['title'].configure(text=title_text)
+        if 'description' in self.widget_refs:
+            self.widget_refs['description'].configure(text=get_text("barriers.description"))
         if 'save_btn' in self.widget_refs:
             self.widget_refs['save_btn'].configure(text=get_text("barriers.save"))
         if 'cancel_btn' in self.widget_refs:

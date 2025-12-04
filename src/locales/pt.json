@@ -1,6 +1,6 @@
 {
   "startup": {
-    "title": "Kit de ferramentas\nSbN para segurança hídrica",
+    "title": "Toolkit\nSbN para segurança hídrica",
     "subtitle": "Ferramenta digital para a incorporação de\nsoluções baseadas na natureza em projetos de segurança hídrica",
     "language_label": "Idioma:",
     "question": "O que você gostaria de fazer?",
@@ -28,6 +28,8 @@
     "objective_placeholder": "Indique os objetivos que deseja alcançar com o Programa e Projeto de Investimento",
     "taxonomy_section": "Taxonomia CAF",
     "taxonomy_info": "Enquadre o Programa e Projeto de Investimento dentro da categoria elegível CAF",
+    "taxonomy_objective_label": "Objetivo:",
+    "select_taxonomy_objective": "-- Selecione um objetivo --",
     "category_label": "Categoria:",
     "subcategory_label": "Subcategoria:",
     "activity_label": "Atividade elegível:",
@@ -45,7 +47,7 @@
     "creation_error": "Erro ao criar o projeto"
   },
   "dashboard": {
-    "title": "Kit de ferramentas\nSbN para segurança hídrica",
+    "title": "Toolkit\nSbN para segurança hídrica",
     "subtitle": "Dashboard do Projeto",
     "project_info": "📋 Informações do Projeto",
     "workflow": "🔄 Fluxo de Trabalho Principal",
@@ -83,7 +85,7 @@
   },
   "map_viewer": {
     "title": "🗺️ Mapa Interativo",
-    "click_to_select": "📍 Clique no mapa para selecionar",
+    "click_to_select": "📍 Clique no mapa para selecionar ou navegar",
     "loading": "🔄 Carregando...",
     "viewer_created": "✅ Visualizador criado",
     "map_loaded": "✅ Mapa carregado",
@@ -196,7 +198,7 @@
   "water_security": {
     "title": "SbN Portfolio Generator - Desafios de Segurança Hídrica",
     "main_title": "💧 Avaliação de Desafios de Segurança Hídrica",
-    "description": "Avalie a importância de cada desafio de segurança hídrica para seu projeto usando uma escala de 1 a 100.",
+    "description": "Avalie a importância de cada desafio de segurança hídrica na área do projeto, classificando-os em uma escala de 1 a 100 (valores altos indicam alta prioridade para o respectivo desafio).",
     "challenge_header": "Desafio",
     "value_header": "Avaliação (1-100)",
     "importance_header": "Nível de Importância",
@@ -282,7 +284,7 @@
   "other_challenges": {
     "title": "SbN Portfolio Generator - Outros Desafios",
     "main_title": "⚡ Avaliação de Outros Desafios",
-    "description": "Avalie a importância de outros desafios para seu projeto usando uma escala de 1 a 100.",
+    "description": "Avalie a importância de outros desafios na área do projeto, classificando-os em uma escala de 1 a 100 (valores altos indicam alta prioridade para o respectivo desafio).",
     "challenge_header": "Desafio",
     "value_header": "Avaliação (1-100)",
     "importance_header": "Nível de Importância",
@@ -351,7 +353,7 @@
     "zoom_error": "Não foi possível fazer zoom nas SbN carregadas",
     "selection_saved": "Seleção salva: {0} SbN selecionadas",
     "priority_label": "(Prioridade {0})",
-    "priority_level": "Nível de prioridade"
+    "priority_level": "Avaliação de adequação"
   },
   "sbn_selection": {
     "title": "Seleção de SbN para Relatório",
@@ -416,7 +418,8 @@
     "project_title": "Título do Programa e Projeto de Investimento",
     "description": "Descrição",
     "location": "Localização",
-    "objectives": "Objetivos",
+    "objectives": "Objetivo do projeto",
+    "objectives_caf": "Objetivo do financiamento verde da CAF",
     "taxonomy_caf": "Taxonomia CAF",
     "category_caf": "Categoria CAF",
     "subcategory_caf": "Subcategoria CAF",
@@ -445,8 +448,10 @@
     "subcategory": "Subcategoria",
     "section6_title": "6 Avaliação de outros desafios",
     "section7_title": "7 SbN priorizadas",
+    "taxo_title": "SbN",
     "priority_order": "Ordem de prioridade",
     "section8_title": "8 Taxonomia CAF atualizada",
+    "footnote": "* Nota: A) Adaptação às mudanças climáticas, B) Biodiversidade e outros objetivos ambientais, M) Mitigação das mudanças climáticas",
     "section9_title": "9 Indicadores de monitoramento e avaliação recomendados",
     "indicator": "Indicadores priorizados",
     "unit": "Unidade de medida",

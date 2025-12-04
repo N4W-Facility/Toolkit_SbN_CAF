@@ -16,9 +16,22 @@ class SbNSelectionWindow(ctk.CTkToplevel):
         self.callback = callback  # Función a llamar después de guardar
 
         self.title(get_text("sbn_selection.title"))
-        self.geometry("600x700")
-        self.resizable(False, False)
-        self.transient(parent)
+
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=600,
+            desired_height=700,
+            width_percent=0.60,
+            height_percent=0.80,
+            min_width=550,
+            min_height=600,
+            max_width=800,
+            max_height=850
+        )
+        self.geometry(f"{width}x{height}")
+        self.resizable(True, True)
+        self.minsize(550, 600)  # Tamaño mínimo para mantener usabilidad
+
         self.grab_set()
 
         self.configure(fg_color=ThemeManager.COLORS['bg_primary'])
@@ -106,6 +119,9 @@ class SbNSelectionWindow(ctk.CTkToplevel):
         select_all_frame = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         select_all_frame.pack(fill="x", padx=10, pady=(10, 5))
 
+        # Ancho adaptativo para botones de selección
+        select_btn_width = ThemeManager.get_adaptive_button_width('normal')
+
         select_all_btn = ctk.CTkButton(
             select_all_frame,
             text="",
@@ -113,7 +129,7 @@ class SbNSelectionWindow(ctk.CTkToplevel):
             font=ThemeManager.FONTS['body'],
             fg_color=ThemeManager.COLORS['accent_secondary'],
             hover_color=ThemeManager.COLORS['accent_primary'],
-            width=120
+            width=select_btn_width
         )
         select_all_btn.pack(side="left", padx=5)
         self.widget_refs['select_all'] = select_all_btn
@@ -125,7 +141,7 @@ class SbNSelectionWindow(ctk.CTkToplevel):
             font=ThemeManager.FONTS['body'],
             fg_color=ThemeManager.COLORS['accent_secondary'],
             hover_color=ThemeManager.COLORS['accent_primary'],
-            width=120
+            width=select_btn_width
         )
         deselect_all_btn.pack(side="left", padx=5)
         self.widget_refs['deselect_all'] = deselect_all_btn
@@ -153,6 +169,9 @@ class SbNSelectionWindow(ctk.CTkToplevel):
         button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         button_frame.pack(fill="x")
 
+        # Ancho adaptativo para botones de acción
+        action_btn_width = ThemeManager.get_adaptive_button_width('large')
+
         cancel_btn = ctk.CTkButton(
             button_frame,
             text="",
@@ -160,7 +179,7 @@ class SbNSelectionWindow(ctk.CTkToplevel):
             font=ThemeManager.FONTS['body'],
             fg_color=ThemeManager.COLORS['error'],
             hover_color="#D32F2F",
-            width=150
+            width=action_btn_width
         )
         cancel_btn.pack(side="left", padx=5)
         self.widget_refs['cancel'] = cancel_btn
@@ -172,7 +191,7 @@ class SbNSelectionWindow(ctk.CTkToplevel):
             font=ThemeManager.FONTS['body'],
             fg_color=ThemeManager.COLORS['success'],
             hover_color="#388E3C",
-            width=150
+            width=action_btn_width
         )
         save_btn.pack(side="right", padx=5)
         self.widget_refs['save'] = save_btn

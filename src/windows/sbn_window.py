@@ -22,9 +22,24 @@ class SbNWindow(ctk.CTkToplevel):
             set_current_global_language(language)
 
         self.title(get_text("sbn.title"))
-        self.geometry("1400x900")
+
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=1400,
+            desired_height=900,
+            width_percent=0.85,
+            height_percent=0.85,
+            min_width=900,
+            min_height=650,
+            max_width=1920,
+            max_height=1200
+        )
+        self.geometry(f"{width}x{height}")
         self.resizable(True, True)
-        self.transient(parent)
+        self.minsize(900, 650)  # Tamaño mínimo para mantener usabilidad
+
+        # Comentar transient para permitir maximizar/minimizar la ventana
+        # self.transient(parent)
         self.grab_set()
 
         self.configure(fg_color=ThemeManager.COLORS['bg_primary'])
@@ -90,8 +105,18 @@ class SbNWindow(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
 
     def _setup_ui(self):
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # Frame scrollable global para pantallas pequeñas
+        scrollable_main = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            scrollbar_button_color=ThemeManager.COLORS['text_light'],
+            scrollbar_button_hover_color=ThemeManager.COLORS['text_secondary']
+        )
+        scrollable_main.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Frame principal dentro del scrollable
+        main_frame = ctk.CTkFrame(scrollable_main, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
 
         # Header
         header_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -120,8 +145,15 @@ class SbNWindow(ctk.CTkToplevel):
         content_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, pady=(0, 15))
 
-        # Panel de SbN (lado derecho) - width fijo
-        sbn_panel = ctk.CTkFrame(content_frame, width=450, **ThemeManager.get_frame_style())
+        # Panel de SbN (lado derecho) - ancho adaptativo
+        panel_width = ThemeManager.get_adaptive_panel_width(
+            desired_width=450,
+            parent_width=None,  # Usa ancho de pantalla
+            width_percent=0.30,
+            min_width=350,
+            max_width=500
+        )
+        sbn_panel = ctk.CTkFrame(content_frame, width=panel_width, **ThemeManager.get_frame_style())
         sbn_panel.pack(side="right", fill="y", padx=(15, 0))
         sbn_panel.pack_propagate(False)
 
@@ -448,19 +480,6 @@ class SbNWindow(ctk.CTkToplevel):
         save_button.pack(side="right")
         self.widget_refs['save_button'] = save_button
 
-        # Botón Zoom a Todas las SbN
-        zoom_all_style = ThemeManager.get_button_style()
-        zoom_all_style['fg_color'] = ThemeManager.COLORS['success']
-        zoom_all_style['hover_color'] = '#2E7D32'  # Verde más oscuro
-        zoom_all_button = ctk.CTkButton(
-            button_frame,
-            text="",
-            command=self._zoom_to_all_rasters,
-            **zoom_all_style
-        )
-        zoom_all_button.pack(side="right", padx=(0, 10))
-        self.widget_refs['zoom_all_button'] = zoom_all_button
-
     def _save_selection(self):
         """Guardar selección actual de SbN y actualizar workflow"""
         selected_sbn = [sbn_id for sbn_id, checkbox in self.sbn_checkboxes.items() if checkbox.get()]
@@ -543,9 +562,6 @@ class SbNWindow(ctk.CTkToplevel):
 
         if 'save_button' in self.widget_refs:
             self.widget_refs['save_button'].configure(text=get_text("sbn.save_selection"))
-
-        if 'zoom_all_button' in self.widget_refs:
-            self.widget_refs['zoom_all_button'].configure(text=get_text("sbn.zoom_all"))
 
     def _on_closing(self):
         """Manejar cierre de ventana"""

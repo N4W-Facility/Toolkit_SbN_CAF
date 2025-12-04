@@ -1,6 +1,6 @@
 {
   "startup": {
-    "title": "Toolkit - SbN for Water Security",
+    "title": "Toolkit - NbS for Water Security",
     "subtitle": "Digital tool for incorporating\nnature-based solutions into water security projects",
     "language_label": "Language:",
     "question": "What would you like to do?",
@@ -28,6 +28,8 @@
     "objective_placeholder": "Indicate the objectives you want to achieve with the Investment Program and Project",
     "taxonomy_section": "CAF Taxonomy",
     "taxonomy_info": "Frame the Investment Program and Project within the eligible CAF category",
+    "taxonomy_objective_label": "Objective:",
+    "select_taxonomy_objective": "-- Select an objective --",
     "category_label": "Category:",
     "subcategory_label": "Subcategory:",
     "activity_label": "Eligible activity:",
@@ -45,7 +47,7 @@
     "creation_error": "Error creating project"
   },
   "dashboard": {
-    "title": "Toolkit - SbN for Water Security",
+    "title": "Toolkit - NbS for Water Security",
     "subtitle": "Project Dashboard",
     "project_info": "📋 Project Information",
     "workflow": "🔄 Main Workflow",
@@ -83,7 +85,7 @@
   },
   "map_viewer": {
     "title": "🗺️ Interactive Map",
-    "click_to_select": "📍 Click on the map to select",
+    "click_to_select": "📍 Click on the map to select or navigate",
     "loading": "🔄 Loading...",
     "viewer_created": "✅ Viewer created",
     "map_loaded": "✅ Map loaded",
@@ -196,7 +198,7 @@
   "water_security": {
     "title": "SbN Portfolio Generator - Water Security Challenges",
     "main_title": "💧 Water Security Challenges Assessment",
-    "description": "Evaluate the importance of each water security challenge for your project using a scale from 1 to 100.",
+    "description": "Assess the importance of each water security challenge in the project area, rating them on a scale of 1 to 100 (high values indicate high priority for the respective challenge).",
     "challenge_header": "Challenge",
     "value_header": "Rating (1-100)",
     "importance_header": "Importance Level",
@@ -282,7 +284,7 @@
   "other_challenges": {
     "title": "SbN Portfolio Generator - Other Challenges",
     "main_title": "⚡ Other Challenges Assessment",
-    "description": "Evaluate the importance of other challenges for your project using a scale from 1 to 100.",
+    "description": "Assess the importance of other challenges in the project area, rating them on a scale of 1 to 100 (high values indicate high priority for the respective challenge).",
     "challenge_header": "Challenge",
     "value_header": "Rating (1-100)",
     "importance_header": "Importance Level",
@@ -351,7 +353,7 @@
     "zoom_error": "Could not zoom to loaded NbS",
     "selection_saved": "Selection saved: {0} NbS selected",
     "priority_label": "(Priority {0})",
-    "priority_level": "Priority Level"
+    "priority_level": "Suitability assessment"
   },
   "sbn_selection": {
     "title": "NbS Selection for Report",
@@ -416,7 +418,8 @@
     "project_title": "Program and Investment Project Title",
     "description": "Description",
     "location": "Location",
-    "objectives": "Objectives",
+    "objectives": "Project Objectives",
+    "objectives_caf": "CAF green financing objective",
     "taxonomy_caf": "CAF Taxonomy",
     "category_caf": "CAF Category",
     "subcategory_caf": "CAF Subcategory",
@@ -445,8 +448,10 @@
     "subcategory": "Subcategory",
     "section6_title": "6 Other challenges assessment",
     "section7_title": "7 Prioritized NbS",
+    "taxo_title": "NbS",
     "priority_order": "Priority order",
     "section8_title": "8 Updated CAF taxonomy",
+    "footnote": "* Note: A) Climate change adaptation, B) Biodiversity and other environmental objectives, M) Climate change mitigation",
     "section9_title": "9 Recommended monitoring and evaluation indicators",
     "indicator": "Prioritized indicators",
     "unit": "Unit of measure",

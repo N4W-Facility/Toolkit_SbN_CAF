@@ -2,10 +2,15 @@ import customtkinter as ctk
 from tkinter import messagebox, filedialog
 import pandas as pd
 import os
+import platform
 from datetime import datetime
+from pathlib import Path
 from ..core.theme_manager import ThemeManager
 from ..core.language_manager import get_text, subscribe_to_language_changes
 from ..utils.sbn_prioritization import SbNPrioritization
+from ..utils.tooltip import ToolTip
+from ..utils.challenge_tooltip_manager import ChallengeTooltipManager
+from ..utils.resource_path import get_resource_path
 
 
 class OtherChallengesWindow(ctk.CTkToplevel):
@@ -24,7 +29,6 @@ class OtherChallengesWindow(ctk.CTkToplevel):
 
         # Hacer la ventana modal
         if parent:
-            self.transient(parent)
             self.grab_set()
 
         # Aplicar tema
@@ -72,6 +76,20 @@ class OtherChallengesWindow(ctk.CTkToplevel):
         )
         title_label.pack(pady=(0, 10))
         self.widget_refs['title'] = title_label
+
+        # Botón de info (posicionado de forma absoluta, no afecta layout)
+        info_btn = ctk.CTkButton(
+            main_frame,
+            text="i",
+            command=self._open_info_pdf,
+            width=28,
+            height=28,
+            fg_color=ThemeManager.COLORS['accent_primary'],
+            hover_color=ThemeManager.COLORS['accent_hover'],
+            font=ctk.CTkFont(size=14)
+        )
+        info_btn.place(relx=1.0, rely=0, x=-10, y=5, anchor="ne")
+        ToolTip(info_btn, "Database Information")
 
         # Descripción
         desc_label = ctk.CTkLabel(
@@ -375,6 +393,35 @@ class OtherChallengesWindow(ctk.CTkToplevel):
         if result:
             self.destroy()
 
+    def _open_info_pdf(self):
+        """Abrir PDF de información de base de datos - Otros Desafíos"""
+        try:
+            pdf_path = get_resource_path(os.path.join('locales', 'InfoDataBase_Other.pdf'))
+
+            if not os.path.exists(pdf_path):
+                messagebox.showerror(
+                    "Error",
+                    f"No se encontró el archivo InfoDataBase_Other.pdf en:\n{pdf_path}"
+                )
+                return
+
+            # Abrir PDF con aplicación predeterminada según OS
+            if platform.system() == 'Windows':
+                os.startfile(pdf_path)
+            elif platform.system() == 'Darwin':  # macOS
+                os.system(f'open "{pdf_path}"')
+            else:  # Linux
+                os.system(f'xdg-open "{pdf_path}"')
+
+            print(f"✓ Abriendo InfoDataBase_Other.pdf: {pdf_path}")
+
+        except Exception as e:
+            print(f"❌ Error abriendo PDF: {e}")
+            messagebox.showerror(
+                "Error",
+                f"No se pudo abrir el archivo PDF:\n{str(e)}"
+            )
+
     def _update_texts(self):
         """Actualiza todos los textos según el idioma actual"""
         self.title(get_text("other_challenges.title"))
@@ -402,6 +449,10 @@ class OtherChallengesWindow(ctk.CTkToplevel):
 
         if 'cancel_btn' in self.widget_refs:
             self.widget_refs['cancel_btn'].configure(text=get_text("other_challenges.cancel"))
+
+        # Recargar tooltips con nuevo idioma
+        tooltip_mgr = ChallengeTooltipManager()
+        tooltip_mgr.reload_tooltips()
 
         # Recargar challenges_data con traducciones actualizadas
         self.challenges_data = self._load_challenges_data()
@@ -448,6 +499,12 @@ class OtherChallengeRow(ctk.CTkFrame):
             wraplength=380
         )
         challenge_label.pack()
+
+        # Agregar tooltip con descripción del desafío
+        tooltip_mgr = ChallengeTooltipManager()
+        tooltip_text = tooltip_mgr.get_tooltip(self.challenge_code)
+        if tooltip_text:
+            self.tooltip = ToolTip(challenge_label, tooltip_text, wraplength=500)
 
         # Columna Valoración (Entry + botones)
         value_frame = ctk.CTkFrame(self, fg_color="transparent")

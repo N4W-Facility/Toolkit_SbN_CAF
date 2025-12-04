@@ -272,6 +272,28 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         )
         reset_view_btn.pack(side="right", padx=8)
 
+        # Botón Zoom Out (alejar)
+        zoom_out_btn = ctk.CTkButton(
+            top_controls,
+            text="🔍-",
+            command=self.zoom_out,
+            width=30,
+            height=32,
+            font=ThemeManager.FONTS['body']
+        )
+        zoom_out_btn.pack(side="right", padx=2)
+
+        # Botón Zoom In (acercar)
+        zoom_in_btn = ctk.CTkButton(
+            top_controls,
+            text="🔍+",
+            command=self.zoom_in,
+            width=30,
+            height=32,
+            font=ThemeManager.FONTS['body']
+        )
+        zoom_in_btn.pack(side="right", padx=2)
+
         # Frame para selector de colormap con label (solo si no está oculto)
         if not self.hide_colormap_controls:
             colormap_frame = ctk.CTkFrame(top_controls, fg_color="transparent")
@@ -1040,7 +1062,23 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         except Exception as e:
             print(f"Error estableciendo coordenadas: {e}")
 
-    def _schedule_redraw(self, delay=400):
+    def _force_basemap_refresh(self):
+        """
+        Fuerza redibujado del basemap con límites explícitos.
+        Usado después de pan/zoom para garantizar que se descarguen tiles faltantes.
+        """
+        try:
+            # Obtener límites actuales explícitamente
+            xlim = self.ax.get_xlim()
+            ylim = self.ax.get_ylim()
+
+            # Redibujar basemap con límites explícitos y forzado
+            self._draw_basemap(xlim=xlim, ylim=ylim, force=True)
+            self.canvas.draw_idle()
+        except Exception as e:
+            print(f"⚠️ Error en _force_basemap_refresh: {e}")
+
+    def _schedule_redraw(self, delay=100):
         """
         Debounce de repintado: espera 'delay' ms sin nuevos eventos
         antes de pedir/actualizar teselas. Evita bombardeo al proveedor
@@ -1049,7 +1087,7 @@ class MatplotlibMapViewer(ctk.CTkFrame):
         try:
             if self._reload_job is not None:
                 self.after_cancel(self._reload_job)
-            self._reload_job = self.after(delay, lambda: self._draw_basemap())
+            self._reload_job = self.after(delay, self._force_basemap_refresh)
         except Exception:
             pass
 
@@ -1382,6 +1420,9 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             # 4) refresca
             self.canvas.draw_idle()
 
+            # 5) programar refresh adicional para asegurar descarga de tiles
+            self._schedule_redraw(delay=100)
+
             print(f"✅ Zoom aplicado a vector: {os.path.basename(vector_path)}")
             return True
 
@@ -1389,6 +1430,90 @@ class MatplotlibMapViewer(ctk.CTkFrame):
             print(f"❌ Error haciendo zoom al vector: {str(e)}")
             import traceback
             traceback.print_exc()
+            return False
+
+    def zoom_in(self):
+        """Acercar el mapa (zoom in) desde el centro actual"""
+        try:
+            # Obtener límites actuales
+            xlim = self.ax.get_xlim()
+            ylim = self.ax.get_ylim()
+
+            # Calcular centro actual
+            center_x = (xlim[0] + xlim[1]) / 2
+            center_y = (ylim[0] + ylim[1]) / 2
+
+            # Calcular nueva extensión (70% del tamaño actual = acercar)
+            zoom_factor = 0.7
+            width = (xlim[1] - xlim[0]) * zoom_factor
+            height = (ylim[1] - ylim[0]) * zoom_factor
+
+            # Calcular nuevos límites centrados
+            new_xlim = (center_x - width / 2, center_x + width / 2)
+            new_ylim = (center_y - height / 2, center_y + height / 2)
+
+            # Aplicar nuevos límites
+            self.ax.set_xlim(new_xlim)
+            self.ax.set_ylim(new_ylim)
+
+            # Obtener límites finales
+            final_xlim = self.ax.get_xlim()
+            final_ylim = self.ax.get_ylim()
+
+            # Redibujar basemap
+            self._draw_basemap(xlim=final_xlim, ylim=final_ylim, force=True)
+            self.canvas.draw_idle()
+
+            # Programar refresh adicional para asegurar descarga de tiles
+            self._schedule_redraw(delay=100)
+
+            print("🔍+ Zoom In aplicado")
+            return True
+
+        except Exception as e:
+            print(f"❌ Error en zoom_in: {str(e)}")
+            return False
+
+    def zoom_out(self):
+        """Alejar el mapa (zoom out) desde el centro actual"""
+        try:
+            # Obtener límites actuales
+            xlim = self.ax.get_xlim()
+            ylim = self.ax.get_ylim()
+
+            # Calcular centro actual
+            center_x = (xlim[0] + xlim[1]) / 2
+            center_y = (ylim[0] + ylim[1]) / 2
+
+            # Calcular nueva extensión (140% del tamaño actual = alejar)
+            zoom_factor = 1.4
+            width = (xlim[1] - xlim[0]) * zoom_factor
+            height = (ylim[1] - ylim[0]) * zoom_factor
+
+            # Calcular nuevos límites centrados
+            new_xlim = (center_x - width / 2, center_x + width / 2)
+            new_ylim = (center_y - height / 2, center_y + height / 2)
+
+            # Aplicar nuevos límites
+            self.ax.set_xlim(new_xlim)
+            self.ax.set_ylim(new_ylim)
+
+            # Obtener límites finales
+            final_xlim = self.ax.get_xlim()
+            final_ylim = self.ax.get_ylim()
+
+            # Redibujar basemap
+            self._draw_basemap(xlim=final_xlim, ylim=final_ylim, force=True)
+            self.canvas.draw_idle()
+
+            # Programar refresh adicional para asegurar descarga de tiles
+            self._schedule_redraw(delay=100)
+
+            print("🔍- Zoom Out aplicado")
+            return True
+
+        except Exception as e:
+            print(f"❌ Error en zoom_out: {str(e)}")
             return False
 
     def zoom_to_raster(self, raster_path, padding_factor=0.1):
@@ -1437,6 +1562,9 @@ class MatplotlibMapViewer(ctk.CTkFrame):
 
                 # Actualizar el canvas
                 self.canvas.draw()
+
+                # Programar refresh adicional para asegurar descarga de tiles
+                self._schedule_redraw(delay=200)
 
                 print(f"✅ Zoom aplicado a raster: {os.path.basename(raster_path)}")
                 return True

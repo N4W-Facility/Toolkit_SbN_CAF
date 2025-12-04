@@ -11,6 +11,7 @@ from .database_processing_dialog import DatabaseProcessingDialog
 from ..core import ProcessingPackage as PackCAF
 from ..core import DelimitacionCuenca as PackCAF_DC
 from ..core.normalize_raster_sbn import normalize_raster
+from ..core.area_calculator import calculate_sbn_areas, save_areas_csv
 
 
 class WatershedDelimitationFolium(ctk.CTkToplevel):
@@ -28,9 +29,24 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             set_current_global_language(language)
 
         self.title(get_text("watershed.title"))
-        self.geometry("1200x800")
+
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=1200,
+            desired_height=800,
+            width_percent=0.85,
+            height_percent=0.85,
+            min_width=900,
+            min_height=650,
+            max_width=1920,
+            max_height=1200
+        )
+        self.geometry(f"{width}x{height}")
         self.resizable(True, True)
-        self.transient(parent)
+        self.minsize(900, 650)  # Tamaño mínimo para mantener usabilidad
+
+        # Comentar transient para permitir maximizar/minimizar la ventana
+        # self.transient(parent)
         self.grab_set()
 
         self.configure(fg_color=ThemeManager.COLORS['bg_primary'])
@@ -66,8 +82,18 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 self.after(500, lambda: self._load_saved_coordinates(saved_lat, saved_lon))
     
     def _setup_ui(self):
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # Frame scrollable global para pantallas pequeñas
+        scrollable_main = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            scrollbar_button_color=ThemeManager.COLORS['text_light'],
+            scrollbar_button_hover_color=ThemeManager.COLORS['text_secondary']
+        )
+        scrollable_main.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Frame principal dentro del scrollable
+        main_frame = ctk.CTkFrame(scrollable_main, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
 
         # Header
         header_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -94,9 +120,16 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         # Layout principal: mapa a la izquierda, panel a la derecha
         content_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, pady=(0, 15))
-        
-        # Panel de información (lado derecho) - más ancho
-        info_panel = ctk.CTkFrame(content_frame, width=400, **ThemeManager.get_frame_style())
+
+        # Panel de información (lado derecho) - ancho adaptativo
+        panel_width = ThemeManager.get_adaptive_panel_width(
+            desired_width=400,
+            parent_width=None,  # Usa ancho de pantalla
+            width_percent=0.30,
+            min_width=350,
+            max_width=450
+        )
+        info_panel = ctk.CTkFrame(content_frame, width=panel_width, **ThemeManager.get_frame_style())
         info_panel.pack(side="right", fill="y", padx=(15, 0))
         info_panel.pack_propagate(False)
         
@@ -114,16 +147,13 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         )
         self.map_viewer.pack(fill="both", expand=True, padx=8, pady=8)
         self.map_viewer.set_coordinate_callback(self._on_coordinates_selected)
-        
+
         self._create_info_panel(info_panel)
-        
-        # Footer con botones
-        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        button_frame.pack(fill="x")
-        
-        self._create_buttons(button_frame)
     
     def _create_info_panel(self, parent):
+        # Ancho adaptativo para botones del panel
+        panel_button_width = ThemeManager.get_adaptive_button_width('wide')
+
         # Título del panel
         self.panel_title = ctk.CTkLabel(
             parent,
@@ -158,7 +188,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         self.manual_btn = ctk.CTkButton(
             coords_frame,
             text=get_text("watershed.manual_input"),
-            width=200,
+            width=panel_button_width,
             command=self._manual_coordinates,
             fg_color=ThemeManager.COLORS['accent_primary'],
             hover_color=ThemeManager.COLORS['accent_secondary'],
@@ -206,7 +236,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         self.select_point_btn = ctk.CTkButton(
             status_frame,
             text=get_text("watershed.select_point_map"),
-            width=200,
+            width=panel_button_width,
             height=40,
             command=self._toggle_point_selection_mode,
             fg_color=ThemeManager.COLORS['accent_primary'],
@@ -222,7 +252,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         self.delimit_btn = ctk.CTkButton(
             status_frame,
             text=get_text("watershed.delimit_button"),
-            width=200,
+            width=panel_button_width,
             height=40,
             command=self._delimit_watershed,
             fg_color=ThemeManager.COLORS['accent_primary'],
@@ -238,7 +268,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         self.define_sbn_btn = ctk.CTkButton(
             status_frame,
             text=get_text("watershed.define_sbn_area"),
-            width=200,
+            width=panel_button_width,
             height=40,
             command=self._toggle_sbn_drawing_mode,
             fg_color=ThemeManager.COLORS['accent_primary'],
@@ -250,11 +280,11 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
         )
         self.define_sbn_btn.pack(pady=(10, 0))
 
-        # Botón guardar y cerrar - ÚLTIMO botón
+        # Botón guardar y cerrar
         self.save_and_close_btn = ctk.CTkButton(
             status_frame,
             text=get_text("watershed.save_and_close"),
-            width=200,
+            width=panel_button_width,
             height=40,
             command=self._save_and_close,
             fg_color=ThemeManager.COLORS['success'],
@@ -265,39 +295,25 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             state="disabled"
         )
         self.save_and_close_btn.pack(pady=(10, 0))
-    
-    def _create_buttons(self, parent):
-        # Botón cancelar
+
+        # Botón cancelar - ÚLTIMO botón
         self.cancel_btn = ctk.CTkButton(
-            parent,
+            status_frame,
             text=get_text("watershed.cancel"),
-            width=120,
+            width=panel_button_width,
             height=40,
             command=self._cancel,
-            fg_color=ThemeManager.COLORS['text_light'],
-            hover_color=ThemeManager.COLORS['text_secondary'],
+            fg_color=ThemeManager.COLORS['error'],
+            hover_color=ThemeManager.COLORS['error_hover'],
             text_color='#FFFFFF',
             font=ThemeManager.FONTS['body'],
             corner_radius=ThemeManager.DIMENSIONS['corner_radius']
         )
-        self.cancel_btn.pack(side="right", padx=(15, 0))
+        self.cancel_btn.pack(pady=(10, 0))
 
-        # Botón guardar
-        self.save_btn = ctk.CTkButton(
-            parent,
-            text=get_text("watershed.save_project"),
-            width=160,
-            height=40,
-            command=self._save_project,
-            fg_color=ThemeManager.COLORS['success'],
-            hover_color=ThemeManager.COLORS['accent_secondary'],
-            text_color='#FFFFFF',
-            font=ThemeManager.FONTS['body'],
-            corner_radius=ThemeManager.DIMENSIONS['corner_radius'],
-            state="disabled"
-        )
-        self.save_btn.pack(side="right", padx=(10, 0))
-        
+    def _create_buttons(self, parent):
+        # Ya no se necesitan botones en el footer - todos están en el panel
+        pass
     
     def _on_coordinates_selected(self, lat, lon):
         """Callback cuando se seleccionan coordenadas en el mapa"""
@@ -319,7 +335,6 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
 
         # Reset estado de guardado
         self.current_watershed = None
-        self.save_btn.configure(state="disabled")
         self.watershed_display.configure(
             text=get_text("watershed.watershed_click"),
             text_color=ThemeManager.COLORS['text_secondary']
@@ -449,8 +464,7 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 text_color=ThemeManager.COLORS['success']
             )
 
-            # Habilitar botones de guardado
-            self.save_btn.configure(state="normal")
+            # Habilitar botón de guardado
             self.save_and_close_btn.configure(state="normal")
 
             # Habilitar botón de definir área SbN (ya que la cuenca fue delimitada exitosamente)
@@ -900,6 +914,9 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             # Diccionario para almacenar idoneidad de cada SbN {sbn_id: 0 o 1}
             sbn_suitability = {}
 
+            # Diccionario para almacenar áreas por SbN {sbn_code: {rango: area}}
+            sbn_areas = {}
+
             # Procesar cada raster
             processed_count = 0
             for index, (raster_name, ref_path) in enumerate(NameRaster.items()):
@@ -937,6 +954,16 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                             sbn_suitability[sbn_id] = 1 if has_data else 0
 
                             print(f"✓ Raster {raster_name} normalizado (max: {max_value:.2f}, idoneidad: {sbn_suitability[sbn_id]})")
+
+                            # Calcular áreas por rangos (solo si tiene datos)
+                            if has_data:
+                                try:
+                                    areas = calculate_sbn_areas(output_path)
+                                    sbn_areas[raster_name] = areas
+                                    print(f"  ✓ Áreas calculadas para {raster_name}")
+                                except Exception as area_error:
+                                    print(f"  ⚠ Error calculando áreas para {raster_name}: {str(area_error)}")
+
                         except Exception as norm_error:
                             print(f"⚠ Error normalizando {raster_name}: {str(norm_error)}")
                             # Si falla, asumir idoneidad = 0
@@ -957,6 +984,14 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             # Actualizar columna Idoneidad en SbN_Prioritization.csv
             if sbn_suitability:
                 self._update_sbn_suitability(project_folder, sbn_suitability)
+
+            # Guardar áreas por SbN en Area.csv
+            if sbn_areas:
+                try:
+                    csv_path = project_folder / "03-SbN" / "Area.csv"
+                    save_areas_csv(sbn_areas, csv_path)
+                except Exception as csv_error:
+                    print(f"⚠ Error guardando Area.csv: {str(csv_error)}")
 
             # Calcular estadísticas de la cuenca
             self._calculate_watershed_statistics()
@@ -1558,9 +1593,6 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
             if hasattr(self, 'cancel_btn'):
                 self.cancel_btn.configure(text=get_text("watershed.cancel"))
 
-            if hasattr(self, 'save_btn'):
-                self.save_btn.configure(text=get_text("watershed.save_project"))
-
         except Exception as e:
             # Fail silently si no se pueden actualizar los textos
             print(f"Error updating texts: {e}")
@@ -1665,8 +1697,6 @@ class WatershedDelimitationFolium(ctk.CTkToplevel):
                 )
 
             # Habilitar botones de guardado
-            if hasattr(self, 'save_btn'):
-                self.save_btn.configure(state="normal")
             if hasattr(self, 'save_and_close_btn'):
                 self.save_and_close_btn.configure(state="normal")
 

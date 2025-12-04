@@ -340,8 +340,22 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         title_key = "project_form.edit_title" if self.is_editing else "project_form.title"
         self.title(get_text(title_key))
-        self.geometry("700x700")
-        self.resizable(False, False)
+
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=700,
+            desired_height=700,
+            width_percent=0.70,
+            height_percent=0.85,
+            min_width=600,
+            min_height=600,
+            max_width=900,
+            max_height=900
+        )
+        self.geometry(f"{width}x{height}")
+        self.resizable(True, True)
+        self.minsize(600, 600)  # Tamaño mínimo para mantener usabilidad
+
         self.transient(parent)
         self.grab_set()
 
@@ -428,6 +442,7 @@ class NewProjectDialog(ctk.CTkToplevel):
         self.name_label.pack(anchor="w", padx=20, pady=(0, 5))
         self.name_entry = ctk.CTkEntry(form_frame, placeholder_text=get_text("project_form.name_placeholder"), **ThemeManager.get_entry_style())
         self.name_entry.pack(fill="x", padx=20, pady=(0, 15))
+        self.name_entry.bind("<KeyRelease>", self._validate_form)
         
         self.description_label = ctk.CTkLabel(form_frame, text=get_text("project_form.description_label"), **ThemeManager.get_label_style('body'))
         self.description_label.pack(anchor="w", padx=20, pady=(0, 5))
@@ -475,11 +490,17 @@ class NewProjectDialog(ctk.CTkToplevel):
         if country_names:
             self.country_combobox.set(country_names[0])  # Seleccionar primer país por defecto
 
-        # Configurar altura máxima del dropdown
-        try:
-            self.country_combobox._dropdown_menu.configure(height=200)
-        except:
-            pass
+        # Configurar altura máxima del dropdown (debe ser después de pack y set)
+        # Usar after para asegurar que el dropdown esté completamente inicializado
+        def configure_country_dropdown():
+            try:
+                if hasattr(self.country_combobox, '_dropdown_menu'):
+                    # Configurar tanto height como número máximo de elementos visibles
+                    self.country_combobox._dropdown_menu.configure(height=5)  # 5 items visibles
+            except Exception as e:
+                print(f"Debug: No se pudo configurar dropdown de países: {e}")
+
+        self.after(100, configure_country_dropdown)
 
         self.objective_label = ctk.CTkLabel(form_frame, text=get_text("project_form.objective_label"), **ThemeManager.get_label_style('body'))
         self.objective_label.pack(anchor="w", padx=20, pady=(0, 5))
@@ -517,6 +538,46 @@ class NewProjectDialog(ctk.CTkToplevel):
         # Cargar taxonomía
         self.taxonomy_data = self._load_taxonomy()
 
+        # Objetivo
+        self.objective_label = ctk.CTkLabel(form_frame, text=get_text("project_form.taxonomy_objective_label"), **ThemeManager.get_label_style('body'))
+        self.objective_label.pack(anchor="w", padx=20, pady=(0, 5))
+
+        # Preparar objetivos truncados para display
+        select_objective_text = get_text("project_form.select_taxonomy_objective")
+        objectives_display = [select_objective_text]
+        self.objective_display_map = {select_objective_text: select_objective_text}
+
+        for obj in self.taxonomy_data.keys():
+            truncated = self._truncate_text(obj, 60)
+            objectives_display.append(truncated)
+            self.objective_display_map[truncated] = obj
+
+        self.objective_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=objectives_display,
+            state="readonly",
+            command=self._on_objective_selected,
+            fg_color=ThemeManager.COLORS['bg_card'],
+            border_color=ThemeManager.COLORS['border'],
+            button_color=ThemeManager.COLORS['accent_primary'],
+            button_hover_color=ThemeManager.COLORS['accent_secondary'],
+            dropdown_fg_color=ThemeManager.COLORS['bg_card'],
+            dropdown_hover_color=ThemeManager.COLORS['bg_secondary'],
+            text_color=ThemeManager.COLORS['text_primary'],
+            font=ThemeManager.FONTS['body'],
+            dropdown_font=("Segoe UI", 8),
+            height=28,
+            width=600
+        )
+        self.objective_combobox.pack(fill="x", padx=20, pady=(0, 15))
+        self.objective_combobox.set(select_objective_text)
+
+        # Configurar altura máxima del dropdown
+        try:
+            self.objective_combobox._dropdown_menu.configure(height=250)
+        except:
+            pass
+
         # Categoría
         self.category_label = ctk.CTkLabel(form_frame, text=get_text("project_form.category_label"), **ThemeManager.get_label_style('body'))
         self.category_label.pack(anchor="w", padx=20, pady=(0, 5))
@@ -526,15 +587,11 @@ class NewProjectDialog(ctk.CTkToplevel):
         categories_display = [select_text]
         self.category_display_map = {select_text: select_text}
 
-        for cat in self.taxonomy_data.keys():
-            truncated = self._truncate_text(cat, 60)
-            categories_display.append(truncated)
-            self.category_display_map[truncated] = cat
-
+        # Las categorías se llenarán cuando se seleccione un objetivo
         self.category_combobox = ctk.CTkComboBox(
             form_frame,
-            values=categories_display,
-            state="readonly",
+            values=[select_text],
+            state="disabled",
             command=self._on_category_selected,
             fg_color=ThemeManager.COLORS['bg_card'],
             border_color=ThemeManager.COLORS['border'],
@@ -595,6 +652,7 @@ class NewProjectDialog(ctk.CTkToplevel):
             form_frame,
             values=[get_text("project_form.select_activity")],
             state="disabled",
+            command=lambda x: self._validate_form(),
             fg_color=ThemeManager.COLORS['bg_card'],
             border_color=ThemeManager.COLORS['border'],
             button_color=ThemeManager.COLORS['accent_primary'],
@@ -634,11 +692,15 @@ class NewProjectDialog(ctk.CTkToplevel):
         # Botones fuera del scrollable frame (fijos en la parte inferior)
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
         button_frame.pack(fill="x", padx=30, pady=(0, 20))
-        
+
+        # Anchos adaptativos para botones
+        cancel_button_width = ThemeManager.get_adaptive_button_width('normal')
+        create_button_width = ThemeManager.get_adaptive_button_width('large')
+
         self.cancel_btn = ctk.CTkButton(
             button_frame,
             text=get_text("project_form.cancel"),
-            width=120,
+            width=cancel_button_width,
             height=40,
             command=self._cancel,
             fg_color=ThemeManager.COLORS['text_light'],
@@ -648,14 +710,15 @@ class NewProjectDialog(ctk.CTkToplevel):
             corner_radius=ThemeManager.DIMENSIONS['corner_radius']
         )
         self.cancel_btn.pack(side="right", padx=(15, 0))
-        
+
         button_text_key = "project_form.save" if self.is_editing else "project_form.create"
         self.create_btn = ctk.CTkButton(
             button_frame,
             text=get_text(button_text_key),
-            width=150,
+            width=create_button_width,
             height=40,
             command=self._create_project,
+            state="disabled",  # Inicialmente deshabilitado
             fg_color=ThemeManager.COLORS['accent_primary'],
             hover_color=ThemeManager.COLORS['accent_secondary'],
             text_color='#FFFFFF',
@@ -703,86 +766,114 @@ class NewProjectDialog(ctk.CTkToplevel):
 
             # Prioridad 1: Buscar por ID (multiidioma, proyectos nuevos)
             if caf_taxonomy_id and caf_taxonomy_id in self.taxonomy_id_map:
-                caf_category, caf_subcategory, caf_activity = self.taxonomy_id_map[caf_taxonomy_id]
+                caf_objective, caf_category, caf_subcategory, caf_activity = self.taxonomy_id_map[caf_taxonomy_id]
                 print(f"✓ Taxonomía cargada por ID: {caf_taxonomy_id}")
+                print(f"  Objetivo: {caf_objective[:50] if len(caf_objective) > 50 else caf_objective}")
                 print(f"  Categoría: {caf_category[:50] if len(caf_category) > 50 else caf_category}")
                 print(f"  Subcategoría: {caf_subcategory[:50] if len(caf_subcategory) > 50 else caf_subcategory}")
                 print(f"  Actividad: {caf_activity[:50] if len(caf_activity) > 50 else caf_activity}")
             else:
                 # Prioridad 2: Fallback a búsqueda por texto (retrocompatibilidad, proyectos viejos)
+                caf_objective = ''  # Proyectos antiguos no tienen objetivo guardado
                 caf_category = project_info.get('caf_category', '')
                 caf_subcategory = project_info.get('caf_subcategory', '')
                 caf_activity = project_info.get('caf_activity', '')
                 if caf_category:
-                    print(f"⚠️ Taxonomía cargada por texto (proyecto antiguo)")
+                    print(f"⚠️ Taxonomía cargada por texto (proyecto antiguo sin objetivo)")
                 else:
                     print(f"✗ No se encontró ID ni datos de texto")
 
             # Si tenemos datos de taxonomía válidos, configurar los comboboxes
-            print(f"Verificando categoría en taxonomy_data...")
-            if caf_category and caf_category in self.taxonomy_data:
-                print(f"✓ Categoría encontrada en taxonomy_data")
+            # Primero verificar y establecer objetivo
+            print(f"Verificando objetivo en taxonomy_data...")
+            if caf_objective and caf_objective in self.taxonomy_data:
+                print(f"✓ Objetivo encontrado en taxonomy_data")
                 # Buscar el valor truncado correspondiente en el mapeo
-                cat_display = None
-                for display, real in self.category_display_map.items():
-                    if real == caf_category:
-                        cat_display = display
+                obj_display = None
+                for display, real in self.objective_display_map.items():
+                    if real == caf_objective:
+                        obj_display = display
                         break
 
-                print(f"Display categoría: {cat_display[:50] if cat_display and len(cat_display) > 50 else cat_display}")
+                print(f"Display objetivo: {obj_display[:50] if obj_display and len(obj_display) > 50 else obj_display}")
 
-                if cat_display:
-                    self.category_combobox.set(cat_display)
-                    self._on_category_selected(cat_display)
-                    print(f"✓ Categoría establecida en combobox")
+                if obj_display:
+                    self.objective_combobox.set(obj_display)
+                    self._on_objective_selected(obj_display)
+                    print(f"✓ Objetivo establecido en combobox")
 
-                    print(f"Verificando subcategoría...")
-                    if caf_subcategory and caf_subcategory in self.taxonomy_data.get(caf_category, {}):
-                        print(f"✓ Subcategoría encontrada en taxonomy_data")
-                        print(f"Mapeos de subcategoría disponibles: {len(self.subcategory_display_map)}")
-
-                        # Buscar el valor truncado de subcategoría
-                        subcat_display = None
-                        for display, real in self.subcategory_display_map.items():
-                            if real == caf_subcategory:
-                                subcat_display = display
+                    # Ahora verificar categoría dentro del objetivo
+                    print(f"Verificando categoría en taxonomy_data...")
+                    if caf_category and caf_category in self.taxonomy_data.get(caf_objective, {}):
+                        print(f"✓ Categoría encontrada en taxonomy_data")
+                        # Buscar el valor truncado correspondiente en el mapeo
+                        cat_display = None
+                        for display, real in self.category_display_map.items():
+                            if real == caf_category:
+                                cat_display = display
                                 break
 
-                        print(f"Display subcategoría: {subcat_display[:50] if subcat_display and len(subcat_display) > 50 else subcat_display}")
+                        print(f"Display categoría: {cat_display[:50] if cat_display and len(cat_display) > 50 else cat_display}")
 
-                        if subcat_display:
-                            self.subcategory_combobox.set(subcat_display)
-                            self._on_subcategory_selected(subcat_display)
-                            print(f"✓ Subcategoría establecida en combobox")
+                        if cat_display:
+                            self.category_combobox.set(cat_display)
+                            self._on_category_selected(cat_display)
+                            print(f"✓ Categoría establecida en combobox")
 
-                            print(f"Verificando actividad...")
-                            if caf_activity:
-                                print(f"Mapeos de actividad disponibles: {len(self.activity_display_map)}")
+                            print(f"Verificando subcategoría...")
+                            if caf_subcategory and caf_subcategory in self.taxonomy_data.get(caf_objective, {}).get(caf_category, {}):
+                                print(f"✓ Subcategoría encontrada en taxonomy_data")
+                                print(f"Mapeos de subcategoría disponibles: {len(self.subcategory_display_map)}")
 
-                                # Buscar el valor truncado de actividad
-                                activity_display = None
-                                for display, real in self.activity_display_map.items():
-                                    if real == caf_activity:
-                                        activity_display = display
+                                # Buscar el valor truncado de subcategoría
+                                subcat_display = None
+                                for display, real in self.subcategory_display_map.items():
+                                    if real == caf_subcategory:
+                                        subcat_display = display
                                         break
 
-                                print(f"Display actividad: {activity_display[:50] if activity_display and len(activity_display) > 50 else activity_display}")
+                                print(f"Display subcategoría: {subcat_display[:50] if subcat_display and len(subcat_display) > 50 else subcat_display}")
 
-                                if activity_display:
-                                    self.activity_combobox.set(activity_display)
-                                    print(f"✓ Actividad establecida en combobox")
+                                if subcat_display:
+                                    self.subcategory_combobox.set(subcat_display)
+                                    self._on_subcategory_selected(subcat_display)
+                                    print(f"✓ Subcategoría establecida en combobox")
+
+                                    print(f"Verificando actividad...")
+                                    if caf_activity:
+                                        print(f"Mapeos de actividad disponibles: {len(self.activity_display_map)}")
+
+                                        # Buscar el valor truncado de actividad
+                                        activity_display = None
+                                        for display, real in self.activity_display_map.items():
+                                            if real == caf_activity:
+                                                activity_display = display
+                                                break
+
+                                        print(f"Display actividad: {activity_display[:50] if activity_display and len(activity_display) > 50 else activity_display}")
+
+                                        if activity_display:
+                                            self.activity_combobox.set(activity_display)
+                                            print(f"✓ Actividad establecida en combobox")
+                                        else:
+                                            print(f"✗ No se encontró display para actividad")
                                 else:
-                                    print(f"✗ No se encontró display para actividad")
+                                    print(f"✗ No se encontró display para subcategoría")
+                            else:
+                                print(f"✗ Subcategoría '{caf_subcategory[:50] if caf_subcategory else 'N/A'}' no encontrada")
                         else:
-                            print(f"✗ No se encontró display para subcategoría")
+                            print(f"✗ No se encontró display para categoría")
                     else:
-                        print(f"✗ Subcategoría '{caf_subcategory[:50] if caf_subcategory else 'N/A'}' no encontrada")
+                        print(f"✗ Categoría no válida o no encontrada")
                 else:
-                    print(f"✗ No se encontró display para categoría")
+                    print(f"✗ No se encontró display para objetivo")
             else:
-                print(f"✗ Categoría no válida o no encontrada")
+                print(f"✗ Objetivo no válido o no encontrado (puede ser proyecto antiguo)")
 
             print(f"=== FIN DEBUG ===\n")
+
+        # Validar formulario después del pre-llenado
+        self._validate_form()
 
     def _truncate_text(self, text, max_length):
         """Truncar texto largo para mostrar en dropdown"""
@@ -790,12 +881,13 @@ class NewProjectDialog(ctk.CTkToplevel):
             return text
         return text[:max_length - 3] + "..."
 
-    def _get_taxonomy_id(self, categoria, subcategoria, actividad):
+    def _get_taxonomy_id(self, objetivo, categoria, subcategoria, actividad):
         """
         Obtener ID de taxonomía para una combinación específica.
         Busca en el mapeo inverso de taxonomy_id_map.
 
         Args:
+            objetivo (str): Objetivo completo
             categoria (str): Categoría completa
             subcategoria (str): Subcategoría completa
             actividad (str): Actividad completa
@@ -803,8 +895,8 @@ class NewProjectDialog(ctk.CTkToplevel):
         Returns:
             str: ID de la taxonomía o None si no se encuentra
         """
-        for tax_id, (cat, subcat, act) in self.taxonomy_id_map.items():
-            if cat == categoria and subcat == subcategoria and act == actividad:
+        for tax_id, (obj, cat, subcat, act) in self.taxonomy_id_map.items():
+            if obj == objetivo and cat == categoria and subcat == subcategoria and act == actividad:
                 return tax_id
         return None
 
@@ -815,7 +907,7 @@ class NewProjectDialog(ctk.CTkToplevel):
         Si no existe, usa español como fallback.
 
         Returns:
-            dict: {Categoria: {Subcategoria: [Actividades]}}
+            dict: {Objetivo: {Categoria: {Subcategoria: [Actividades]}}}
         """
         try:
             import csv
@@ -868,6 +960,7 @@ class NewProjectDialog(ctk.CTkToplevel):
             # Mapeo de nombres de columnas en diferentes idiomas
             column_mappings = {
                 'id': ['ID'],
+                'objetivo': ['Objetivo', 'Objective', 'Objetive'],
                 'categoria': ['Categoria', 'Category'],
                 'subcategoria': ['Subcategoria', 'Subcategory'],
                 'actividad': ['Actividad', 'Activity', 'Atividade']
@@ -886,30 +979,34 @@ class NewProjectDialog(ctk.CTkToplevel):
 
                 for row in reader:
                     tax_id = row.get(col_names.get('id', 'ID'), '').strip()
+                    objetivo = row.get(col_names.get('objetivo', 'Objetivo'), '').strip()
                     categoria = row.get(col_names.get('categoria', 'Categoria'), '').strip()
                     subcategoria = row.get(col_names.get('subcategoria', 'Subcategoria'), '').strip()
                     actividad = row.get(col_names.get('actividad', 'Actividad'), '').strip()
 
-                    if not categoria or not subcategoria or not actividad:
+                    if not objetivo or not categoria or not subcategoria or not actividad:
                         continue
 
-                    # Construir estructura jerárquica para navegación
-                    if categoria not in taxonomy:
-                        taxonomy[categoria] = {}
+                    # Construir estructura jerárquica para navegación: Objetivo > Categoría > Subcategoría > Actividades
+                    if objetivo not in taxonomy:
+                        taxonomy[objetivo] = {}
 
-                    if subcategoria not in taxonomy[categoria]:
-                        taxonomy[categoria][subcategoria] = []
+                    if categoria not in taxonomy[objetivo]:
+                        taxonomy[objetivo][categoria] = {}
 
-                    if actividad not in taxonomy[categoria][subcategoria]:
-                        taxonomy[categoria][subcategoria].append(actividad)
+                    if subcategoria not in taxonomy[objetivo][categoria]:
+                        taxonomy[objetivo][categoria][subcategoria] = []
+
+                    if actividad not in taxonomy[objetivo][categoria][subcategoria]:
+                        taxonomy[objetivo][categoria][subcategoria].append(actividad)
 
                     # Construir mapeo de ID para búsqueda multiidioma
                     if tax_id:
-                        self.taxonomy_id_map[tax_id] = (categoria, subcategoria, actividad)
+                        self.taxonomy_id_map[tax_id] = (objetivo, categoria, subcategoria, actividad)
 
-            print(f"✓ Cargadas {len(taxonomy)} categorías desde {taxonomy_filename}")
-            for cat in taxonomy.keys():
-                print(f"  - Categoría: {cat}")
+            print(f"✓ Cargados {len(taxonomy)} objetivos desde {taxonomy_filename}")
+            for obj in taxonomy.keys():
+                print(f"  - Objetivo: {obj}")
             return taxonomy
 
         except Exception as e:
@@ -960,6 +1057,65 @@ class NewProjectDialog(ctk.CTkToplevel):
             print(f"⚠️ Error cargando países: {e}")
             return {}
 
+    def _validate_form(self, *args):
+        """
+        Valida el formulario y habilita/deshabilita el botón de crear/guardar.
+        Se llama cada vez que cambia un campo obligatorio.
+        """
+        # Verificar nombre del proyecto
+        name = self.name_entry.get().strip()
+
+        # Verificar taxonomía completa
+        select_obj = get_text("project_form.select_taxonomy_objective")
+        select_cat = get_text("project_form.select_category")
+        select_subcat = get_text("project_form.select_subcategory")
+        select_act = get_text("project_form.select_activity")
+
+        obj_valid = self.objective_combobox.get() != select_obj
+        cat_valid = self.category_combobox.get() != select_cat
+        subcat_valid = self.subcategory_combobox.get() != select_subcat
+        act_valid = self.activity_combobox.get() != select_act
+
+        # El formulario es válido si tiene nombre y taxonomía completa
+        is_valid = bool(name) and obj_valid and cat_valid and subcat_valid and act_valid
+
+        # Habilitar o deshabilitar botón
+        if is_valid:
+            self.create_btn.configure(state="normal")
+        else:
+            self.create_btn.configure(state="disabled")
+
+    def _on_objective_selected(self, selected_objective_display):
+        """Manejar selección de objetivo y habilitar categorías"""
+        # Resetear categoría, subcategoría y actividad
+        self.category_combobox.configure(state="disabled")
+        self.category_combobox.set(get_text("project_form.select_category"))
+        self.subcategory_combobox.configure(state="disabled")
+        self.subcategory_combobox.set(get_text("project_form.select_subcategory"))
+        self.activity_combobox.configure(state="disabled")
+        self.activity_combobox.set(get_text("project_form.select_activity"))
+
+        # Obtener objetivo real desde el mapeo
+        selected_objective = self.objective_display_map.get(selected_objective_display, selected_objective_display)
+
+        # Si el objetivo seleccionado es válido, habilitar categorías
+        if selected_objective and selected_objective != get_text("project_form.select_taxonomy_objective"):
+            if selected_objective in self.taxonomy_data:
+                # Preparar categorías truncadas
+                select_text = get_text("project_form.select_category")
+                categories_display = [select_text]
+                self.category_display_map = {select_text: select_text}
+
+                for cat in self.taxonomy_data[selected_objective].keys():
+                    truncated = self._truncate_text(cat, 60)
+                    categories_display.append(truncated)
+                    self.category_display_map[truncated] = cat
+
+                self.category_combobox.configure(values=categories_display, state="readonly")
+
+        # Validar formulario
+        self._validate_form()
+
     def _on_category_selected(self, selected_category_display):
         """Manejar selección de categoría y habilitar subcategorías"""
         # Resetear subcategoría y actividad
@@ -973,18 +1129,26 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         # Si la categoría seleccionada es válida, habilitar subcategorías
         if selected_category and selected_category != get_text("project_form.select_category"):
-            if selected_category in self.taxonomy_data:
-                # Preparar subcategorías truncadas
-                select_text = get_text("project_form.select_subcategory")
-                subcategories_display = [select_text]
-                self.subcategory_display_map = {select_text: select_text}
+            # Obtener objetivo seleccionado
+            selected_objective_display = self.objective_combobox.get()
+            selected_objective = self.objective_display_map.get(selected_objective_display, selected_objective_display)
 
-                for subcat in self.taxonomy_data[selected_category].keys():
-                    truncated = self._truncate_text(subcat, 80)
-                    subcategories_display.append(truncated)
-                    self.subcategory_display_map[truncated] = subcat
+            if selected_objective in self.taxonomy_data:
+                if selected_category in self.taxonomy_data[selected_objective]:
+                    # Preparar subcategorías truncadas
+                    select_text = get_text("project_form.select_subcategory")
+                    subcategories_display = [select_text]
+                    self.subcategory_display_map = {select_text: select_text}
 
-                self.subcategory_combobox.configure(values=subcategories_display, state="readonly")
+                    for subcat in self.taxonomy_data[selected_objective][selected_category].keys():
+                        truncated = self._truncate_text(subcat, 80)
+                        subcategories_display.append(truncated)
+                        self.subcategory_display_map[truncated] = subcat
+
+                    self.subcategory_combobox.configure(values=subcategories_display, state="readonly")
+
+        # Validar formulario
+        self._validate_form()
 
     def _on_subcategory_selected(self, selected_subcategory_display):
         """Manejar selección de subcategoría y habilitar actividades"""
@@ -997,23 +1161,30 @@ class NewProjectDialog(ctk.CTkToplevel):
 
         # Si la subcategoría seleccionada es válida, habilitar actividades
         if selected_subcategory and selected_subcategory != get_text("project_form.select_subcategory"):
-            # Obtener categoría real desde el mapeo
+            # Obtener objetivo y categoría desde los mapeos
+            selected_objective_display = self.objective_combobox.get()
+            selected_objective = self.objective_display_map.get(selected_objective_display, selected_objective_display)
+
             selected_category_display = self.category_combobox.get()
             selected_category = self.category_display_map.get(selected_category_display, selected_category_display)
 
-            if selected_category in self.taxonomy_data:
-                if selected_subcategory in self.taxonomy_data[selected_category]:
-                    # Preparar actividades truncadas
-                    select_text = get_text("project_form.select_activity")
-                    activities_display = [select_text]
-                    self.activity_display_map = {select_text: select_text}
+            if selected_objective in self.taxonomy_data:
+                if selected_category in self.taxonomy_data[selected_objective]:
+                    if selected_subcategory in self.taxonomy_data[selected_objective][selected_category]:
+                        # Preparar actividades truncadas
+                        select_text = get_text("project_form.select_activity")
+                        activities_display = [select_text]
+                        self.activity_display_map = {select_text: select_text}
 
-                    for activity in self.taxonomy_data[selected_category][selected_subcategory]:
-                        truncated = self._truncate_text(activity, 100)
-                        activities_display.append(truncated)
-                        self.activity_display_map[truncated] = activity
+                        for activity in self.taxonomy_data[selected_objective][selected_category][selected_subcategory]:
+                            truncated = self._truncate_text(activity, 100)
+                            activities_display.append(truncated)
+                            self.activity_display_map[truncated] = activity
 
-                    self.activity_combobox.configure(values=activities_display, state="readonly")
+                        self.activity_combobox.configure(values=activities_display, state="readonly")
+
+        # Validar formulario
+        self._validate_form()
 
     def _create_project(self):
         acronym     = self.acronym_entry.get().strip()
@@ -1034,17 +1205,19 @@ class NewProjectDialog(ctk.CTkToplevel):
                 country_code, country_factor = country_data
 
         # Obtener taxonomía CAF seleccionada (valores de display)
+        caf_objective_display = self.objective_combobox.get()
         caf_category_display = self.category_combobox.get()
         caf_subcategory_display = self.subcategory_combobox.get()
         caf_activity_display = self.activity_combobox.get()
 
         # Obtener valores reales desde los mapeos
+        caf_objective = self.objective_display_map.get(caf_objective_display, caf_objective_display)
         caf_category = self.category_display_map.get(caf_category_display, caf_category_display)
         caf_subcategory = self.subcategory_display_map.get(caf_subcategory_display, caf_subcategory_display)
         caf_activity = self.activity_display_map.get(caf_activity_display, caf_activity_display)
 
         # Obtener ID de taxonomía para persistencia multiidioma
-        caf_taxonomy_id = self._get_taxonomy_id(caf_category, caf_subcategory, caf_activity)
+        caf_taxonomy_id = self._get_taxonomy_id(caf_objective, caf_category, caf_subcategory, caf_activity)
 
         # Validaciones
         if not name:
@@ -1052,11 +1225,13 @@ class NewProjectDialog(ctk.CTkToplevel):
             return
 
         # Validar taxonomía CAF (todos los campos deben estar seleccionados)
+        select_obj = get_text("project_form.select_taxonomy_objective")
         select_cat = get_text("project_form.select_category")
         select_subcat = get_text("project_form.select_subcategory")
         select_act = get_text("project_form.select_activity")
 
-        if (caf_category == select_cat or
+        if (caf_objective == select_obj or
+            caf_category == select_cat or
             caf_subcategory == select_subcat or
             caf_activity == select_act):
             messagebox.showerror(get_text("messages.error"), get_text("project_form.taxonomy_required"))
@@ -1074,6 +1249,7 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'country_code': country_code,
                     'country_name': country_name,
                     'country_factor': country_factor,
+                    'caf_objective': caf_objective,
                     'caf_category': caf_category,
                     'caf_subcategory': caf_subcategory,
                     'caf_activity': caf_activity,
@@ -1102,6 +1278,7 @@ class NewProjectDialog(ctk.CTkToplevel):
                     'country_code': country_code,
                     'country_name': country_name,
                     'country_factor': country_factor,
+                    'caf_objective': caf_objective,
                     'caf_category': caf_category,
                     'caf_subcategory': caf_subcategory,
                     'caf_activity': caf_activity,

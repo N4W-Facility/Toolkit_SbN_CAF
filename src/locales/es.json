@@ -28,6 +28,8 @@
     "objective_placeholder": "Indique los objetivos que desea alcanzar con el Programa y Proyecto de Inversión",
     "taxonomy_section": "Taxonomía CAF",
     "taxonomy_info": "Enmarque el Programa y Proyecto de Inversión dentro de la categoría elegible CAF",
+    "taxonomy_objective_label": "Objetivo:",
+    "select_taxonomy_objective": "-- Seleccione un objetivo --",
     "category_label": "Categoría:",
     "subcategory_label": "Subcategoría:",
     "activity_label": "Actividad elegible:",
@@ -83,7 +85,7 @@
   },
   "map_viewer": {
     "title": "🗺️ Mapa Interactivo",
-    "click_to_select": "📍 Haga clic en el mapa para seleccionar",
+    "click_to_select": "📍 Haga clic en el mapa para seleccionar o navegar",
     "loading": "🔄 Cargando...",
     "viewer_created": "✅ Visor creado",
     "map_loaded": "✅ Mapa cargado",
@@ -196,7 +198,7 @@
   "water_security": {
     "title": "Desafíos de Seguridad Hídrica",
     "main_title": "💧 Evaluación de Desafíos de Seguridad Hídrica",
-    "description": "Evalúe la importancia de cada desafío de seguridad hídrica para su proyecto usando una escala de 1 a 100.",
+    "description": "Evalúe la importancia de cada desafío de seguridad hídrica en el área del proyecto, calificándolos en una escala de 1 a 100 (valores altos indican alta prioridad para el desafío respectivo).",
     "challenge_header": "Desafío",
     "value_header": "Valoración (1-100)",
     "importance_header": "Nivel de Importancia",
@@ -282,7 +284,7 @@
   "other_challenges": {
     "title": "Otros Desafíos",
     "main_title": "⚡ Evaluación de Otros Desafíos",
-    "description": "Evalúe la importancia de otros desafíos para su proyecto usando una escala de 1 a 100.",
+    "description": "Evalúe la importancia de otros desafíos en el área del proyecto, calificándolos en una escala de 1 a 100 (valores altos indican alta prioridad para el desafío respectivo).",
     "challenge_header": "Desafío",
     "value_header": "Valoración (1-100)",
     "importance_header": "Nivel de Importancia",
@@ -351,7 +353,7 @@
     "zoom_error": "No se pudo hacer zoom a las SbN cargadas",
     "selection_saved": "Selección guardada: {0} SbN seleccionadas",
     "priority_label": "(Prioridad {0})",
-    "priority_level": "Nivel de prioridad"
+    "priority_level": "Evaluación de idoneidad"
   },
   "sbn_selection": {
     "title": "Selección de SbN para Reporte",
@@ -416,7 +418,8 @@
     "project_title": "Título del Programa y Proyecto de Inversión",
     "description": "Descripción",
     "location": "Localización",
-    "objectives": "Objetivos",
+    "objectives": "Objetivos del proyecto",
+    "objectives_caf": "Objetivo de financiamiento verde CAF",
     "taxonomy_caf": "Taxonomía CAF",
     "category_caf": "Categoría CAF",
     "subcategory_caf": "Subcategoría CAF",
@@ -445,8 +448,10 @@
     "subcategory": "Subcategoría",
     "section6_title": "6 Evaluación de otros desafíos",
     "section7_title": "7 SbN priorizadas",
+    "taxo_title": "SbN",
     "priority_order": "Orden de prioridad",
     "section8_title": "8 Taxonomía CAF actualizada",
+    "footnote": "* Nota: A) Adaptación al cambio climático, B) Biodiversidad y otros objetivos ambientales, M) Mitigación del cambio climático",
     "section9_title": "9 Indicadores de monitoreo y evaluación recomendados",
     "indicator": "Indicadores priorizados",
     "unit": "Unidad de medida",

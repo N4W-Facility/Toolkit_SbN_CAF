@@ -91,10 +91,9 @@ class DashboardWindow(ctk.CTk):
         project_info_frame.pack(side="left", fill="y", padx=(0, 10))
         project_info_frame.pack_propagate(False)
 
-        # Panel central con botones del flujo principal - más compacto
-        workflow_frame = ctk.CTkFrame(content_frame, width=500, height=500, **ThemeManager.get_frame_style())
-        workflow_frame.pack(side="left", fill="y", padx=(10, 0))
-        workflow_frame.pack_propagate(False)
+        # Panel central con botones del flujo principal - dinámico
+        workflow_frame = ctk.CTkFrame(content_frame, **ThemeManager.get_frame_style())
+        workflow_frame.pack(side="left", fill="both", expand=True, padx=(10, 0))
 
         # Configurar cada panel
         self._create_project_info_panel(project_info_frame)
@@ -515,9 +514,18 @@ class DashboardWindow(ctk.CTk):
         )
         self.widget_refs['workflow_title'].pack(pady=(10, 0))
 
+        # Frame scrollable para el contenido del workflow
+        scrollable_workflow = ctk.CTkScrollableFrame(
+            parent,
+            fg_color="transparent",
+            scrollbar_button_color=ThemeManager.COLORS['text_light'],
+            scrollbar_button_hover_color=ThemeManager.COLORS['text_secondary']
+        )
+        scrollable_workflow.pack(fill="both", expand=True, padx=5, pady=(10, 5))
+
         # Contenedor para la matriz de botones
-        matrix_container = ctk.CTkFrame(parent, fg_color="transparent")
-        matrix_container.pack(expand=True, padx=20, pady=(10,5))
+        matrix_container = ctk.CTkFrame(scrollable_workflow, fg_color="transparent")
+        matrix_container.pack(expand=False, padx=15, pady=(0, 5))
 
         # Botones del flujo de trabajo
         self.workflow_buttons = {}
@@ -581,7 +589,7 @@ class DashboardWindow(ctk.CTk):
                     }
 
         # Panel de imagen de la cuenca debajo de los botones
-        self._create_image_panel(parent)
+        self._create_image_panel(scrollable_workflow)
 
     def _create_image_panel(self, parent):
         """Crear panel para mostrar la imagen de la cuenca"""
@@ -1081,6 +1089,17 @@ class DashboardWindow(ctk.CTk):
                 SbNPrioritization.update_other_challenges(project_folder)
 
                 print("✓ Priorización actualizada correctamente")
+
+                # Paso 2.6: Compilar áreas y costos
+                print("📋 Compilando áreas y costos...")
+                from ..core.area_calculator import compile_area_and_costs
+                compile_success = compile_area_and_costs(project_folder)
+
+                if not compile_success:
+                    print("⚠️ No se pudo compilar Area_Cost_Compiler.csv")
+                    print("   Posibles causas:")
+                    print("   - Area.csv no existe (ejecutar delimitación de cuenca primero)")
+                    print("   - Cost.csv no existe (se acaba de generar, verificar errores)")
 
             # Paso 3: Abrir ventana de SbN con la configuración
             window = SbNWindow(

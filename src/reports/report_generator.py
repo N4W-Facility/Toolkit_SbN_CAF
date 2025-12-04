@@ -34,8 +34,10 @@ import json
 from datetime import datetime
 from typing import List, Sequence, Optional, Dict, Any, Tuple
 from tkinter import messagebox
+from pathlib import Path
 
 from fpdf import FPDF
+from pypdf import PdfWriter, PdfReader
 from src.utils.resource_path import get_resource_path
 from src.reports.sbn_sheets_generator import SbnSheetsGenerator
 from src.core.language_manager import get_text
@@ -453,6 +455,7 @@ class ReportGenerator:
             (self.texts.get('description', 'Descripción'), project_info.get('description', self.texts.get('not_specified', 'No especificado')) or self.texts.get('not_specified', 'No especificado')),
             (self.texts.get('location', 'Localización'), full_location),
             (self.texts.get('objectives', 'Objetivos'), project_info.get('objective', self.texts.get('not_specified', 'No especificado')) or self.texts.get('not_specified', 'No especificado')),
+            (self.texts.get('objectives_caf', 'Objetivo de financiamiento verde CAF'), project_info.get('caf_objective', self.texts.get('not_specified', 'No especificado'))),
             (self.texts.get('category_caf', 'Categoría CAF'), project_info.get('caf_category', self.texts.get('not_specified', 'No especificado'))),
             (self.texts.get('subcategory_caf', 'Subcategoría CAF'), project_info.get('caf_subcategory', self.texts.get('not_specified', 'No especificado'))),
             (self.texts.get('activity_caf', 'Actividad CAF'), project_info.get('caf_activity', self.texts.get('not_specified', 'No especificado'))),
@@ -739,7 +742,7 @@ class ReportGenerator:
 
         # ---------- 7. SbN seleccionadas ----------
         pdf.h1(self.texts.get('section7_title', '7 SbN seleccionadas'))
-        headers_s = [self.texts.get('num', 'Prioridad'), self.texts.get('sbn', 'SbN')]
+        headers_s = [self.texts.get('priority_order', 'Prioridad'), self.texts.get('section7_title', 'SbN')]
         colw_s = [total_w * 0.30, total_w * 0.70]  # 30% prioridad, 70% nombre
 
         if not self.selected_sbn:
@@ -762,7 +765,7 @@ class ReportGenerator:
             # Render de filas con control de salto de página
             for sbn_id in self.selected_sbn:
                 order = self.sbn_orders.get(sbn_id, 0)
-                priority_text = f"{self.texts.get('num', 'Prioridad')} {order}"
+                priority_text = f"{self.texts.get('priority_order', 'Prioridad')} {order}"
                 sbn_name = self.sbn_solutions.get(str(sbn_id), f"SbN {sbn_id}")
 
                 # Altura estimada por wrapping del nombre
@@ -800,12 +803,12 @@ class ReportGenerator:
         pdf.h1(self.texts.get('section8_title', '8 Taxonomía CAF'))
 
         if self.selected_sbn and self.taxonomy_tree:
-            # Columnas: Objetivo, Categoría, Subcategoría, SbN/Acción
+            # Columnas: SbN, Categoría, Subcategoría, Actividad
             headers_t = [
-                self.texts.get('sbn', 'SbN'),
-                self.texts.get('taxonomy_obj', 'Objetivo'),
-                self.texts.get('taxonomy_cat', 'Categoría'),
-                self.texts.get('taxonomy_subcat', 'Subcategoría')
+                self.texts.get('taxo_title', 'SbN'),
+                self.texts.get('category_caf', 'Categoría'),
+                self.texts.get('subcategory_caf', 'Subcategoría'),
+                self.texts.get('activity_caf', 'Actividad')
             ]
             colw_t = [total_w * 0.18, total_w * 0.22, total_w * 0.25, total_w * 0.35]
 
@@ -884,6 +887,7 @@ class ReportGenerator:
                             pdf.set_xy(x0, y0 + row_h)
         else:
             pdf.p(self.texts.get('not_available', 'No disponible'))
+        pdf.p(self.texts.get('footnote', ''))
         pdf.ln(3)
 
         # ---------- 9. Indicadores ----------
@@ -1019,6 +1023,13 @@ class ReportGenerator:
 
                     if not sheets_success:
                         print("⚠️ Hubo errores al generar las fichas técnicas")
+                    else:
+                        # Si las fichas se generaron exitosamente, concatenar con el reporte
+                        print("\n📑 Generando PDF Total (Reporte + Fichas)...")
+                        concat_success = self.concatenate_report_and_sheets(output_path)
+
+                        if not concat_success:
+                            print("⚠️ No se pudo generar el PDF Total, pero los archivos individuales están disponibles")
 
                 except Exception as e:
                     print(f"❌ Error al generar fichas técnicas: {e}")
@@ -1029,3 +1040,81 @@ class ReportGenerator:
                 print("\n⏭️ Usuario optó por omitir la generación de fichas técnicas de SbN")
 
         return True
+
+    def concatenate_report_and_sheets(self, report_pdf_path: str) -> bool:
+        """
+        Concatena el reporte principal con todas las fichas de SbN en un PDF Total.
+
+        Args:
+            report_pdf_path: Ruta del PDF del reporte principal
+
+        Returns:
+            bool: True si fue exitoso
+        """
+        try:
+            report_path = Path(report_pdf_path)
+
+            # Verificar que el reporte principal existe
+            if not report_path.exists():
+                print(f"⚠️ No se encontró el reporte principal: {report_path}")
+                return False
+
+            # Ruta de la carpeta de fichas
+            sheets_folder = Path(self.project_path) / "03-SbN"
+
+            if not sheets_folder.exists():
+                print(f"⚠️ No se encontró la carpeta de fichas: {sheets_folder}")
+                return False
+
+            # Buscar todas las fichas en orden (SbN_01.pdf a SbN_21.pdf)
+            sheet_files = []
+            for i in range(1, 22):  # SbN_01 a SbN_21
+                sheet_name = f"SbN_{i}.pdf"
+                sheet_path = sheets_folder / sheet_name
+                if sheet_path.exists():
+                    sheet_files.append(sheet_path)
+
+            if not sheet_files:
+                print("⚠️ No se encontraron fichas de SbN para concatenar")
+                return False
+
+            print(f"\n📑 Concatenando reporte con {len(sheet_files)} fichas de SbN...")
+
+            # Crear nombre del PDF total
+            # Ejemplo: "Reporte_Proyecto.pdf" → "Reporte_Proyecto_Total.pdf"
+            total_pdf_name = report_path.stem + "_Total.pdf"
+            total_pdf_path = report_path.parent / total_pdf_name
+
+            # Crear escritor de PDF
+            pdf_writer = PdfWriter()
+
+            # 1. Agregar reporte principal
+            print(f"  ✓ Agregando reporte principal: {report_path.name}")
+            with open(report_path, 'rb') as pdf_file:
+                pdf_reader = PdfReader(pdf_file)
+                for page in pdf_reader.pages:
+                    pdf_writer.add_page(page)
+
+            # 2. Agregar fichas de SbN en orden
+            for sheet_path in sheet_files:
+                print(f"  ✓ Agregando ficha: {sheet_path.name}")
+                with open(sheet_path, 'rb') as pdf_file:
+                    pdf_reader = PdfReader(pdf_file)
+                    for page in pdf_reader.pages:
+                        pdf_writer.add_page(page)
+
+            # 3. Guardar PDF compilado
+            with open(total_pdf_path, 'wb') as output_file:
+                pdf_writer.write(output_file)
+
+            print(f"\n✅ PDF Total generado exitosamente:")
+            print(f"   📄 {total_pdf_path}")
+            print(f"   📊 Reporte principal + {len(sheet_files)} fichas de SbN")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Error concatenando PDFs: {e}")
+            import traceback
+            traceback.print_exc()
+            return False

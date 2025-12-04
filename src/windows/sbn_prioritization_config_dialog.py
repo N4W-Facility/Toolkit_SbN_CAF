@@ -23,9 +23,22 @@ class SbnPrioritizationConfigDialog(ctk.CTkToplevel):
 
         # Configuración de la ventana
         self.title(get_text("sbn_prioritization.title"))
-        self.geometry("700x800")
-        self.resizable(False, False)
-        self.transient(parent)
+
+        # Dimensiones adaptativas según tamaño de pantalla
+        width, height = ThemeManager.get_window_dimensions(
+            desired_width=700,
+            desired_height=800,
+            width_percent=0.70,
+            height_percent=0.85,
+            min_width=600,
+            min_height=600,
+            max_width=900,
+            max_height=900
+        )
+        self.geometry(f"{width}x{height}")
+        self.resizable(True, True)
+        self.minsize(600, 600)  # Tamaño mínimo para mantener usabilidad
+
         self.grab_set()
 
         self.configure(fg_color=ThemeManager.COLORS['bg_primary'])
@@ -105,9 +118,18 @@ class SbnPrioritizationConfigDialog(ctk.CTkToplevel):
 
     def _setup_ui(self):
         """Crear la interfaz de usuario"""
-        # Frame principal con scroll
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # Frame scrollable principal (fondo blanco, scroll gris)
+        scrollable_main_frame = ctk.CTkScrollableFrame(
+            self,
+            fg_color=ThemeManager.COLORS['bg_primary'],
+            scrollbar_button_color=ThemeManager.COLORS['text_light'],
+            scrollbar_button_hover_color=ThemeManager.COLORS['text_secondary']
+        )
+        scrollable_main_frame.pack(fill="both", expand=True, padx=20, pady=(20, 10))
+
+        # Contenedor para el contenido
+        main_frame = ctk.CTkFrame(scrollable_main_frame, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Header
         header_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -246,14 +268,17 @@ class SbnPrioritizationConfigDialog(ctk.CTkToplevel):
             checkbox.pack(anchor="w", pady=5, padx=10)
             self.sbn_checkboxes[sbn_id] = checkbox
 
-        # ===== BOTONES DE ACCIÓN =====
-        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        button_frame.pack(fill="x")
+        # ===== BOTONES DE ACCIÓN (fuera del scroll, fijos abajo) =====
+        button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        button_frame.pack(fill="x", padx=20, pady=(0, 20))
+
+        # Obtener ancho adaptativo para botones
+        button_width = ThemeManager.get_adaptive_button_width('normal')
 
         self.cancel_btn = ctk.CTkButton(
             button_frame,
             text=get_text("sbn_prioritization.cancel"),
-            width=120,
+            width=button_width,
             height=40,
             command=self._on_cancel,
             fg_color=ThemeManager.COLORS['text_light'],
@@ -266,7 +291,7 @@ class SbnPrioritizationConfigDialog(ctk.CTkToplevel):
         self.next_btn = ctk.CTkButton(
             button_frame,
             text=get_text("sbn_prioritization.next"),
-            width=120,
+            width=button_width,
             height=40,
             command=self._on_next,
             fg_color=ThemeManager.COLORS['success'],
